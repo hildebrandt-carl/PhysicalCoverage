@@ -5,7 +5,7 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from highway_config_v2 import HighwayConfig
+from highway_config import HighwayConfig
 from car_controller import EgoController
 from physical_analysis import PhysicalAnalysis
 
