@@ -102,9 +102,7 @@ class ReachableSet:
                         if dis < min_distance:
                             min_distance = dis
                             min_point = i
-                    
-                    print(min_point)
-            
+                                
             # Update the line
             true_l = LineString([origin, min_point])
             new_lines.append(true_l)

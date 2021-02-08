@@ -22,7 +22,10 @@ class TrackedObject:
         self.position.append(pos)
         self.velocity.append(vel)
         self.last_update = time.time()
-        self.current_heading = math.atan(vel[1]/vel[0])
+        if abs(vel[0]) < 1e-6:
+            self.current_heading = 0
+        else:
+            self.current_heading = math.atan(vel[1]/vel[0])
 
     def distance_to(self, pos_in):
         # Get the latest position
