@@ -1,5 +1,5 @@
 class HighwayConfig:
-    def __init__(self):
+    def __init__(self, environment_vehicles=20):
         policy_freq = 5 #[hz]
         duration = 80 #[s]
         self.env_configuration = {
@@ -16,7 +16,7 @@ class HighwayConfig:
                 "type": "DiscreteMetaAction",
             },
             "lanes_count": 4,
-            "vehicles_count": 20,
+            "vehicles_count": environment_vehicles,
             "duration": duration * policy_freq,  # [s]
             "initial_spacing": 1,
             "collision_reward": -1,  # The reward received when colliding with a vehicle.
