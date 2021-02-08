@@ -7,18 +7,19 @@ import matplotlib.pyplot as plt
 
 from highway_config import HighwayConfig
 from car_controller import EgoController
-from physical_analysis import PhysicalAnalysis
+from tracker import Tracker
+from reachset import ReachableSet
 
 # Suppress exponetial notation
 np.set_printoptions(suppress=True)
 
-look_ahead_distance = 30
-recording = True
+recording = False
 
 # Create the controllers
 hw_config = HighwayConfig()
 car_controller = EgoController(debug=True)
-physical_analysis = PhysicalAnalysis(distance_threshold=5, time_threshold=2, debug=True)
+tracker = Tracker(distance_threshold=5, time_threshold=2, debug=True)
+reach = ReachableSet()
 
 # Create the environment
 env = gym.make("highway-v0")
@@ -47,93 +48,57 @@ while not done:
     action = car_controller.drive(obs)
 
     # Track objects
-    tracked_objects = physical_analysis.track(obs)
-    physical_analysis.compute_trajectories(history_size=3, look_ahead_distance=look_ahead_distance, steering_angle=5)
-    intersection_data = physical_analysis.compute_intersection(look_ahead_distance)
-    G, node_pos, node_colors = physical_analysis.compute_analysis_graph()
+    tracker.track(obs)
+    tracked_objects = tracker.get_observations()
 
-    # Plot the results
+    # Get the reach set simulation
+    polygons = reach.compute_environment(tracked_objects)
+    r_set = reach.estimate_raw_reachset()
+    final_r_set = reach.estimate_true_reachset(polygons, r_set)
+    r_vector = reach.vectorize_reachset(final_r_set)
+
     plt.figure(1)
     plt.clf()
-    plt.title('Trajectory Viewer')
-
-    # Invert the y axis for easier viewing
-    ax = plt.gca()
-    ax.invert_yaxis()
-
-    # Draw nodes and edges
-    nx.draw_networkx_nodes(G, node_pos, node_size=500, node_color=node_colors)
-    # nx.draw_networkx_edges(G, node_pos, width=3, alpha=0.5, edge_color="b", style="dashed")
-
-    # Draw the trajectories
-    for obj in tracked_objects:
-        p1_vel, p2_vel = obj.get_trajectory_velocity()
-        
-    # Show each of the lines
-    for obj in tracked_objects:
-        reach = obj.reachable_set
-        p1, p2 = obj.get_trajectory_points(look_ahead_distance)
-        p1_vel, p2_vel = obj.get_trajectory_velocity()
-        if ((p1_vel is not None) and (p2_vel is not None) and (reach is not None)):
-            # Assume no intersection
-            c = 'g'
-            # If this line intersects with another line
-            for intersection in intersection_data:
-                if (intersection['intersection_percentage'] > 0) and obj.obj_id in intersection['id']:
-                    c = 'r'
-
-            # Plot the reachable set
-            ax.fill(*reach.exterior.xy, alpha=0.5, fc=c , ec='none')
-
-            # Plot the original distance line
-            x = [p1[0], p2[0]]
-            y = [p1[1], p2[1]]
-            plt.plot(x, y, color=c)
-
-        if ((p1_vel is not None) and (p2_vel is not None)):
-            plt.annotate(text='', xy=p1_vel, xytext=p2_vel, arrowprops=dict(arrowstyle='<-', color=c, lw=3.5))
-
-    # Label each of the nodes
-    nx.draw_networkx_labels(G, node_pos)
-
-    # Set the size of the graph
-    plt.xlim([-100,100])
-    plt.ylim([-14, 14])
-
-    # Invert the y axis as negative is up and show ticks
-    ax.set_ylim(ax.get_ylim()[::-1])
-    ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
-
-    plt.figure(2)
-    plt.clf()
-    plt.title('Physical Stack')
+    plt.title('Environment')
 
     # Invert the y axis for easier viewing
     plt.gca().invert_yaxis()
 
-    # Add edges between any two nodes which intersect
-    for intersection in intersection_data:
-        if intersection['intersection_percentage'] > 0:
-            paid_id = intersection['id']
-            if paid_id[0] != 1:
-                n1 = str(paid_id[0])
-            else:
-                n1 = "ego"
-            n2 = str(paid_id[1])
-            G.add_edge(n1, n2, weight=intersection['intersection_percentage'])
+    # Display the environment
+    for i in range(len(polygons)):
+        # Get the polygon
+        p = polygons[i]
+        x,y = p.exterior.xy
+        # Get the color
+        c = "g" if i == 0 else "r"
+        # Plot
+        plt.plot(x,y,color=c)
 
-    # Draw nodes and edges
-    nx.draw_networkx_nodes(G, node_pos, node_size=500, node_color=node_colors)
-    nx.draw_networkx_edges(G, node_pos, width=4, alpha=0.5, edge_color="r")
-    labels = nx.get_edge_attributes(G,'weight')
-    nx.draw_networkx_edge_labels(G, node_pos, edge_labels=labels, bbox=dict(alpha=0.0))
+    # Display the reachset
+    for i in range(len(r_set)):
+        # Get the polygon
+        p = r_set[i]
+        x,y = p.xy
+        # Get the color
+        c = "r"
+        # Plot
+        plt.plot(x,y,color=c, alpha=0.5)
 
-    # Label each of the nodes
-    nx.draw_networkx_labels(G, node_pos)
+    # Display the reachset
+    for i in range(len(final_r_set)):
+        # Get the polygon
+        p = final_r_set[i]
+        x,y = p.xy
+        # Get the color
+        c = "g"
+        # Plot
+        plt.plot(x,y,color=c)
+
+    print("Vector: " + str(r_vector))
 
     # Set the size of the graph
-    plt.xlim([-100,100])
-    plt.ylim([-14, 14])
+    plt.xlim([-30,30])
+    plt.ylim([-30, 30])
 
     # Invert the y axis as negative is up and show ticks
     ax = plt.gca()
