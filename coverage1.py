@@ -104,9 +104,9 @@ def isUnique(vector, unique_vectors_seen):
 # print(c)
 
 new_steering_angle  = 30
-new_total_lines     = 4
+new_total_lines     = 5
 new_max_distance    = 20
-new_accuracy        = 10
+new_accuracy        = 5
 
 # Compute total possible values using the above
 unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0

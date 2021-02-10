@@ -14,9 +14,14 @@ from reachset import ReachableSet
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--save_name', type=str, default="output.txt", help="The save name of the run")
-parser.add_argument('--environment_vehicles', type=int, default=20, help="total_number of vehicles in the environment")
+parser.add_argument('--environment_vehicles', type=int, default=15, help="total_number of vehicles in the environment")
 parser.add_argument('--no_plot', action='store_true')
 args = parser.parse_args()
+
+# Variables
+total_lines     = 30
+steering_angle  = 60
+max_distance    = 30
 
 # Save the output file
 text_file = open("../output/" + args.save_name, "w")
@@ -25,6 +30,9 @@ e = datetime.datetime.now()
 text_file.write("Date: %s/%s/%s\n" % (e.day, e.month, e.year))
 text_file.write("Time: %s:%s:%s\n" % (e.hour, e.minute, e.second))
 text_file.write("External Vehicles: %d\n" % args.environment_vehicles)
+text_file.write("Reach set total lines: %d\n" % total_lines)
+text_file.write("Reach set steering angle: %d\n" % steering_angle)
+text_file.write("Reach set max distance: %d\n" % max_distance)
 text_file.write("------------------------------\n")
 
 # Suppress exponetial notation
@@ -67,10 +75,12 @@ while not done:
     tracked_objects = tracker.get_observations()
 
     # Get the reach set simulation
-    polygons = reach.compute_environment(tracked_objects)
-    r_set = reach.estimate_raw_reachset()
+    polygons    = reach.compute_environment(tracked_objects)
+    r_set       = reach.estimate_raw_reachset(total_lines=total_lines, 
+                                              steering_angle=steering_angle,
+                                              max_distance=max_distance)
     final_r_set = reach.estimate_true_reachset(polygons, r_set)
-    r_vector = reach.vectorize_reachset(final_r_set)
+    r_vector    = reach.vectorize_reachset(final_r_set, accuracy=0.001)
 
     if not args.no_plot:
         plt.figure(1)
@@ -88,7 +98,7 @@ while not done:
             # Get the color
             c = "g" if i == 0 else "r"
             # Plot
-            plt.plot(x,y,color=c)
+            plt.plot(x, y, color=c)
 
         # Display the reachset
         for i in range(len(r_set)):
@@ -98,7 +108,7 @@ while not done:
             # Get the color
             c = "r"
             # Plot
-            plt.plot(x,y,color=c, alpha=0.5)
+            plt.plot(x, y, color=c, alpha=0.5)
 
         # Display the reachset
         for i in range(len(final_r_set)):
@@ -108,10 +118,10 @@ while not done:
             # Get the color
             c = "g"
             # Plot
-            plt.plot(x,y,color=c)
+            plt.plot(x, y, color=c)
 
         # Set the size of the graph
-        plt.xlim([-30,30])
+        plt.xlim([-30, 30])
         plt.ylim([-30, 30])
 
         # Invert the y axis as negative is up and show ticks
@@ -119,13 +129,18 @@ while not done:
         ax.set_ylim(ax.get_ylim()[::-1])
         ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 
+        # plot the graph
         plt.pause(0.1)
 
         # Render environment
         env.render()
 
+    print("")
     print("Vector: " + str(r_vector))
+
     text_file.write("Vector: " + str(r_vector) + "\n")
+    text_file.write("Crash: " + str(info["crashed"]) + "\n")
+    text_file.write("\n")
 
     print("---------------------------------------")
 

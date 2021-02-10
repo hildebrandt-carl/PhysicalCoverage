@@ -50,7 +50,7 @@ class ReachableSet:
     :param max_distance: the maximum distance of each of the lines
     :return: a list of lines
     """ 
-    def estimate_raw_reachset(self, total_lines=10, steering_angle=20, max_distance=15):
+    def estimate_raw_reachset(self, total_lines=40, steering_angle=40, max_distance=30):
         # Create the output
         lines = []
 
@@ -116,12 +116,13 @@ class ReachableSet:
     :param accuracy: The accuracy you want the vector to be. i.e. 0.5 will round to the closest 0.5
     :return: a vector which represents the reachable set
     """ 
-    def vectorize_reachset(self, lines, accuracy=0.5):
+    def vectorize_reachset(self, lines, accuracy=0.25):
         vector = []
         # For each line:
         for l in lines:
             l_len = l.length
             l_len = getStep(l_len, accuracy)
+            l_len = round(l_len, 6)
             vector.append(l_len)
 
         return vector
