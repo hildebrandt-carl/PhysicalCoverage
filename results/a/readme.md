@@ -9,7 +9,7 @@ new_accuracy        = 5
 
 The overall results for this were:
 Total vectors considered:	29709541
-Total unqiue vectors seen:	1170
+Total unique vectors seen:	1170
 Total possible vectors:		3125.0
 
 

@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from tqdm import tqdm
+import argparse
 
 
 def string_to_vector(vector_string):
@@ -103,10 +104,27 @@ def isUnique(vector, unique_vectors_seen):
 # print(b)
 # print(c)
 
-new_steering_angle  = 30
-new_total_lines     = 4
-new_max_distance    = 20
-new_accuracy        = 10
+parser = argparse.ArgumentParser()
+parser.add_argument('--steering_angle', type=int, default=30,   help="The steering angle used to compute the reachable set")
+parser.add_argument('--beam_count',     type=int, default=4,    help="The number of beams used to vectorize the reachable set")
+parser.add_argument('--max_distance',   type=int, default=20,   help="The maximum dist the vehicle can travel in 1 time step")
+parser.add_argument('--accuracy',       type=int, default=5,    help="What each vector is rounded to")
+parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
+args = parser.parse_args()
+
+new_steering_angle  = args.steering_angle
+new_total_lines     = args.beam_count
+new_max_distance    = args.max_distance
+new_accuracy        = args.accuracy
+
+print("----------------------------------")
+print("-----Reach Set Configuration------")
+print("----------------------------------")
+
+print("Max steering angle:\t" + str(new_steering_angle))
+print("Total beams:\t\t" + str(new_total_lines))
+print("Max velocity:\t\t" + str(new_max_distance))
+print("Vector accuracy:\t" + str(new_accuracy))
 
 # Compute total possible values using the above
 unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
@@ -116,7 +134,8 @@ all_files = glob.glob("./first_batch/*.txt")
 
 # Select all or part of the files
 file_names = all_files
-# file_names = random.sample(all_files, 200)
+if args.total_samples != -1:
+    file_names = random.sample(all_files, args.total_samples)
 
 # Sort the file names based on the total number of vehicles
 file_names = sorted(file_names, key = lambda x: int(re.split(r'\-|/', x)[2]))
@@ -148,7 +167,8 @@ print("----------------------------------")
 
 unique_vectors_seen = []
 total_observations = 0
-
+total_traces = 0
+total_crashes = 0
 
 accumulative_graph = []
 acuumulative_graph_vehicle_count = []
@@ -158,11 +178,14 @@ file_count = 0
 for i in tqdm(range(len(file_names))):
     # Get the filename
     file_name = file_names[i]
+    total_traces += 1
 
     # Process the file
     f = open(file_name, "r")    
     vehicle_count, crash, test_vectors = processFile(f)
     f.close()
+
+    total_crashes += int(crash)
 
     # Update total observations
     total_observations += len(test_vectors)
@@ -177,9 +200,17 @@ for i in tqdm(range(len(file_names))):
     accumulative_graph.append(len(unique_vectors_seen))
     acuumulative_graph_vehicle_count.append(vehicle_count)
 
+
+overall_coverage = round((len(unique_vectors_seen) / float(total_possible_observations)) * 100, 4)
+crash_percentage = round(total_crashes / float(total_traces) * 100, 4)
+
+print("Total traces considered:\t" + str(total_traces))
+print("Total crashes:\t\t\t" + str(total_crashes))
+print("Crash percentage:\t\t" + str(crash_percentage) + "%")
 print("Total vectors considered:\t" + str(total_observations))
-print("Total unqiue vectors seen:\t" + str(len(unique_vectors_seen)))
+print("Total unique vectors seen:\t" + str(len(unique_vectors_seen)))
 print("Total possible vectors:\t\t" + str(total_possible_observations))
+print("Total coverage:\t\t\t" + str(overall_coverage) + "%")
 
 # Get all the unique number of external vehicles
 unique_vehicle_count = list(set(acuumulative_graph_vehicle_count))
@@ -213,11 +244,16 @@ print("----------------------------------")
 
 
 # Coverage criteria in percentage
-coverage_criteria = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20]
+overall_coverage = overall_coverage - (overall_coverage * 0.50)
+coverage_criteria = np.linspace(1, overall_coverage, 5)
+coverage_criteria = getStep(coverage_criteria, 1)
+coverage_criteria = coverage_criteria.astype(int)
 output_data = {}
 
 for c in coverage_criteria:
-    output_data[c] = []
+    output_data[str(c) + "_crashes"] = []
+    output_data[str(c) + "_traces"] = []
+    output_data[str(c) + "_coverage"] = []
 
 for c in coverage_criteria:
     # Do 10 random samples
@@ -254,23 +290,34 @@ for c in coverage_criteria:
                     unique_vectors_seen.append(v1)
 
             # Compute coverage
-            coverage = (len(unique_vectors_seen) / total_possible_observations) * 100
+            coverage = (len(unique_vectors_seen) / float(total_possible_observations)) * 100
 
         # Save how many crashes required to get to that coverage criteria
         if f_index >= len(file_names):
             crashes_found = -1
-        output_data[c].append(crashes_found)
+        output_data[str(c) + "_crashes"].append(crashes_found)
+        output_data[str(c) + "_traces"].append(f_index)
+        output_data[str(c) + "_coverage"].append(round(coverage, 4))
+
+# Print output
+for c in coverage_criteria:
+    print("-----------------------------")
+    print("Coverage criteria: " + str(c) + "%")
+    print("Test in test suite:\t" + str(output_data[str(c) + "_traces"]))
+    print("Crashes in test suite:\t" + str(output_data[str(c) + "_crashes"]))
+    print("Coverage in test suite:\t" + str(output_data[str(c) + "_coverage"]))
 
 # Create the boxplot
 data = []
 labels = []
 for key in output_data:
-    labels.append(key)
-    data.append(output_data[key])
+    if "_crashes" in key:
+        labels.append(key)
+        data.append(output_data[key])
 plt.figure(2)
 plt.boxplot(data)
 plt.xticks(np.arange(len(labels)) + 1, list(labels))
 plt.xlabel("Coverage Criteria")
-plt.ylabel("Number Crashes")
+plt.ylabel("Number of Crashes")
 
 plt.show()
