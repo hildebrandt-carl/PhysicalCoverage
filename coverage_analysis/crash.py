@@ -130,7 +130,7 @@ print("Vector accuracy:\t" + str(new_accuracy))
 unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
 total_possible_observations = pow(unique_observations_per_cell, new_total_lines)
 
-all_files = glob.glob("./first_batch/*.txt")
+all_files = glob.glob("../data/*.txt")
 
 # Select all or part of the files
 file_names = all_files
@@ -140,140 +140,41 @@ if args.total_samples != -1:
 # Sort the file names based on the total number of vehicles
 file_names = sorted(file_names, key = lambda x: int(re.split(r'\-|/', x)[2]))
 
-
 print("----------------------------------")
-print("---Checking for corrupted files---")
-print("----------------------------------")
-
-
-# Check if any of the files are corrupted
-for i in tqdm(range(len(file_names))):
-    # Get the filename
-    file_name = file_names[i]
-
-    # Open the file and count vectors
-    f = open(file_name, "r")    
-    vector_count, crash = countVectorsInFile(f)
-    f.close()
-
-    # Print the number of vectors
-    if (vector_count < 400) and not crash:
-        print("corrupted file: " + str(file_name))
-
-
-print("----------------------------------")
-print("---------Processing files---------")
+print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
-unique_vectors_seen = []
-total_observations = 0
-total_traces = 0
-total_crashes = 0
+# Select 1000 test suites each with 100 test cases
+# Plot the crashes vs coverage data
 
-accumulative_graph = []
-acuumulative_graph_vehicle_count = []
+total_test_suites = 1000
+tests_per_test_suite = [10, 100, 1000, 10000]
 
-# For each file
-file_count = 0
-for i in tqdm(range(len(file_names))):
-    # Get the filename
-    file_name = file_names[i]
-    total_traces += 1
+plt.figure(3)
 
-    # Process the file
-    f = open(file_name, "r")    
-    vehicle_count, crash, test_vectors = processFile(f)
-    f.close()
+for j in range(len(tests_per_test_suite)):
+    # Get the number of tests
+    test_number = tests_per_test_suite[j]
 
-    total_crashes += int(crash)
+    coverage_data = []
+    crash_data = []
 
-    # Update total observations
-    total_observations += len(test_vectors)
-
-    # Check to see if any of the vectors are new
-    for v1 in test_vectors:
-        unique = isUnique(v1, unique_vectors_seen)
-        if unique:
-            unique_vectors_seen.append(v1)
-
-    # Used for the accumulative graph
-    accumulative_graph.append(len(unique_vectors_seen))
-    acuumulative_graph_vehicle_count.append(vehicle_count)
-
-
-overall_coverage = round((len(unique_vectors_seen) / float(total_possible_observations)) * 100, 4)
-crash_percentage = round(total_crashes / float(total_traces) * 100, 4)
-
-print("Total traces considered:\t" + str(total_traces))
-print("Total crashes:\t\t\t" + str(total_crashes))
-print("Crash percentage:\t\t" + str(crash_percentage) + "%")
-print("Total vectors considered:\t" + str(total_observations))
-print("Total unique vectors seen:\t" + str(len(unique_vectors_seen)))
-print("Total possible vectors:\t\t" + str(total_possible_observations))
-print("Total coverage:\t\t\t" + str(overall_coverage) + "%")
-
-# Get all the unique number of external vehicles
-unique_vehicle_count = list(set(acuumulative_graph_vehicle_count))
-unique_vehicle_count.sort()
-
-# Convert to numpy arrays
-accumulative_graph_coverage = (np.array(accumulative_graph) / total_possible_observations) * 100
-acuumulative_graph_vehicle_count = np.array(acuumulative_graph_vehicle_count)
-
-# Plotting the coverage per scenario            
-plt.figure(1)
-color_index = 0
-previous_index = 0
-for vc in unique_vehicle_count:
-    scenario_indices = np.where(acuumulative_graph_vehicle_count == vc)[0]
-    y_data = accumulative_graph_coverage[scenario_indices]
-    x_data = np.arange(previous_index, len(y_data) + previous_index)
-    previous_index += len(y_data) + 1 
-    plt.scatter(x_data, y_data, color='C'+str(color_index), marker='o', label=str(vc) + " vehicle(s)", s=1)
-    color_index += 1
-plt.legend(loc='upper left')
-plt.title("Reachable Set Coverage")
-plt.xlabel("Scenario")
-plt.ylabel("Reachable Set Coverage (%)")
-
-
-
-print("----------------------------------")
-print("-------Coverage and crashes-------")
-print("----------------------------------")
-
-
-# Coverage criteria in percentage
-overall_coverage = overall_coverage - (overall_coverage * 0.50)
-coverage_criteria = np.linspace(1, overall_coverage, 5)
-coverage_criteria = getStep(coverage_criteria, 1)
-coverage_criteria = coverage_criteria.astype(int)
-output_data = {}
-
-for c in coverage_criteria:
-    output_data[str(c) + "_crashes"] = []
-    output_data[str(c) + "_traces"] = []
-    output_data[str(c) + "_coverage"] = []
-
-for c in coverage_criteria:
-    # Do 10 random samples
-    print("Coverage criteria: " + str(c))
-    for i in tqdm(np.arange(10)):
+    # For test suites
+    print("Test suites with " + str(test_number) + " tests")
+    for i in tqdm(np.arange(total_test_suites)):
 
         # Shuffle the data
         random.shuffle(file_names)
 
-        coverage = 0
+        # Init variables
+        cov = 0
         crashes_found = 0
         unique_vectors_seen = []
 
-
-        # While coverage is less than 10%
-        f_index = 0
-        while (coverage < c) and (f_index < len(file_names)):
+        # For 100 test cases
+        for f_index in range(test_number):
             # Get the filename
             file_name = file_names[f_index]
-            f_index += 1
 
             # Process the file
             f = open(file_name, "r")    
@@ -290,34 +191,17 @@ for c in coverage_criteria:
                     unique_vectors_seen.append(v1)
 
             # Compute coverage
-            coverage = (len(unique_vectors_seen) / float(total_possible_observations)) * 100
+            cov = (len(unique_vectors_seen) / float(total_possible_observations)) * 100
 
-        # Save how many crashes required to get to that coverage criteria
-        if f_index >= len(file_names):
-            crashes_found = -1
-        output_data[str(c) + "_crashes"].append(crashes_found)
-        output_data[str(c) + "_traces"].append(f_index)
-        output_data[str(c) + "_coverage"].append(round(coverage, 4))
+        # Save the data for that test suite
+        coverage_data.append(cov)
+        crash_data.append(crashes_found)
 
-# Print output
-for c in coverage_criteria:
-    print("-----------------------------")
-    print("Coverage criteria: " + str(c) + "%")
-    print("Test in test suite:\t" + str(output_data[str(c) + "_traces"]))
-    print("Crashes in test suite:\t" + str(output_data[str(c) + "_crashes"]))
-    print("Coverage in test suite:\t" + str(output_data[str(c) + "_coverage"]))
+    # Plot the data
+    plt.scatter(coverage_data, crash_data, color='C' + str(j), marker='o', label="#Tests: " + str(test_number), s=1)
 
-# Create the boxplot
-data = []
-labels = []
-for key in output_data:
-    if "_crashes" in key:
-        labels.append(key)
-        data.append(output_data[key])
-plt.figure(2)
-plt.boxplot(data)
-plt.xticks(np.arange(len(labels)) + 1, list(labels))
-plt.xlabel("Coverage Criteria")
+plt.legend(loc='upper left')
+plt.xlabel("Physical Coverage (%)")
 plt.ylabel("Number of Crashes")
 
 plt.show()
