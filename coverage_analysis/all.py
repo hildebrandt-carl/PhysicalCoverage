@@ -330,7 +330,7 @@ print("----------------------------------")
 # Plot the crashes vs coverage data
 
 total_test_suites = 1000
-tests_per_test_suite = [10, 100, 1000, 10000]
+tests_per_test_suite = [10, 25, 50, 100]
 
 plt.figure(3)
 
