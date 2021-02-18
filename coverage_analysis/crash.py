@@ -148,7 +148,7 @@ print("----------------------------------")
 # Plot the crashes vs coverage data
 
 total_test_suites = 1000
-tests_per_test_suite = [10, 25, 50, 100]
+tests_per_test_suite = [10, 25, 50, 100, 250, 500]
 
 plt.figure(3)
 
@@ -199,6 +199,11 @@ for j in range(len(tests_per_test_suite)):
 
     # Plot the data
     plt.scatter(coverage_data, crash_data, color='C' + str(j), marker='o', label="#Tests: " + str(test_number), s=1)
+
+    # Compute the line of best fit
+    m, b = np.polyfit(coverage_data, crash_data, 1)
+    x_range = np.arange(0,100)
+    plt.plot(x_range, m*x_range + b, c='C' + str(j))
 
 plt.legend(loc='upper left')
 plt.xlabel("Physical Coverage (%)")

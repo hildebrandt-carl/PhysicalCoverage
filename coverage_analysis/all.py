@@ -130,7 +130,8 @@ print("Vector accuracy:\t" + str(new_accuracy))
 unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
 total_possible_observations = pow(unique_observations_per_cell, new_total_lines)
 
-all_files = glob.glob("../data/*.txt")
+all_files = glob.glob("../beamng_output/*.txt")
+# all_files = glob.glob("../data/*.txt")
 
 # Select all or part of the files
 file_names = all_files
@@ -138,7 +139,7 @@ if args.total_samples != -1:
     file_names = random.sample(all_files, args.total_samples)
 
 # Sort the file names based on the total number of vehicles
-file_names = sorted(file_names, key = lambda x: int(re.split(r'\-|/', x)[2]))
+# file_names = sorted(file_names, key = lambda x: int(re.split(r'\-|/', x)[2]))
 
 
 print("----------------------------------")
@@ -330,7 +331,7 @@ print("----------------------------------")
 # Plot the crashes vs coverage data
 
 total_test_suites = 1000
-tests_per_test_suite = [10, 25, 50, 100]
+tests_per_test_suite = [10, 25, 50, 100, 250, 500]
 
 plt.figure(3)
 
@@ -381,6 +382,11 @@ for j in range(len(tests_per_test_suite)):
 
     # Plot the data
     plt.scatter(coverage_data, crash_data, color='C' + str(j), marker='o', label="#Tests: " + str(test_number), s=1)
+
+    # Compute the line of best fit
+    m, b = np.polyfit(coverage_data, crash_data, 1)
+    x_range = np.arange(0,100)
+    plt.plot(x_range, m*x_range + b, c='C' + str(j))
 
 plt.legend(loc='upper left')
 plt.xlabel("Physical Coverage (%)")
