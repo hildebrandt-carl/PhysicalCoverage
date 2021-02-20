@@ -24,7 +24,7 @@ steering_angle  = 60
 max_distance    = 30
 
 # Save the output file
-text_file = open("../output/" + args.save_name, "w")
+text_file = open("../../output/" + args.save_name, "w")
 text_file.write("Name: %s\n" % args.save_name)
 e = datetime.datetime.now()
 text_file.write("Date: %s/%s/%s\n" % (e.day, e.month, e.year))

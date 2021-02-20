@@ -131,7 +131,7 @@ unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
 total_possible_observations = pow(unique_observations_per_cell, new_total_lines)
 
 all_files = glob.glob("../beamng_output/*.txt")
-# all_files = glob.glob("../data/*.txt")
+# all_files = glob.glob("../data/*/*.txt")
 
 # Select all or part of the files
 file_names = all_files

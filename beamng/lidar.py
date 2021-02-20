@@ -1,6 +1,7 @@
 import glob
 import math
-import datetime
+from datetime import datetime
+import time
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -79,30 +80,43 @@ def rotate(p, origin=(0, 0), angle=0):
     p = np.atleast_2d(p)
     return np.squeeze((R @ (p.T-o.T) + o.T).T)
 
-file_names = glob.glob("./data/*.csv")
+raw_file_location       = "../../PhysicalCoverageData/beamng/raw/"
+output_file_location    = "../../PhysicalCoverageData/beamng/processed/"
+file_names = glob.glob(raw_file_location + "*.csv")
 
+plot = True
 steering_angle  = 60
 total_lines     = 30
 max_distance    = 30
 
 for file_number in tqdm(range(len(file_names))):
-    # Get the filename
+
+    counter = 0
+    # Compute the file name in the format vehiclecount-time-run#.txt
     file_name = file_names[file_number]
     name_only = file_name[file_name.rfind('/')+1:]
-    save_name = './data/output/' + name_only[0:-4] + ".txt"
+    folder = file_name[0:file_name.rfind('/')]
+    folder = folder[folder.rfind('/')+1:]
+    external_vehicle_count = folder[0: folder.find('_')]
+    name_only = name_only[name_only.rfind('_')+1:]
+    e = datetime.now()
+    external_vehicle_count = '3'
+    save_name = ""
+    save_name += str(output_file_location)
+    save_name += external_vehicle_count + "-"
+    save_name += str(int(e.timestamp())) +"-"
+    save_name += name_only[0:-4] + ".txt"
 
     # Open the file and count vectors
     input_file = open(file_name, "r")
+    print("Proecssing: " + file_name)
     
     # Open a text file to save output
-    # print("Analysing: " + str(file_name))
-    # print("Saving to: " + str(save_name))
     output_file = open(save_name, "w")
     output_file.write("Name: %s\n" % file_name)
-    e = datetime.datetime.now()
     output_file.write("Date: %s/%s/%s\n" % (e.day, e.month, e.year))
     output_file.write("Time: %s:%s:%s\n" % (e.hour, e.minute, e.second))
-    output_file.write("External Vehicles: %d\n" % args.environment_vehicles)
+    output_file.write("External Vehicles: %s\n" % external_vehicle_count)
     output_file.write("Reach set total lines: %d\n" % total_lines)
     output_file.write("Reach set steering angle: %d\n" % steering_angle)
     output_file.write("Reach set max distance: %d\n" % max_distance)
@@ -112,17 +126,26 @@ for file_number in tqdm(range(len(file_names))):
     first_line = True
     for line in input_file:
         # Add to the time step 
-        
+
+        counter+=1
+
         if first_line:
             first_line = False
             continue
     
-        # Remove unnecessary characters
+        if counter > 10:
+            continue
+
+        # Remove unnecessary characters and split the data correctly
         data = line.split("],")
         time_step_position = data[0].split(",[")
+        crash_vehicle_count = data[-1].split(",")
         data = data[1:]
         data.insert(0, time_step_position[0])
         data.insert(1, time_step_position[1])
+        data = data[:-1]
+        data.append(crash_vehicle_count[0])
+        data.append(crash_vehicle_count[1])
 
         # Get the data
         current_data = {}
@@ -131,6 +154,7 @@ for file_number in tqdm(range(len(file_names))):
         current_data["velocity"]        = data[3]
         current_data["lidar"]           = data[4]
         current_data["crash"]           = data[5]
+        current_data["veh_count"]       = data[6]
         current_data['origin']          = "[0, 0, 0]"
         current_data["ego_orientation"] = "[1, 0, 0]"
 
@@ -143,6 +167,10 @@ for file_number in tqdm(range(len(file_names))):
         for key in current_data:
             current_data[key] = current_data[key].split(", ")
             current_data[key] = np.array(current_data[key], dtype=float)
+
+        # if current_data["veh_count"] != int(external_vehicle_count):
+        #     print("Vehicle count does not match: " + str(current_data["veh_count"]) + " - " + external_vehicle_count)
+        #     exit()
 
         # Get the lidar data into the right shape
         unique_entries = int(current_data["lidar"].shape[0] / 3)
@@ -238,6 +266,58 @@ for file_number in tqdm(range(len(file_names))):
         environment_data["r_set"]       = r_set
         environment_data["final_r_set"] = final_r_set
 
+
+        if plot:
+            plt.figure(1)
+            plt.clf()
+            plt.title('Environment')
+
+            # Invert the y axis for easier viewing
+            plt.gca().invert_yaxis()
+
+            # Display the environment
+            for i in range(len(environment_data["polygons"])):
+                # Get the polygon
+                p = environment_data["polygons"][i]
+                x,y = p.exterior.xy
+                # Get the color
+                c = "g" if i == 0 else "r"
+                # Plot
+                plt.plot(x, y, color=c)
+
+            # Display the reachset
+            for i in range(len(environment_data["r_set"])):
+                # Get the polygon
+                p = environment_data["r_set"][i]
+                x,y = p.xy
+                # Get the color
+                c = "r"
+                # Plot
+                plt.plot(x, y, color=c, alpha=0.5)
+
+            # Display the reachset
+            for i in range(len(environment_data["final_r_set"])):
+                # Get the polygon
+                p = environment_data["final_r_set"][i]
+                x,y = p.xy
+                # Get the color
+                c = "g"
+                # Plot
+                plt.plot(x, y, color=c)
+
+            # Set the size of the graph
+            plt.xlim([-30, 100])
+            plt.ylim([-40, 40])
+
+            # Invert the y axis as negative is up and show ticks
+            ax = plt.gca()
+            ax.set_ylim(ax.get_ylim()[::-1])
+            ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+
+            # plot the graph
+            plt.pause(0.1)
+            plt.savefig('frame' + str(counter) + '.png')
+
         # Plot the environment figures
         # plt = create_lidar_plot(environment_data, "Environment Zoomed", [-15, 45], [-30, 30], 3)
         # plt = create_lidar_plot(environment_data, "Environment", [-100, 100], [-100, 100], 4)
@@ -245,13 +325,8 @@ for file_number in tqdm(range(len(file_names))):
         # Compute the vectorized reach set
         r_vector = vectorize_reachset(environment_data["final_r_set"], accuracy=0.001)
         output_file.write("Vector: " + str(r_vector) + "\n")
-        output_file.write("Crash: " + str(current_data["crash"]) + "\n")
+        output_file.write("Crash: " + str(bool(current_data["crash"])) + "\n")
         output_file.write("\n")
-        if current_data["crash"] > 0:
-            print("Crash occured: " + str(file_name))
-
-        # Draw all figures
-        plt.pause(0.1)
 
     # Close both files
     output_file.close()
