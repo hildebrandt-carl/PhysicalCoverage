@@ -7,6 +7,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from shapely.geometry import LineString
 from shapely.geometry import Polygon, LineString, Point
+import multiprocessing
 
 def create_frame_plot(data, origin, orientation, title, fig_num):
     fig = plt.figure(fig_num)
@@ -80,36 +81,17 @@ def rotate(p, origin=(0, 0), angle=0):
     p = np.atleast_2d(p)
     return np.squeeze((R @ (p.T-o.T) + o.T).T)
 
-raw_file_location       = "../../PhysicalCoverageData/beamng/raw/"
-output_file_location    = "../../PhysicalCoverageData/beamng/processed/"
-file_names = glob.glob(raw_file_location + "*.csv")
+def process_file(file_name, save_name, external_vehicle_count):
 
-plot = True
-steering_angle  = 60
-total_lines     = 30
-max_distance    = 30
-
-for file_number in tqdm(range(len(file_names))):
-
-    counter = 0
-    # Compute the file name in the format vehiclecount-time-run#.txt
-    file_name = file_names[file_number]
-    name_only = file_name[file_name.rfind('/')+1:]
-    folder = file_name[0:file_name.rfind('/')]
-    folder = folder[folder.rfind('/')+1:]
-    external_vehicle_count = folder[0: folder.find('_')]
-    name_only = name_only[name_only.rfind('_')+1:]
-    e = datetime.now()
-    external_vehicle_count = '3'
-    save_name = ""
-    save_name += str(output_file_location)
-    save_name += external_vehicle_count + "-"
-    save_name += str(int(e.timestamp())) +"-"
-    save_name += name_only[0:-4] + ".txt"
+    steering_angle  = 60
+    total_lines     = 30
+    max_distance    = 30
 
     # Open the file and count vectors
     input_file = open(file_name, "r")
-    print("Proecssing: " + file_name)
+    print("Processing: " + file_name)
+    print("Saving output to: " + str(save_name))
+    print("-----------------------")
     
     # Open a text file to save output
     output_file = open(save_name, "w")
@@ -122,20 +104,16 @@ for file_number in tqdm(range(len(file_names))):
     output_file.write("Reach set max distance: %d\n" % max_distance)
     output_file.write("------------------------------\n")
 
+    frame_skip_counter =  0
+
     # Print the file
-    first_line = True
     for line in input_file:
-        # Add to the time step 
 
-        counter+=1
-
-        if first_line:
-            first_line = False
+        # Skip the first second of data (this needs to be atleast 1 which is the heading)
+        frame_skip_counter += 1
+        if frame_skip_counter < 5:
             continue
-    
-        if counter > 10:
-            continue
-
+        
         # Remove unnecessary characters and split the data correctly
         data = line.split("],")
         time_step_position = data[0].split(",[")
@@ -168,9 +146,9 @@ for file_number in tqdm(range(len(file_names))):
             current_data[key] = current_data[key].split(", ")
             current_data[key] = np.array(current_data[key], dtype=float)
 
-        # if current_data["veh_count"] != int(external_vehicle_count):
-        #     print("Vehicle count does not match: " + str(current_data["veh_count"]) + " - " + external_vehicle_count)
-        #     exit()
+        if current_data["veh_count"] != int(external_vehicle_count):
+            print("Vehicle count does not match: " + str(current_data["veh_count"]) + " - " + external_vehicle_count)
+            exit()
 
         # Get the lidar data into the right shape
         unique_entries = int(current_data["lidar"].shape[0] / 3)
@@ -266,57 +244,56 @@ for file_number in tqdm(range(len(file_names))):
         environment_data["r_set"]       = r_set
         environment_data["final_r_set"] = final_r_set
 
+        # if plot:
+        #     plt.figure(1)
+        #     plt.clf()
+        #     plt.title('Environment')
 
-        if plot:
-            plt.figure(1)
-            plt.clf()
-            plt.title('Environment')
+        #     # Invert the y axis for easier viewing
+        #     plt.gca().invert_yaxis()
 
-            # Invert the y axis for easier viewing
-            plt.gca().invert_yaxis()
+        #     # Display the environment
+        #     for i in range(len(environment_data["polygons"])):
+        #         # Get the polygon
+        #         p = environment_data["polygons"][i]
+        #         x,y = p.exterior.xy
+        #         # Get the color
+        #         c = "g" if i == 0 else "r"
+        #         # Plot
+        #         plt.plot(x, y, color=c)
 
-            # Display the environment
-            for i in range(len(environment_data["polygons"])):
-                # Get the polygon
-                p = environment_data["polygons"][i]
-                x,y = p.exterior.xy
-                # Get the color
-                c = "g" if i == 0 else "r"
-                # Plot
-                plt.plot(x, y, color=c)
+        #     # Display the reachset
+        #     for i in range(len(environment_data["r_set"])):
+        #         # Get the polygon
+        #         p = environment_data["r_set"][i]
+        #         x,y = p.xy
+        #         # Get the color
+        #         c = "r"
+        #         # Plot
+        #         plt.plot(x, y, color=c, alpha=0.5)
 
-            # Display the reachset
-            for i in range(len(environment_data["r_set"])):
-                # Get the polygon
-                p = environment_data["r_set"][i]
-                x,y = p.xy
-                # Get the color
-                c = "r"
-                # Plot
-                plt.plot(x, y, color=c, alpha=0.5)
+        #     # Display the reachset
+        #     for i in range(len(environment_data["final_r_set"])):
+        #         # Get the polygon
+        #         p = environment_data["final_r_set"][i]
+        #         x,y = p.xy
+        #         # Get the color
+        #         c = "g"
+        #         # Plot
+        #         plt.plot(x, y, color=c)
 
-            # Display the reachset
-            for i in range(len(environment_data["final_r_set"])):
-                # Get the polygon
-                p = environment_data["final_r_set"][i]
-                x,y = p.xy
-                # Get the color
-                c = "g"
-                # Plot
-                plt.plot(x, y, color=c)
+        #     # Set the size of the graph
+        #     plt.xlim([-30, 100])
+        #     plt.ylim([-40, 40])
 
-            # Set the size of the graph
-            plt.xlim([-30, 100])
-            plt.ylim([-40, 40])
+        #     # Invert the y axis as negative is up and show ticks
+        #     ax = plt.gca()
+        #     ax.set_ylim(ax.get_ylim()[::-1])
+        #     ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 
-            # Invert the y axis as negative is up and show ticks
-            ax = plt.gca()
-            ax.set_ylim(ax.get_ylim()[::-1])
-            ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
-
-            # plot the graph
-            plt.pause(0.1)
-            plt.savefig('frame' + str(counter) + '.png')
+        #     # plot the graph
+        #     plt.pause(0.1)
+        #     plt.savefig('./output/file' + str(file_number) + 'frame' + str(frame_skip_counter) + '.png')
 
         # Plot the environment figures
         # plt = create_lidar_plot(environment_data, "Environment Zoomed", [-15, 45], [-30, 30], 3)
@@ -331,3 +308,46 @@ for file_number in tqdm(range(len(file_names))):
     # Close both files
     output_file.close()
     input_file.close()
+
+raw_file_location       = "../../PhysicalCoverageData/beamng/raw/"
+output_file_location    = "../../PhysicalCoverageData/beamng/processed/"
+file_names = glob.glob(raw_file_location + "/*/*.csv")
+
+total_cores = 20
+manager = multiprocessing.Manager()
+jobs = []
+
+for file_number in tqdm(range(len(file_names))):
+
+    # Compute the file name in the format vehiclecount-time-run#.txt
+    file_name = file_names[file_number]
+    name_only = file_name[file_name.rfind('/')+1:]
+    folder = file_name[0:file_name.rfind('/')]
+    folder = folder[folder.rfind('/')+1:]
+    external_vehicle_count = folder[0: folder.find('_')]
+    name_only = name_only[name_only.rfind('_')+1:]
+    e = datetime.now()
+    save_name = ""
+    save_name += str(output_file_location)
+    save_name += external_vehicle_count + "-"
+    save_name += str(int(e.timestamp())) +"-"
+    save_name += name_only[0:-4] + ".txt"
+
+    # Run each of the files in a seperate process
+    p = multiprocessing.Process(target=process_file, args=(file_name, save_name, external_vehicle_count))
+    jobs.append(p)
+    p.start()
+
+    # Only launch total_cores jobs at a time
+    if (file_number + 1) % total_cores == 0:
+        # For each of the currently running jobs
+        for j in jobs:
+            # Wait for them to finish
+            j.join()
+
+# For each of the currently running jobs
+for j in jobs:
+    # Wait for them to finish
+    j.join()
+
+print("Complete")

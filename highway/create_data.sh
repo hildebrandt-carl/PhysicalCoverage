@@ -3,7 +3,7 @@
 vehicle_count=(3 5 7 9 11 13 15 17 19 21 23 25)
 output_count=$1
 
-for value in {1..332}
+for value in {1..2}
 do
     for tot_vehicle in "${vehicle_count[@]}"
     do

@@ -6,73 +6,10 @@ import re
 from tqdm import tqdm
 import argparse
 import copy
+import multiprocessing
 
-def isUnique(vector, unique_vectors_seen):
-    unique = True
-    for v2 in unique_vectors_seen:
-        # If we have seen this vector break out of this loop
-        if np.array_equal(vector, v2):
-            unique = False
-            break
-    return unique
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--steering_angle', type=int, default=30,    help="The steering angle used to compute the reachable set")
-parser.add_argument('--beam_count',     type=int, default=5,     help="The number of beams used to vectorize the reachable set")
-parser.add_argument('--max_distance',   type=int, default=30,    help="The maximum dist the vehicle can travel in 1 time step")
-parser.add_argument('--accuracy',       type=int, default=5,     help="What each vector is rounded to")
-parser.add_argument('--total_samples',  type=int, default=10000, help="-1 all samples, otherwise randomly selected x samples")
-args = parser.parse_args()
-
-new_steering_angle  = args.steering_angle
-new_total_lines     = args.beam_count
-new_max_distance    = args.max_distance
-new_accuracy        = args.accuracy
-greedy_sample_size  = 100
-
-print("----------------------------------")
-print("-----Reach Set Configuration------")
-print("----------------------------------")
-
-print("Max steering angle:\t" + str(new_steering_angle))
-print("Total beams:\t\t" + str(new_total_lines))
-print("Max velocity:\t\t" + str(new_max_distance))
-print("Vector accuracy:\t" + str(new_accuracy))
-
-# Compute total possible values using the above
-unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
-total_possible_observations = pow(unique_observations_per_cell, new_total_lines)
-
-print("----------------------------------")
-print("-----------Loading Data-----------")
-print("----------------------------------")
-
-load_name = ""
-load_name += "_s" + str(new_steering_angle) 
-load_name += "_b" + str(new_total_lines) 
-load_name += "_d" + str(new_max_distance) 
-load_name += "_a" + str(new_accuracy)
-load_name += "_t" + str(args.total_samples)
-load_name += ".npy"
-
-print("Loading: " + load_name)
-traces = np.load("traces" + load_name)
-
-print("----------------------------------")
-print("--------Crashes vs Coverage-------")
-print("----------------------------------")
-
-# Select 1000 test suites each with 100 test cases
-# Plot the crashes vs coverage data
-
-total_test_suites = 25
-tests_per_test_suite = [10, 25, 50, 100]
-
-plt.figure(1)
-
-for j in range(len(tests_per_test_suite)):
-    # Get the number of tests
-    test_number = tests_per_test_suite[j]
+def random_selection(total_test_suites, test_number, traces, return_dict, return_key):
 
     random_selection_coverage_data = []
     random_selection_crash_data = []
@@ -87,7 +24,7 @@ for j in range(len(tests_per_test_suite)):
         crashes_found = 0
         unique_vectors_seen = []
         # For the X test cases
-        for ind in tqdm(range(len(indices)), leave=False):
+        for ind in range(len(indices)):
             random_i = indices[ind]
             # Get the filename
             vectors = traces[random_i]
@@ -107,18 +44,35 @@ for j in range(len(tests_per_test_suite)):
         # Save the data for that test suite
         random_selection_coverage_data.append(cov)
         random_selection_crash_data.append(crashes_found)
+        
+    # Return the data
+    return_dict[return_key] = [random_selection_coverage_data, random_selection_crash_data]
 
+def greedy_selection(test_number, traces, return_dict, return_key):
     # Greedy algorithm
     worst_case_vectors = []
     worst_case_crashes = 0
     best_case_vectors = []
     best_case_crashes = 0
 
-    print("Greedy case test suite with " + str(test_number) + " tests")
+    # Hold indicies which we can select from
+    selected_indices = []
+
+    print("Starting Greedy case test suite with " + str(test_number) + " tests")
     for k in tqdm(np.arange(test_number)):
-       
+        
         # Randomly select 10 traces to subsample from
-        indices = np.random.choice(traces.shape[0], greedy_sample_size, replace=False)
+        indicies_found = False
+        while not indicies_found:
+            # randomly select greedy_sample_size values within the range traces.shape[0]
+            indices = np.random.choice(traces.shape[0], greedy_sample_size, replace=False)
+            # Look if any of the selected indicies have already been selected
+            already_selected = False
+            for j in selected_indices:
+                if j in indices:
+                    already_selected = True
+            # We have found allowable indicies if they have not already been selected
+            indicies_found = not already_selected
 
         # Holds the min and max coverage
         min_coverage = np.zeros(1000)
@@ -127,7 +81,7 @@ for j in range(len(tests_per_test_suite)):
         best_selected_trace_index = -1
 
         # For each considered trace
-        for ind in tqdm(range(len(indices)), leave=False):
+        for ind in range(len(indices)):
             # Select the correct index
             i = indices[ind]
 
@@ -169,18 +123,126 @@ for j in range(len(tests_per_test_suite)):
             best_case_crashes += 1
 
         # Remove the selected index from consideration
-        traces = np.delete(traces, [worst_selected_trace_index, best_selected_trace_index], axis=0)
+        selected_indices.append(worst_selected_trace_index)
+        selected_indices.append(best_selected_trace_index)
 
     worst_coverage = (len(worst_case_vectors) / float(total_possible_observations)) * 100
     best_coverage = (len(best_case_vectors) / float(total_possible_observations)) * 100
+    print("Greedy case test suite with " + str(test_number) + " tests")
     print("Worst Coverage: " + str(worst_coverage) + " - Crashes: " + str(worst_case_crashes))
     print("Best Coverage: " + str(best_coverage) + " - Crashes: " + str(best_case_crashes))
     print("----------")
+    
+    # Return the data
+    return_dict[return_key] = [worst_coverage, worst_case_crashes, best_coverage, best_case_crashes]
+
+def isUnique(vector, unique_vectors_seen):
+    unique = True
+    for v2 in unique_vectors_seen:
+        # If we have seen this vector break out of this loop
+        if np.array_equal(vector, v2):
+            unique = False
+            break
+    return unique
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--steering_angle', type=int, default=30,    help="The steering angle used to compute the reachable set")
+parser.add_argument('--beam_count',     type=int, default=5,     help="The number of beams used to vectorize the reachable set")
+parser.add_argument('--max_distance',   type=int, default=30,    help="The maximum dist the vehicle can travel in 1 time step")
+parser.add_argument('--accuracy',       type=int, default=5,     help="What each vector is rounded to")
+parser.add_argument('--total_samples',  type=int, default=1000,  help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--greedy_sample',  type=int, default=50,    help="The unumber of samples considered by the greedy search")
+args = parser.parse_args()
+
+new_steering_angle  = args.steering_angle
+new_total_lines     = args.beam_count
+new_max_distance    = args.max_distance
+new_accuracy        = args.accuracy
+greedy_sample_size  = args.greedy_sample
+
+print("----------------------------------")
+print("-----Reach Set Configuration------")
+print("----------------------------------")
+
+print("Max steering angle:\t" + str(new_steering_angle))
+print("Total beams:\t\t" + str(new_total_lines))
+print("Max velocity:\t\t" + str(new_max_distance))
+print("Vector accuracy:\t" + str(new_accuracy))
+print("Greedy Sample Size:\t" + str(greedy_sample_size))
+
+# Compute total possible values using the above
+unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
+total_possible_observations = pow(unique_observations_per_cell, new_total_lines)
+
+print("----------------------------------")
+print("-----------Loading Data-----------")
+print("----------------------------------")
+
+load_name = ""
+load_name += "_s" + str(new_steering_angle) 
+load_name += "_b" + str(new_total_lines) 
+load_name += "_d" + str(new_max_distance) 
+load_name += "_a" + str(new_accuracy)
+load_name += "_t" + str(args.total_samples)
+load_name += ".npy"
+
+base_path = '../../PhysicalCoverageData/highway/numpy_data/'
+print("Loading: " + load_name)
+traces = np.load(base_path + "traces" + load_name)
+
+print("----------------------------------")
+print("--------Crashes vs Coverage-------")
+print("----------------------------------")
+
+# Select 1000 test suites each with 100 test cases
+# Plot the crashes vs coverage data
+
+total_test_suites = 25
+tests_per_test_suite = [10, 25, 50, 100, 250, 500, 1000]
+
+manager = multiprocessing.Manager()
+random_return_dict = manager.dict()
+greedy_return_dict = manager.dict()
+jobs = []
+
+# For each test size
+for j in range(len(tests_per_test_suite)):
+
+    # Get the return key
+    return_key = 'p' + str(j)
+
+    # Get the number of tests
+    test_number = tests_per_test_suite[j]
+
+    # Do a random selection of 
+    p = multiprocessing.Process(target=random_selection, args=(total_test_suites, test_number, traces, random_return_dict, return_key))
+    jobs.append(p)
+    p.start()
+
+    # Do a greedy selection
+    p = multiprocessing.Process(target=greedy_selection, args=(test_number, traces, greedy_return_dict, return_key))
+    jobs.append(p)
+    p.start()
+
+# For each of the currently running jobs
+for j in jobs:
+    # Wait for them to finish
+    j.join()
+
+# For all the data plot it
+plt.figure(1)
+
+color_index = 0
+for key in random_return_dict:
+    # Expand the data
+    worst_coverage, worst_case_crashes, best_coverage, best_case_crashes = greedy_return_dict[key]
+    random_selection_coverage_data, random_selection_crash_data = random_return_dict[key]
+    test_number = tests_per_test_suite[int(key[1:])]
 
     # Plot the data
-    plt.scatter(worst_coverage, worst_case_crashes, color='C' + str(j), marker='*', s=40)
-    plt.scatter(best_coverage, best_case_crashes, color='C' + str(j), marker='*', s=40)
-    plt.scatter(random_selection_coverage_data, random_selection_crash_data, color='C' + str(j), marker='o', label="#Tests: " + str(test_number), s=5)
+    plt.scatter(worst_coverage, worst_case_crashes, color='C' + str(color_index), marker='*', s=40)
+    plt.scatter(best_coverage, best_case_crashes, color='C' + str(color_index), marker='*', s=40)
+    plt.scatter(random_selection_coverage_data, random_selection_crash_data, color='C' + str(color_index), marker='o', label="#Tests: " + str(test_number), s=5)
 
     # Compute the line of best fit
     random_selection_coverage_data.append(worst_coverage)
@@ -188,8 +250,11 @@ for j in range(len(tests_per_test_suite)):
     random_selection_crash_data.append(worst_case_crashes)
     random_selection_crash_data.append(best_case_crashes)
     m, b = np.polyfit(random_selection_coverage_data, random_selection_crash_data, 1)
-    x_range = np.arange(0, 25)
-    plt.plot(x_range, m*x_range + b, c='C' + str(j))
+    x_range = np.arange(0, best_coverage, 0.1)
+    plt.plot(x_range, m*x_range + b, c='C' + str(color_index))
+    
+    # keep track of the color we are plotting
+    color_index += 1
 
 
 first_legend = plt.legend(loc='upper left')
@@ -199,5 +264,6 @@ rand = plt.scatter([], [], color='black', marker='o', s=20, label='Random Select
 second_legend = plt.legend(handles=[greed, rand], loc='lower right')
 plt.xlabel("Physical Coverage (%)")
 plt.ylabel("Number of Crashes")
+plt.title("Greedy Sample Size: " + str(greedy_sample_size))
 
 plt.show()
