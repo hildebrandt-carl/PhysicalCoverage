@@ -8,10 +8,6 @@ import argparse
 import multiprocessing
 from datetime import datetime
 
-def chunks(l, n):
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
-
 def isUnique(vector, unique_vectors_seen, unique_vector_length_count):
     unique = True
     for i in range(unique_vector_length_count):
@@ -54,7 +50,7 @@ def compute_coverage(load_name, return_dict, return_key, base_path):
     acuumulative_graph_vehicle_count    = np.full(total_traces, np.nan)
 
     # For each file
-    for i in tqdm(range(total_traces), position=int(return_key[1:])):
+    for i in tqdm(range(total_traces), position=int(return_key[1:]), mininterval=5):
 
         vectors = traces[i]
         vehicle_count = vehicles[i]
