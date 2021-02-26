@@ -305,6 +305,11 @@ def process_file(file_name, save_name, external_vehicle_count):
         output_file.write("Crash: " + str(bool(current_data["crash"])) + "\n")
         output_file.write("\n")
 
+        # If we crashed end the trace
+        if bool(current_data["crash"]):
+            break
+
+
     # Close both files
     output_file.close()
     input_file.close()
@@ -313,7 +318,7 @@ raw_file_location       = "../../PhysicalCoverageData/beamng/raw/"
 output_file_location    = "../../PhysicalCoverageData/beamng/processed/"
 file_names = glob.glob(raw_file_location + "/*/*.csv")
 
-total_cores = 20
+total_cores = 32
 manager = multiprocessing.Manager()
 jobs = []
 

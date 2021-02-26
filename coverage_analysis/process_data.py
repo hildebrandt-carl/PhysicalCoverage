@@ -126,8 +126,8 @@ print("----------------------------------")
 print("----------Locating Files----------")
 print("----------------------------------")
 
-# all_files = glob.glob("../beamng_output/*.txt")
-all_files = glob.glob("../../PhysicalCoverageData/highway/*/*.txt")
+all_files = glob.glob("../../PhysicalCoverageData/beamng/processed/*.txt")
+# all_files = glob.glob("../../PhysicalCoverageData/highway/*/*.txt")
 total_files = len(all_files)
 print("Total files found: " + str(total_files))
 

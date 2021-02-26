@@ -137,7 +137,8 @@ load_name += ".npy"
 
 # Get the file names
 
-base_path = '../../PhysicalCoverageData/highway/numpy_data/' + str(args.total_samples) + "/"
+base_path = '../../PhysicalCoverageData/beamng/numpy_data/'
+# base_path = '../../PhysicalCoverageData/highway/numpy_data/' + str(args.total_samples) + "/"
 trace_file_names = glob.glob(base_path + "traces" + load_name)
 print(trace_file_names)
 file_names = []
