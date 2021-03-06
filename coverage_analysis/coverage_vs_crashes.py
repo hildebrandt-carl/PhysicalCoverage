@@ -50,32 +50,78 @@ def random_selection(total_test_suites, test_number, traces, return_dict, return
     # Return the data
     return_dict[return_key] = [random_selection_coverage_data, random_selection_crash_data]
 
-def greedy_selection(test_number, traces, return_dict, return_key, print_line):
+def greedy_selection_best(test_number, traces, return_dict, return_key, print_line):
     # Greedy algorithm
-    worst_case_vectors = []
-    worst_case_crashes = 0
     best_case_vectors = []
     best_case_crashes = 0
 
     # Hold indicies which we can select from
-    selected_indices = []
+    available_indices = set(np.arange(traces.shape[0]))
 
-    print("Starting Greedy case test suite with " + str(test_number) + " tests")
+    print("Starting best case test suite with " + str(test_number) + " tests (greedy search)")
     time.sleep(1)
-    for k in tqdm(np.arange(test_number), position=print_line, mininterval=1):
+    for k in tqdm(np.arange(test_number), position=print_line, mininterval=1, desc="Greedy Best (" + str(test_number) + ")"):
+
+        # Randomly select greedy_sample_size traces to compare over
+        selected_indices = random.sample(available_indices, min(greedy_sample_size, len(available_indices)))
+
+        # Holds the min and max coverage
+        max_coverage = []
+        best_selected_trace_index = -1
+
+        # For each considered trace
+        for i in selected_indices:
+
+            # These hold the new vectors
+            current_best_case_vectors = copy.deepcopy(best_case_vectors)
+
+            # Get the current test we are considering
+            vectors = traces[i]
+
+            # Check to see if any of the vectors are new in this trace
+            for v in vectors:
+                if not np.isnan(v).any():
+                    unique = isUnique(v, current_best_case_vectors)
+                    if unique:
+                        current_best_case_vectors.append(v)
+
+            # See if this is the best we can do
+            if len(max_coverage) < len(current_best_case_vectors):
+                best_selected_trace_index = i
+                max_coverage = copy.deepcopy(current_best_case_vectors)
+
+        # Update the best and worst coverage data
+        best_case_vectors = copy.deepcopy(max_coverage)
+        # Update the best and worst crash data
+        if np.isnan(traces[best_selected_trace_index]).any():
+            best_case_crashes += 1
+
+        # Remove the selected index from consideration
+        available_indices.remove(best_selected_trace_index)
+
+    best_coverage = (len(best_case_vectors) / float(total_possible_observations)) * 100
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("Greedy case test suite with " + str(test_number) + " tests")
+    print("Best Coverage: " + str(best_coverage) + " - Crashes: " + str(best_case_crashes))
+    print("----------")
+    
+    # Return the data
+    return_dict[return_key] = [best_coverage, best_case_crashes]
+
+def greedy_selection_worst(test_number, traces, return_dict, return_key, print_line):
+    # Greedy algorithm
+    worst_case_vectors = []
+    worst_case_crashes = 0
+
+    # Hold indicies which we can select from
+    available_indices = set(np.arange(traces.shape[0]))
+
+    print("Starting worst case test suite with " + str(test_number) + " tests (greedy search)")
+    time.sleep(1)
+    for k in tqdm(np.arange(test_number), position=print_line, mininterval=1, desc="Greedy Worst (" + str(test_number) + ")"):
         
-        # Randomly select 10 traces to subsample from
-        indicies_found = False
-        while not indicies_found:
-            # randomly select greedy_sample_size values within the range traces.shape[0]
-            indices = np.random.choice(traces.shape[0], greedy_sample_size, replace=False)
-            # Look if any of the selected indicies have already been selected
-            already_selected = False
-            for j in selected_indices:
-                if j in indices:
-                    already_selected = True
-            # We have found allowable indicies if they have not already been selected
-            indicies_found = not already_selected
+        # Randomly select greedy_sample_size traces to compare over
+        selected_indices = random.sample(available_indices, min(greedy_sample_size, len(available_indices)))
 
         # Holds the min and max coverage
         min_coverage = np.zeros(1000)
@@ -84,13 +130,10 @@ def greedy_selection(test_number, traces, return_dict, return_key, print_line):
         best_selected_trace_index = -1
 
         # For each considered trace
-        for ind in range(len(indices)):
-            # Select the correct index
-            i = indices[ind]
+        for i in selected_indices:
 
             # These hold the new vectors
             current_worst_case_vectors = copy.deepcopy(worst_case_vectors)
-            current_best_case_vectors = copy.deepcopy(best_case_vectors)
 
             # Get the current test we are considering
             vectors = traces[i]
@@ -102,43 +145,29 @@ def greedy_selection(test_number, traces, return_dict, return_key, print_line):
                     if unique:
                         current_worst_case_vectors.append(v)
 
-                    unique = isUnique(v, current_best_case_vectors)
-                    if unique:
-                        current_best_case_vectors.append(v)
-
             # See if this is the worst we can do
             if len(min_coverage) > len(current_worst_case_vectors):
                 worst_selected_trace_index = i
                 min_coverage = copy.deepcopy(current_worst_case_vectors)
 
-            # See if this is the best we can do
-            if len(max_coverage) < len(current_best_case_vectors):
-                best_selected_trace_index = i
-                max_coverage = copy.deepcopy(current_best_case_vectors)
-
         # Update the best and worst coverage data
         worst_case_vectors = copy.deepcopy(min_coverage)
-        best_case_vectors = copy.deepcopy(max_coverage)
+
         # Update the best and worst crash data
         if np.isnan(traces[worst_selected_trace_index]).any():
             worst_case_crashes += 1
-        if np.isnan(traces[best_selected_trace_index]).any():
-            best_case_crashes += 1
 
         # Remove the selected index from consideration
-        selected_indices.append(worst_selected_trace_index)
-        selected_indices.append(best_selected_trace_index)
+        available_indices.remove(worst_selected_trace_index)
 
     worst_coverage = (len(worst_case_vectors) / float(total_possible_observations)) * 100
-    best_coverage = (len(best_case_vectors) / float(total_possible_observations)) * 100
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Greedy case test suite with " + str(test_number) + " tests")
     print("Worst Coverage: " + str(worst_coverage) + " - Crashes: " + str(worst_case_crashes))
-    print("Best Coverage: " + str(best_coverage) + " - Crashes: " + str(best_case_crashes))
     print("----------")
     
     # Return the data
-    return_dict[return_key] = [worst_coverage, worst_case_crashes, best_coverage, best_case_crashes]
+    return_dict[return_key] = [worst_coverage, worst_case_crashes]
 
 def isUnique(vector, unique_vectors_seen):
     unique = True
@@ -203,11 +232,12 @@ print("----------------------------------")
 # Plot the crashes vs coverage data
 
 total_test_suites = 25
-tests_per_test_suite = [10, 25, 50, 100, 200]
+tests_per_test_suite = [10, 25, 50, 100, 250, 500, 1000]
 
 manager = multiprocessing.Manager()
 random_return_dict = manager.dict()
-greedy_return_dict = manager.dict()
+worst_return_dict = manager.dict()
+best_return_dict = manager.dict()
 jobs = []
 
 # For each test size
@@ -227,15 +257,21 @@ for j in range(len(tests_per_test_suite)):
     p.start()
 
     # Do a greedy selection
-    p = multiprocessing.Process(target=greedy_selection, args=(test_number, traces, greedy_return_dict, return_key, print_line))
+    p = multiprocessing.Process(target=greedy_selection_best, args=(test_number, traces, best_return_dict, return_key, print_line))
     print_line += 1
     jobs.append(p)
     p.start()
 
-# For each of the currently running jobs
-for j in jobs:
-    # Wait for them to finish
-    j.join()
+    # Do a greedy selection
+    p = multiprocessing.Process(target=greedy_selection_worst, args=(test_number, traces, worst_return_dict, return_key, print_line))
+    print_line += 1
+    jobs.append(p)
+    p.start()
+
+    # For each of the currently running jobs
+    for j in jobs:
+        # Wait for them to finish
+        j.join()
 
 # For all the data plot it
 plt.figure(1)
@@ -243,7 +279,8 @@ plt.figure(1)
 color_index = 0
 for key in random_return_dict:
     # Expand the data
-    worst_coverage, worst_case_crashes, best_coverage, best_case_crashes = greedy_return_dict[key]
+    best_coverage, best_case_crashes = best_return_dict[key]
+    worst_coverage, worst_case_crashes = worst_return_dict[key]
     random_selection_coverage_data, random_selection_crash_data = random_return_dict[key]
     test_number = tests_per_test_suite[int(key[1:])]
 

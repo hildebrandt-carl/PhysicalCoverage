@@ -157,8 +157,8 @@ def process_file(file_name, save_name, external_vehicle_count):
         # Subtract the cars position from the data
         current_data["lidar"] = current_data["lidar"] - current_data["position"]
 
-        # Remove every 50th element
-        # current_data["lidar"] = current_data["lidar"][0::50]
+        # Select every 25th element
+        # current_data["lidar"] = current_data["lidar"][0::25]
         # print("Analyzing " + str(current_data["lidar"].shape[0]) + " points")
 
         # Plot the data
@@ -309,50 +309,58 @@ def process_file(file_name, save_name, external_vehicle_count):
         if bool(current_data["crash"]):
             break
 
-
     # Close both files
     output_file.close()
     input_file.close()
+    
+# Create a function called "chunks" with two arguments, l and n:
+def chunks(l, n):
+    # For item i in a range that is a length of l,
+    for i in range(0, len(l), n):
+        # Create an index range for l of n items:
+        yield l[i:i+n]
+
+
 
 raw_file_location       = "../../PhysicalCoverageData/beamng/raw/"
 output_file_location    = "../../PhysicalCoverageData/beamng/processed/"
 file_names = glob.glob(raw_file_location + "/*/*.csv")
 
 total_cores = 32
-manager = multiprocessing.Manager()
-jobs = []
 
-for file_number in tqdm(range(len(file_names))):
+# Create file names with lists of total_core length
+data_to_process = list(chunks(file_names, total_cores))
 
-    # Compute the file name in the format vehiclecount-time-run#.txt
-    file_name = file_names[file_number]
-    name_only = file_name[file_name.rfind('/')+1:]
-    folder = file_name[0:file_name.rfind('/')]
-    folder = folder[folder.rfind('/')+1:]
-    external_vehicle_count = folder[0: folder.find('_')]
-    name_only = name_only[name_only.rfind('_')+1:]
-    e = datetime.now()
-    save_name = ""
-    save_name += str(output_file_location)
-    save_name += external_vehicle_count + "-"
-    save_name += str(int(e.timestamp())) +"-"
-    save_name += name_only[0:-4] + ".txt"
+for chunk_number in tqdm(range(len(data_to_process))):
 
-    # Run each of the files in a seperate process
-    p = multiprocessing.Process(target=process_file, args=(file_name, save_name, external_vehicle_count))
-    jobs.append(p)
-    p.start()
+    file_list = data_to_process[chunk_number]
 
-    # Only launch total_cores jobs at a time
-    if (file_number + 1) % total_cores == 0:
-        # For each of the currently running jobs
-        for j in jobs:
-            # Wait for them to finish
-            j.join()
+    manager = multiprocessing.Manager()
+    jobs = []
 
-# For each of the currently running jobs
-for j in jobs:
-    # Wait for them to finish
-    j.join()
+    for file_name in file_list:
+
+        # Compute the file name in the format vehiclecount-time-run#.txt
+        name_only = file_name[file_name.rfind('/')+1:]
+        folder = file_name[0:file_name.rfind('/')]
+        folder = folder[folder.rfind('/')+1:]
+        external_vehicle_count = folder[0: folder.find('_')]
+        name_only = name_only[name_only.rfind('_')+1:]
+        e = datetime.now()
+        save_name = ""
+        save_name += str(output_file_location)
+        save_name += external_vehicle_count + "-"
+        save_name += str(int(e.timestamp())) +"-"
+        save_name += name_only[0:-4] + ".txt"
+
+        # Run each of the files in a seperate process
+        p = multiprocessing.Process(target=process_file, args=(file_name, save_name, external_vehicle_count))
+        jobs.append(p)
+        p.start()     
+
+    # For each of the currently running jobs
+    for j in jobs:
+        # Wait for them to finish
+        j.join()
 
 print("Complete")
