@@ -66,7 +66,7 @@ def greedy_selection_best(test_number, traces, return_dict, return_key, print_li
         selected_indices = random.sample(available_indices, min(greedy_sample_size, len(available_indices)))
 
         # Holds the min and max coverage
-        max_coverage = []
+        max_coverage = None
         best_selected_trace_index = -1
 
         # For each considered trace
@@ -86,7 +86,10 @@ def greedy_selection_best(test_number, traces, return_dict, return_key, print_li
                         current_best_case_vectors.append(v)
 
             # See if this is the best we can do
-            if len(max_coverage) < len(current_best_case_vectors):
+            if max_coverage is None:
+                best_selected_trace_index = i
+                max_coverage = copy.deepcopy(current_best_case_vectors)
+            elif len(max_coverage) < len(current_best_case_vectors):
                 best_selected_trace_index = i
                 max_coverage = copy.deepcopy(current_best_case_vectors)
 
@@ -124,7 +127,7 @@ def greedy_selection_worst(test_number, traces, return_dict, return_key, print_l
         selected_indices = random.sample(available_indices, min(greedy_sample_size, len(available_indices)))
 
         # Holds the min and max coverage
-        min_coverage = np.zeros(1000)
+        min_coverage = None
         max_coverage = []
         worst_selected_trace_index = -1
         best_selected_trace_index = -1
@@ -146,7 +149,10 @@ def greedy_selection_worst(test_number, traces, return_dict, return_key, print_l
                         current_worst_case_vectors.append(v)
 
             # See if this is the worst we can do
-            if len(min_coverage) > len(current_worst_case_vectors):
+            if min_coverage is None:
+                worst_selected_trace_index = i
+                min_coverage = copy.deepcopy(current_worst_case_vectors)
+            elif len(min_coverage) > len(current_worst_case_vectors):
                 worst_selected_trace_index = i
                 min_coverage = copy.deepcopy(current_worst_case_vectors)
 
@@ -185,6 +191,7 @@ parser.add_argument('--max_distance',   type=int, default=30,    help="The maxim
 parser.add_argument('--accuracy',       type=int, default=5,     help="What each vector is rounded to")
 parser.add_argument('--total_samples',  type=int, default=1000,  help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--greedy_sample',  type=int, default=50,    help="The unumber of samples considered by the greedy search")
+parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
 args = parser.parse_args()
 
 new_steering_angle  = args.steering_angle
@@ -219,8 +226,15 @@ load_name += "_a" + str(new_accuracy)
 load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
-# base_path = '../../PhysicalCoverageData/highway/numpy_data/' + str(args.total_samples) + '/'
-base_path = '../../PhysicalCoverageData/beamng/numpy_data/'
+# Get the file names
+base_path = None
+if args.scenario == "beamng":
+    base_path = '../../PhysicalCoverageData/beamng/numpy_data/'
+elif args.scenario == "highway":
+    base_path = '../../PhysicalCoverageData/highway/numpy_data/' + str(args.total_samples) + "/"
+else:
+    exit()
+
 print("Loading: " + load_name)
 traces = np.load(base_path + "traces" + load_name)
 
@@ -268,10 +282,10 @@ for j in range(len(tests_per_test_suite)):
     jobs.append(p)
     p.start()
 
-    # For each of the currently running jobs
-    for j in jobs:
-        # Wait for them to finish
-        j.join()
+# For each of the currently running jobs
+for j in jobs:
+    # Wait for them to finish
+    j.join()
 
 # For all the data plot it
 plt.figure(1)

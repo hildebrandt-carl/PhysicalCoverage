@@ -103,6 +103,7 @@ parser.add_argument('--beam_count',     type=int, default=4,    help="The number
 parser.add_argument('--max_distance',   type=int, default=20,   help="The maximum dist the vehicle can travel in 1 time step")
 parser.add_argument('--accuracy',       type=int, default=5,    help="What each vector is rounded to")
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
 args = parser.parse_args()
 
 new_steering_angle  = args.steering_angle
@@ -136,9 +137,14 @@ load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the file names
-
-base_path = '../../PhysicalCoverageData/beamng/numpy_data/'
-# base_path = '../../PhysicalCoverageData/highway/numpy_data/' + str(args.total_samples) + "/"
+base_path = None
+if args.scenario == "beamng":
+    base_path = '../../PhysicalCoverageData/beamng/numpy_data/'
+elif args.scenario == "highway":
+    base_path = '../../PhysicalCoverageData/highway/numpy_data/' + str(args.total_samples) + "/"
+else:
+    exit()
+    
 trace_file_names = glob.glob(base_path + "traces" + load_name)
 print(trace_file_names)
 file_names = []
