@@ -83,9 +83,9 @@ def rotate(p, origin=(0, 0), angle=0):
 
 def process_file(file_name, save_name, external_vehicle_count):
 
-    steering_angle  = 60
-    total_lines     = 30
-    max_distance    = 30
+    steering_angle  = 90
+    total_lines     = 45
+    max_distance    = 60
 
     # Open the file and count vectors
     input_file = open(file_name, "r")
@@ -321,12 +321,11 @@ def chunks(l, n):
         yield l[i:i+n]
 
 
-
 raw_file_location       = "../../PhysicalCoverageData/beamng/raw/"
 output_file_location    = "../../PhysicalCoverageData/beamng/processed/"
 file_names = glob.glob(raw_file_location + "/*/*.csv")
 
-total_cores = 32
+total_cores = 30
 
 # Create file names with lists of total_core length
 data_to_process = list(chunks(file_names, total_cores))
