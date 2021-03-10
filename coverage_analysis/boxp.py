@@ -15,8 +15,8 @@ def myround(x, base=5):
 
 results1 = np.load('data1.npy')
 results2 = np.load('data2.npy')
-# results3 = np.load('data3.npy')
-results = np.concatenate([results1, results2], axis=0)
+results3 = np.load('data3.npy')
+results = np.concatenate([results1, results2, results3], axis=0)
 print(results.shape)
 
 # Get the coverage / crashes / and number of tests
@@ -47,7 +47,7 @@ plt.ylabel("Number of tests in test suite")
 plt.title('Matplot scatter plot')
 
 # Create a box plot of the data
-interval_size = 0.1
+interval_size = 0.5
 max_coverage = np.max(coverage) + interval_size
 box_intervals = np.arange(0, max_coverage, interval_size)
 
