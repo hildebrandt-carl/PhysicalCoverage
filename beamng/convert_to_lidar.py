@@ -9,6 +9,10 @@ from shapely.geometry import LineString
 from shapely.geometry import Polygon, LineString, Point
 import multiprocessing
 
+steering_angle  = 45
+total_lines     = 30
+max_distance    = 60
+
 def create_frame_plot(data, origin, orientation, title, fig_num):
     fig = plt.figure(fig_num)
     plt.clf()
@@ -81,18 +85,17 @@ def rotate(p, origin=(0, 0), angle=0):
     p = np.atleast_2d(p)
     return np.squeeze((R @ (p.T-o.T) + o.T).T)
 
-def process_file(file_name, save_name, external_vehicle_count):
-
-    steering_angle  = 90
-    total_lines     = 45
-    max_distance    = 60
+def process_file(file_name, save_name, external_vehicle_count, file_number):
 
     # Open the file and count vectors
     input_file = open(file_name, "r")
-    print("Processing: " + file_name)
+    print("(" + str(file_number) + ") Processing: " + file_name)
     print("Saving output to: " + str(save_name))
     print("-----------------------")
     
+    # Get the time
+    e = datetime.now()
+
     # Open a text file to save output
     output_file = open(save_name, "w")
     output_file.write("Name: %s\n" % file_name)
@@ -312,54 +315,38 @@ def process_file(file_name, save_name, external_vehicle_count):
     # Close both files
     output_file.close()
     input_file.close()
-    
-# Create a function called "chunks" with two arguments, l and n:
-def chunks(l, n):
-    # For item i in a range that is a length of l,
-    for i in range(0, len(l), n):
-        # Create an index range for l of n items:
-        yield l[i:i+n]
-
+    return True
 
 raw_file_location       = "../../PhysicalCoverageData/beamng/raw/"
 output_file_location    = "../../PhysicalCoverageData/beamng/processed/"
 file_names = glob.glob(raw_file_location + "/*/*.csv")
 
-total_cores = 30
+# Create a pool with x processes
+total_processors = 32
+pool =  multiprocessing.Pool(total_processors)
+result_object = []
+file_number = 0
 
-# Create file names with lists of total_core length
-data_to_process = list(chunks(file_names, total_cores))
+for file_name in file_names:
 
-for chunk_number in tqdm(range(len(data_to_process))):
+    # Compute the file name in the format vehiclecount-time-run#.txt
+    name_only = file_name[file_name.rfind('/')+1:]
+    folder = file_name[0:file_name.rfind('/')]
+    folder = folder[folder.rfind('/')+1:]
+    external_vehicle_count = folder[0: folder.find('_')]
+    name_only = name_only[name_only.rfind('_')+1:]
+    e = datetime.now()
+    save_name = ""
+    save_name += str(output_file_location)
+    save_name += external_vehicle_count + "-"
+    save_name += str(int(e.timestamp())) +"-"
+    save_name += name_only[0:-4] + ".txt"
 
-    file_list = data_to_process[chunk_number]
+    # Run each of the files in a seperate process
+    result_object.append(pool.apply_async(process_file, args=(file_name, save_name, external_vehicle_count, file_number)))
+    file_number += 1
 
-    manager = multiprocessing.Manager()
-    jobs = []
-
-    for file_name in file_list:
-
-        # Compute the file name in the format vehiclecount-time-run#.txt
-        name_only = file_name[file_name.rfind('/')+1:]
-        folder = file_name[0:file_name.rfind('/')]
-        folder = folder[folder.rfind('/')+1:]
-        external_vehicle_count = folder[0: folder.find('_')]
-        name_only = name_only[name_only.rfind('_')+1:]
-        e = datetime.now()
-        save_name = ""
-        save_name += str(output_file_location)
-        save_name += external_vehicle_count + "-"
-        save_name += str(int(e.timestamp())) +"-"
-        save_name += name_only[0:-4] + ".txt"
-
-        # Run each of the files in a seperate process
-        p = multiprocessing.Process(target=process_file, args=(file_name, save_name, external_vehicle_count))
-        jobs.append(p)
-        p.start()     
-
-    # For each of the currently running jobs
-    for j in jobs:
-        # Wait for them to finish
-        j.join()
-
-print("Complete")
+# Wait to make sure all files are finished
+results = [r.get() for r in result_object]
+pool.close()
+print("All files completed")

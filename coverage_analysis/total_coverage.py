@@ -8,10 +8,13 @@ import argparse
 import multiprocessing
 from datetime import datetime
 
-def isUnique(vector, unique_vectors_seen, unique_vector_length_count):
+def isUnique(vector, unique_vectors_seen):
+    # Return false if the vector contains Nan
+    if np.isnan(vector).any():
+        return False
+    # Assume True
     unique = True
-    for i in range(unique_vector_length_count):
-        v2 = unique_vectors_seen[i]
+    for v2 in unique_vectors_seen:
         # If we have seen this vector break out of this loop
         if np.array_equal(vector, v2):
             unique = False
@@ -43,33 +46,34 @@ def compute_coverage(load_name, return_dict, return_key, base_path):
     total_traces = traces.shape[0]
     total_crashes = 0
     total_vectors = 0
-    unique_vector_length_count = 0
 
-    unique_vectors_seen                 = np.full((total_possible_observations, total_beams), np.nan)
+    unique_vectors_seen                 = []
     accumulative_graph                  = np.full(total_traces, np.nan)
     acuumulative_graph_vehicle_count    = np.full(total_traces, np.nan)
 
-    # For each file
+    # For each of the traces
     for i in tqdm(range(total_traces), position=int(return_key[1:]), mininterval=5):
-
-        vectors = traces[i]
+        # Get the trace
+        trace = traces[i]
         vehicle_count = vehicles[i]
-
-        if np.isnan(vectors).any():
+        
+        # See if there was a crash
+        if np.isnan(trace).any():
             total_crashes += 1
-        # Update total vectors observed
-        for j in range(vectors.shape[0]):
-            if not np.isnan(vectors[j]).any():
-                total_vectors += 1
-        # Check to see if any of the vectors are new
-        for v in vectors:
+
+        # For each vector in the trace
+        for v in trace:
+            # If this vector does not have any nan
             if not np.isnan(v).any():
-                unique = isUnique(v, unique_vectors_seen, unique_vector_length_count)
+                # Count it
+                total_vectors += 1
+                # Check if it is unique
+                unique = isUnique(v, unique_vectors_seen)
                 if unique:
-                    unique_vectors_seen[unique_vector_length_count] = v
-                    unique_vector_length_count += 1
+                    unique_vectors_seen.append(v)
 
         # Used for the accumulative graph
+        unique_vector_length_count          = len(unique_vectors_seen)
         accumulative_graph[i]               = unique_vector_length_count
         acuumulative_graph_vehicle_count[i] = vehicle_count
 
@@ -96,6 +100,7 @@ def compute_coverage(load_name, return_dict, return_key, base_path):
 
     # Return both arrays
     return_dict[return_key] = [accumulative_graph_coverage, acuumulative_graph_vehicle_count, total_beams]
+    return True
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--steering_angle', type=int, default=30,   help="The steering angle used to compute the reachable set")
@@ -157,39 +162,33 @@ file_names.sort()
 print("Files: " + str(file_names))
 print("Loading Complete")
 
-
 print("----------------------------------")
 print("-------Computing Coverage---------")
 print("----------------------------------")
 
-total_cores = 10
 manager = multiprocessing.Manager()
 return_dict = manager.dict()
-jobs = []
 
-# For each file to be processed
+# Create a pool with x processes
+total_processors = 2
+pool =  multiprocessing.Pool(total_processors)
+
+# Call our function total_test_suites times
+result_object = []
 for file_index in range(len(file_names)):
 
     # Get the file name and the return key
     file_name = file_names[file_index]
     return_key = 'p' + str(file_index)
 
-    # Call the function using multiprocessing
-    p = multiprocessing.Process(target=compute_coverage, args=(file_name, return_dict, return_key, base_path))
-    jobs.append(p)
-    p.start()
+    result_object.append(pool.apply_async(compute_coverage, args=(file_name, return_dict, return_key, base_path)))
 
-    # Only launch total_cores jobs at a time
-    if (file_index + 1) % total_cores == 0:
-        # For each of the currently running jobs
-        for j in jobs:
-            # Wait for them to finish
-            j.join()
+# Get the results
+results = [r.get() for r in result_object]
+results = np.array(results)
 
-# For each of the currently running jobs
-for j in jobs:
-    # Wait for them to finish
-    j.join()
+# Close the pool
+pool.close()
 
 # For all the data plot it
 color_index = 0

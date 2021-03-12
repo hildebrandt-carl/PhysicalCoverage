@@ -11,9 +11,12 @@ import time
 import itertools
 
 def myround(x, base=5):
-    return base * round(x/base)
+    return round(base * round(x/base), 5)
 
-def generate_random_test_suite_coverage(traces, process_number):
+def generate_random_test_suite_coverage(process_number):
+    global traces 
+
+    print("Starting: " + str(process_number))
     # Randomly select how many tests to include
     number_traces = random.randint(1, traces.shape[0])
     # Randomly select indices to include
@@ -42,6 +45,10 @@ def generate_random_test_suite_coverage(traces, process_number):
     return [coverage, crashes, number_traces]
 
 def isUnique(vector, unique_vectors_seen):
+    # Return false if the vector contains Nan
+    if np.isnan(vector).any():
+        return False
+    # Assume True
     unique = True
     for v2 in unique_vectors_seen:
         # If we have seen this vector break out of this loop
@@ -51,18 +58,20 @@ def isUnique(vector, unique_vectors_seen):
     return unique
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--steering_angle', type=int, default=30,    help="The steering angle used to compute the reachable set")
-parser.add_argument('--beam_count',     type=int, default=5,     help="The number of beams used to vectorize the reachable set")
-parser.add_argument('--max_distance',   type=int, default=30,    help="The maximum dist the vehicle can travel in 1 time step")
-parser.add_argument('--accuracy',       type=int, default=5,     help="What each vector is rounded to")
-parser.add_argument('--total_samples',  type=int, default=1000,  help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
+parser.add_argument('--steering_angle',             type=int, default=30,    help="The steering angle used to compute the reachable set")
+parser.add_argument('--beam_count',                 type=int, default=5,     help="The number of beams used to vectorize the reachable set")
+parser.add_argument('--max_distance',               type=int, default=30,    help="The maximum dist the vehicle can travel in 1 time step")
+parser.add_argument('--accuracy',                   type=int, default=5,     help="What each vector is rounded to")
+parser.add_argument('--total_samples',              type=int, default=1000,  help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--scenario',                   type=str, default="",    help="beamng/highway")
+parser.add_argument('--total_random_test_suites',   type=int, default=1000,  help="Total random test suites to be generated")
 args = parser.parse_args()
 
 new_steering_angle  = args.steering_angle
 new_total_lines     = args.beam_count
 new_max_distance    = args.max_distance
 new_accuracy        = args.accuracy
+total_test_suites   = args.total_random_test_suites
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
@@ -105,23 +114,19 @@ print("----------------------------------")
 print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
-# Randomly select tests suites and compute coverage and crash data
-total_test_suites = 1500
-
 # Create a pool with x processes
-total_processors = 32
+total_processors = 16
 pool =  multiprocessing.Pool(total_processors)
 
 # Call our function total_test_suites times
 result_object = []
 for i in range(total_test_suites):
-    result_object.append(pool.apply_async(generate_random_test_suite_coverage, args=(traces, i)))
+    result_object.append(pool.apply_async(generate_random_test_suite_coverage, args=([i])))
 
 # Get the results
 results = [r.get() for r in result_object]
 results = np.array(results)
-np.save('data.npy', results)
-results = np.load('data.npy')
+np.save("crash_variance_" + str(args.scenario), results)
 
 # Close the pool
 pool.close()
@@ -154,7 +159,7 @@ plt.ylabel("Number of tests in test suite")
 plt.title('Matplot scatter plot')
 
 # Create a box plot of the data
-interval_size = 0.1
+interval_size = 0.5
 max_coverage = np.max(coverage) + interval_size
 box_intervals = np.arange(0, max_coverage, interval_size)
 

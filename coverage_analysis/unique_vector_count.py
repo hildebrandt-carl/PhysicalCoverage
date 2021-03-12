@@ -11,6 +11,10 @@ import time
 import itertools
 
 def isUnique(vector, unique_vectors_seen):
+    # Return false if the vector contains Nan
+    if np.isnan(vector).any():
+        return False
+    # Assume True
     unique = True
     for v2 in unique_vectors_seen:
         # If we have seen this vector break out of this loop
@@ -74,6 +78,43 @@ print("----------------------------------")
 print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
+# Compute all unique values for tests with crashes
+unique_vectors = []
+crashing_test_count = 0
+for i in tqdm(range(traces.shape[0])):
+    trace = traces[i]
+    # Only compute traces without a crash
+    if np.isnan(trace).any():
+        crashing_test_count += 1
+        # For each vector in the trace
+        for vector in trace:
+            # We want to consider vectors before Nan
+            if not np.isnan(vector).any():
+                unique = isUnique(vector, unique_vectors)
+                if unique:
+                    unique_vectors.append(vector)
+
+print("Crashing tests: " + str(crashing_test_count) + "/" + str(traces.shape[0]))
+print("Crashing unique vectors: " + str(len(unique_vectors)) + "/" + str(total_possible_observations))
+
+# Compute all unique values for tests without crashes
+non_crashing_test_count = 0
+for i in tqdm(range(traces.shape[0])):
+    trace = traces[i]
+    # Only compute traces without a crash
+    if not np.isnan(trace).any():
+        non_crashing_test_count += 1
+        # For each vector in the trace
+        for vector in trace:
+            unique = isUnique(vector, unique_vectors)
+            if unique:
+                unique_vectors.append(vector)
+
+print("Non-crashing tests: " + str(non_crashing_test_count) + "/" + str(traces.shape[0]))
+print("Non-crashing unique vectors (including non crashing): " + str(len(unique_vectors)) + "/" + str(total_possible_observations))
+
+print("\n\n")
+
 # Compute all unique values for tests without crashes
 unique_vectors = []
 non_crashing_test_count = 0
@@ -91,6 +132,7 @@ for i in tqdm(range(traces.shape[0])):
 print("Non crashing tests: " + str(non_crashing_test_count) + "/" + str(traces.shape[0]))
 print("Non crashing unique vectors: " + str(len(unique_vectors)) + "/" + str(total_possible_observations))
 
+# Compute all unique values for tests with crashes
 crashing_test_count = 0
 for i in tqdm(range(traces.shape[0])):
     trace = traces[i]
@@ -99,9 +141,11 @@ for i in tqdm(range(traces.shape[0])):
         crashing_test_count += 1
         # For each vector in the trace
         for vector in trace:
-            unique = isUnique(vector, unique_vectors)
-            if unique:
-                unique_vectors.append(vector)
+            # We want to consider vectors before Nan
+            if not np.isnan(vector).any():
+                unique = isUnique(vector, unique_vectors)
+                if unique:
+                    unique_vectors.append(vector)
 
 print("Crashing tests: " + str(crashing_test_count) + "/" + str(traces.shape[0]))
 print("Crashing unique vectors (including non crashing): " + str(len(unique_vectors)) + "/" + str(total_possible_observations))

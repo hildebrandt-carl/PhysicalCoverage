@@ -9,16 +9,15 @@ import copy
 import multiprocessing
 import time
 
-
-def random_selection(total_test_suites, test_number, traces, return_dict, return_key, print_line):
+def random_selection(total_test_suites, test_number, return_dict, return_key):
+    global traces
 
     random_selection_coverage_data = []
     random_selection_crash_data = []
 
     # Randomly picked tests
-    print("Randomly selecting " + str(total_test_suites) + " test suites with " + str(test_number) + " tests")
-    time.sleep(1)
-    for i in tqdm(np.arange(total_test_suites), position=print_line, mininterval=1):
+    print("Starting: Randomly selecting " + str(total_test_suites) + " test suites with " + str(test_number) + " tests")
+    for i in np.arange(total_test_suites):
         # Generate the test indices
         indices = np.random.choice(traces.shape[0], test_number, replace=False)
         # Init variables
@@ -49,8 +48,14 @@ def random_selection(total_test_suites, test_number, traces, return_dict, return
         
     # Return the data
     return_dict[return_key] = [random_selection_coverage_data, random_selection_crash_data]
+    print("----------")
+    print("Complete: Randomly selecting " + str(total_test_suites) + " test suites with " + str(test_number) + " tests")
+    print("----------")
+    return True
 
-def greedy_selection_best(test_number, traces, return_dict, return_key, print_line):
+def greedy_selection_best(test_number, return_dict, return_key):
+    global traces
+
     # Greedy algorithm
     best_case_vectors = []
     best_case_crashes = 0
@@ -58,9 +63,9 @@ def greedy_selection_best(test_number, traces, return_dict, return_key, print_li
     # Hold indicies which we can select from
     available_indices = set(np.arange(traces.shape[0]))
 
-    print("Starting best case test suite with " + str(test_number) + " tests (greedy search)")
-    time.sleep(1)
-    for k in tqdm(np.arange(test_number), position=print_line, mininterval=1, desc="Greedy Best (" + str(test_number) + ")"):
+    print("Starting: Best case test suite with " + str(test_number) + " tests (greedy search)")
+
+    for k in np.arange(test_number):
 
         # Randomly select greedy_sample_size traces to compare over
         selected_indices = random.sample(available_indices, min(greedy_sample_size, len(available_indices)))
@@ -103,15 +108,19 @@ def greedy_selection_best(test_number, traces, return_dict, return_key, print_li
         available_indices.remove(best_selected_trace_index)
 
     best_coverage = (len(best_case_vectors) / float(total_possible_observations)) * 100
-    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("----------")
+    print("Complete: best case test suite with " + str(test_number) + " tests (greedy search)")
     print("Greedy case test suite with " + str(test_number) + " tests")
     print("Best Coverage: " + str(best_coverage) + " - Crashes: " + str(best_case_crashes))
     print("----------")
     
     # Return the data
     return_dict[return_key] = [best_coverage, best_case_crashes]
+    return True
 
-def greedy_selection_worst(test_number, traces, return_dict, return_key, print_line):
+def greedy_selection_worst(test_number, return_dict, return_key):
+    global traces
+
     # Greedy algorithm
     worst_case_vectors = []
     worst_case_crashes = 0
@@ -119,9 +128,8 @@ def greedy_selection_worst(test_number, traces, return_dict, return_key, print_l
     # Hold indicies which we can select from
     available_indices = set(np.arange(traces.shape[0]))
 
-    print("Starting worst case test suite with " + str(test_number) + " tests (greedy search)")
-    time.sleep(1)
-    for k in tqdm(np.arange(test_number), position=print_line, mininterval=1, desc="Greedy Worst (" + str(test_number) + ")"):
+    print("Starting: Worst case test suite with " + str(test_number) + " tests (greedy search)")
+    for k in np.arange(test_number):
         
         # Randomly select greedy_sample_size traces to compare over
         selected_indices = random.sample(available_indices, min(greedy_sample_size, len(available_indices)))
@@ -167,15 +175,21 @@ def greedy_selection_worst(test_number, traces, return_dict, return_key, print_l
         available_indices.remove(worst_selected_trace_index)
 
     worst_coverage = (len(worst_case_vectors) / float(total_possible_observations)) * 100
-    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("----------")
+    print("Complete: Worst case test suite with " + str(test_number) + " tests (greedy search)")
     print("Greedy case test suite with " + str(test_number) + " tests")
     print("Worst Coverage: " + str(worst_coverage) + " - Crashes: " + str(worst_case_crashes))
     print("----------")
     
     # Return the data
     return_dict[return_key] = [worst_coverage, worst_case_crashes]
+    return True
 
 def isUnique(vector, unique_vectors_seen):
+    # Return false if the vector contains Nan
+    if np.isnan(vector).any():
+        return False
+    # Assume True
     unique = True
     for v2 in unique_vectors_seen:
         # If we have seen this vector break out of this loop
@@ -242,9 +256,6 @@ print("----------------------------------")
 print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
-# Select 1000 test suites each with 100 test cases
-# Plot the crashes vs coverage data
-
 total_test_suites = 25
 tests_per_test_suite = [10, 25, 50, 100, 250, 500, 1000]
 
@@ -252,40 +263,28 @@ manager = multiprocessing.Manager()
 random_return_dict = manager.dict()
 worst_return_dict = manager.dict()
 best_return_dict = manager.dict()
-jobs = []
 
-# For each test size
-print_line = 0
+# Create a pool with x processes
+total_processors = 16
+pool =  multiprocessing.Pool(total_processors)
+
+# Call our function total_test_suites times
+result_object = []
 for j in range(len(tests_per_test_suite)):
-
     # Get the return key
     return_key = 'p' + str(j)
-
     # Get the number of tests
     test_number = tests_per_test_suite[j]
+    # Do the random and greedy selection
+    result_object.append(pool.apply_async(random_selection, args=(total_test_suites, test_number, random_return_dict, return_key)))
+    result_object.append(pool.apply_async(greedy_selection_best, args=(test_number, best_return_dict, return_key)))
+    result_object.append(pool.apply_async(greedy_selection_worst, args=(test_number, worst_return_dict, return_key)))
 
-    # Do a random selection of 
-    p = multiprocessing.Process(target=random_selection, args=(total_test_suites, test_number, traces, random_return_dict, return_key, print_line))
-    print_line += 1
-    jobs.append(p)
-    p.start()
+# Wait for the results
+_ = [r.get() for r in result_object]
 
-    # Do a greedy selection
-    p = multiprocessing.Process(target=greedy_selection_best, args=(test_number, traces, best_return_dict, return_key, print_line))
-    print_line += 1
-    jobs.append(p)
-    p.start()
-
-    # Do a greedy selection
-    p = multiprocessing.Process(target=greedy_selection_worst, args=(test_number, traces, worst_return_dict, return_key, print_line))
-    print_line += 1
-    jobs.append(p)
-    p.start()
-
-# For each of the currently running jobs
-for j in jobs:
-    # Wait for them to finish
-    j.join()
+# Close the pool
+pool.close()
 
 # For all the data plot it
 plt.figure(1)
@@ -309,7 +308,7 @@ for key in random_return_dict:
     random_selection_crash_data.append(worst_case_crashes)
     random_selection_crash_data.append(best_case_crashes)
     m, b = np.polyfit(random_selection_coverage_data, random_selection_crash_data, 1)
-    x_range = np.arange(0, best_coverage, 0.1)
+    x_range = np.arange(worst_coverage, best_coverage, 0.1)
     plt.plot(x_range, m*x_range + b, c='C' + str(color_index))
     
     # keep track of the color we are plotting
