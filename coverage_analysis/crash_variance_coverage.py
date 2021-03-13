@@ -115,7 +115,7 @@ print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
 # Create a pool with x processes
-total_processors = 16
+total_processors = 64
 pool =  multiprocessing.Pool(total_processors)
 
 # Call our function total_test_suites times

@@ -170,7 +170,7 @@ manager = multiprocessing.Manager()
 return_dict = manager.dict()
 
 # Create a pool with x processes
-total_processors = 2
+total_processors = 32
 pool =  multiprocessing.Pool(total_processors)
 
 # Call our function total_test_suites times
