@@ -18,126 +18,23 @@ def autolabel(rects):
 def myround(x, base=5):
     return round(base * round(x/base), 5)
 
-def generate_random_test_suite_coverage(process_number):
-    global traces 
-
-    print("Starting: " + str(process_number))
-    # Randomly select how many tests to include
-    number_traces = random.randint(1, min(traces.shape[0], 10000))
-    # Randomly select indices to include
-    selected_indices = random.sample(set(np.arange(traces.shape[0])), number_traces)
-    # Init variables
-    coverage = 0
-    crashes = 0
-    unique_vectors_seen = []
-    # Compute the coverage for this test set
-    for i in selected_indices:
-        # Get the trace
-        trace = traces[i]
-        # Get all unique vectors from this trace
-        for vector in trace:
-            if not np.isnan(vector).any():
-                unique = isUnique(vector, unique_vectors_seen)
-                if unique:
-                    unique_vectors_seen.append(vector)
-        # Check if there was a crash
-        if np.isnan(trace).any():
-            crashes += 1
-    # Compute the coverage
-    coverage = (len(unique_vectors_seen) / float(total_possible_observations)) * 100
-    # Return the data
-    print("Finished: " + str(process_number))
-    return [coverage, crashes, number_traces]
-
-def isUnique(vector, unique_vectors_seen):
-    # Return false if the vector contains Nan
-    if np.isnan(vector).any():
-        return False
-    # Assume True
-    unique = True
-    for v2 in unique_vectors_seen:
-        # If we have seen this vector break out of this loop
-        if np.array_equal(vector, v2):
-            unique = False
-            break
-    return unique
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--steering_angle',             type=int, default=30,    help="The steering angle used to compute the reachable set")
-parser.add_argument('--beam_count',                 type=int, default=5,     help="The number of beams used to vectorize the reachable set")
-parser.add_argument('--max_distance',               type=int, default=30,    help="The maximum dist the vehicle can travel in 1 time step")
-parser.add_argument('--accuracy',                   type=int, default=5,     help="What each vector is rounded to")
-parser.add_argument('--total_samples',              type=int, default=1000,  help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--scenario',                   type=str, default="",    help="beamng/highway")
-parser.add_argument('--total_random_test_suites',   type=int, default=1000,  help="Total random test suites to be generated")
-args = parser.parse_args()
-
-new_steering_angle  = args.steering_angle
-new_total_lines     = args.beam_count
-new_max_distance    = args.max_distance
-new_accuracy        = args.accuracy
-total_test_suites   = args.total_random_test_suites
-
-min_tests_per_group = 500
-interval_size = 1
-
-print("----------------------------------")
-print("-----Reach Set Configuration------")
-print("----------------------------------")
-
-print("Max steering angle:\t" + str(new_steering_angle))
-print("Total beams:\t\t" + str(new_total_lines))
-print("Max velocity:\t\t" + str(new_max_distance))
-print("Vector accuracy:\t" + str(new_accuracy))
-
-# Compute total possible values using the above
-unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
-total_possible_observations = pow(unique_observations_per_cell, new_total_lines)
-
-print("----------------------------------")
-print("-----------Loading Data-----------")
-print("----------------------------------")
-
-load_name = ""
-load_name += "_s" + str(new_steering_angle) 
-load_name += "_b" + str(new_total_lines) 
-load_name += "_d" + str(new_max_distance) 
-load_name += "_a" + str(new_accuracy)
-load_name += "_t" + str(args.total_samples)
-load_name += ".npy"
-
-# Get the file names
-base_path = None
-if args.scenario == "beamng":
-    base_path = '../../PhysicalCoverageData/beamng/numpy_data/'
-elif args.scenario == "highway":
-    base_path = '../../PhysicalCoverageData/highway/numpy_data/' + str(args.total_samples) + "/"
-else:
-    exit()
-
-print("Loading: " + load_name)
-traces = np.load(base_path + "traces" + load_name)
-
-print("----------------------------------")
-print("--------Crashes vs Coverage-------")
-print("----------------------------------")
-
-# Create a pool with x processes
-total_processors = 124
-pool =  multiprocessing.Pool(total_processors)
-
-# Call our function total_test_suites times
-result_object = []
-for i in range(total_test_suites):
-    result_object.append(pool.apply_async(generate_random_test_suite_coverage, args=([i])))
+scenario = "beamng"
+min_tests_per_group = 200
+interval_size = 0.5
 
 # Get the results
-results = [r.get() for r in result_object]
-results = np.array(results)
-np.save("crash_variance_" + str(args.scenario), results)
+results = None
+if scenario == "highway":
+    results = np.load("../results/Final/crashes_vs_coverage/50k_crash_variance_highway.npy")
+elif scenario == "beamng":
+    results1 = np.load("../results/Final/crashes_vs_coverage/10k_1_crash_variance_beamng.npy")
+    results2 = np.load("../results/Final/crashes_vs_coverage/10k_2_crash_variance_beamng.npy")
+    results3 = np.load("../results/Final/crashes_vs_coverage/30k_crash_variance_beamng.npy")
+    results = np.concatenate([results1, results2, results3], axis=0)
 
-# Close the pool
-pool.close()
+
+results = np.load("../results/crash_variance_highway.npy")
+
 
 # Get the coverage / crashes / and number of tests
 coverage = np.zeros(len(results))
@@ -184,6 +81,7 @@ for i in range(coverage.shape[0]):
     coverage_data[str(c)].append(coverage[i])
     crash_data[str(c)].append(crashes[i])
 
+
 # Plot the distribution of values
 print("-----------------")
 print("Before normalizing test suite size")
@@ -199,7 +97,7 @@ for key in coverage_data:
 fig = plt.figure(2, figsize =(10, 7))
 ax = fig.add_subplot(1, 1, 1)
 rects = ax.bar(coverage_box, number_per_box)
-plt.title("Before normalizing number of test suites")
+plt.title("Before normalizing number of tests")
 plt.xlabel("Physical Coverage (%)")
 plt.ylabel("Number of test suites")
 autolabel(rects)
@@ -266,7 +164,7 @@ for key in coverage_data:
 fig = plt.figure(4, figsize =(10, 7))
 ax = fig.add_subplot(1, 1, 1)
 rects = ax.bar(coverage_box, number_per_box)
-plt.title("After normalizing number of test suites")
+plt.title("After normalizing number of tests")
 plt.xlabel("Physical Coverage (%)")
 plt.ylabel("Number of test suites")
 autolabel(rects)
