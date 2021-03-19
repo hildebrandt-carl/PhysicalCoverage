@@ -25,8 +25,9 @@ def compute_coverage(load_name, return_dict, return_key, base_path):
     
     # Get the current time
     start=datetime.now()
-
-    total_beams = load_name[load_name.find("_b")+2:]
+    total_beams = load_name[load_name.find("_")+1:]
+    total_beams = total_beams[total_beams.find("_")+1:]
+    total_beams = total_beams[total_beams.find("_b")+2:]
     total_beams = total_beams[0:total_beams.find("_d")]
     total_beams = int(total_beams)
 
@@ -150,7 +151,7 @@ elif args.scenario == "highway":
 else:
     exit()
     
-trace_file_names = glob.glob(base_path + "traces" + load_name)
+trace_file_names = glob.glob(base_path + "traces_" + args.scenario + load_name)
 print(trace_file_names)
 file_names = []
 for f in trace_file_names:

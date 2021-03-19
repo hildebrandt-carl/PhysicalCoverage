@@ -47,20 +47,18 @@ def crashing_vs_noncrashing(print_pos):
                 if unique:
                     unique_vectors.append(vector)
 
-    print("--------------------------------------------------------------")
+    print("\n\n\n\n\n\n\n--------------------------------------------------------------")
     print("Crashing tests: " + str(crashing_test_count) + "/" + str(traces.shape[0]))
     print("Crashing unique vectors: " + str(only_crashing_vectors) + "/" + str(total_possible_observations))
     print("Non-crashing tests: " + str(non_crashing_test_count) + "/" + str(traces.shape[0]))
     print("Non-crashing unique vectors (including non crashing): " + str(len(unique_vectors)) + "/" + str(total_possible_observations))
-    print("--------------------------------------------------------------")
+    print("--------------------------------------------------------------\n\n\n\n\n\n\n")
 
     return None
 
 
 def noncrashing_vs_crashing(print_pos):
     global traces 
-    # Sleep for 60 seconds to reduce chance of finishing at the same time
-    # time.sleep(60)
 
     only_noncrashing_vectors = 0
 
@@ -95,12 +93,12 @@ def noncrashing_vs_crashing(print_pos):
                     if unique:
                         unique_vectors.append(vector)
 
-    print("--------------------------------------------------------------")
+    print("\n\n\n\n\n\n\n--------------------------------------------------------------")
     print("Non crashing tests: " + str(non_crashing_test_count) + "/" + str(traces.shape[0]))
     print("Non crashing unique vectors: " + str(only_noncrashing_vectors) + "/" + str(total_possible_observations))
     print("Crashing tests: " + str(crashing_test_count) + "/" + str(traces.shape[0]))
     print("Crashing unique vectors (including non crashing): " + str(len(unique_vectors)) + "/" + str(total_possible_observations))
-    print("--------------------------------------------------------------")
+    print("--------------------------------------------------------------\n\n\n\n\n\n\n")
 
     return None
 
