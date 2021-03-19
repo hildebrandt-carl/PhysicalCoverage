@@ -205,7 +205,7 @@ parser.add_argument('--max_distance',   type=int, default=30,    help="The maxim
 parser.add_argument('--accuracy',       type=int, default=5,     help="What each vector is rounded to")
 parser.add_argument('--total_samples',  type=int, default=1000,  help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--greedy_sample',  type=int, default=50,    help="The unumber of samples considered by the greedy search")
-parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
+parser.add_argument('--scenario',       type=str, default="",    help="beamng/highway")
 args = parser.parse_args()
 
 new_steering_angle  = args.steering_angle

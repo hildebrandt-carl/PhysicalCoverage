@@ -102,6 +102,7 @@ parser.add_argument('--beam_count',     type=int, default=4,    help="The number
 parser.add_argument('--max_distance',   type=int, default=20,   help="The maximum dist the vehicle can travel in 1 time step")
 parser.add_argument('--accuracy',       type=int, default=5,    help="What each vector is rounded to")
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
 args = parser.parse_args()
 
 new_steering_angle  = args.steering_angle
@@ -126,8 +127,15 @@ print("----------------------------------")
 print("----------Locating Files----------")
 print("----------------------------------")
 
-all_files = glob.glob("../../PhysicalCoverageData/beamng/processed/*.txt")
-# all_files = glob.glob("../../PhysicalCoverageData/highway/*/*.txt")
+
+all_files = None
+if args.scenario == "beamng":
+    all_files = glob.glob("../../PhysicalCoverageData/beamng/processed/*.txt")
+elif args.scenario == "highway":
+    all_files = glob.glob("../../PhysicalCoverageData/highway/*/*.txt")
+else:
+    exit()
+
 total_files = len(all_files)
 print("Total files found: " + str(total_files))
 
@@ -197,12 +205,12 @@ for i in tqdm(range(total_files)):
     reach_vectors[i] = test_vectors
     vehicles_per_trace[i] = vehicle_count
 
-save_name = ""
+save_name = args.scenario
 save_name += "_s" + str(new_steering_angle) 
 save_name += "_b" + str(new_total_lines) 
 save_name += "_d" + str(new_max_distance) 
 save_name += "_a" + str(new_accuracy)
 save_name += "_t" + str(total_files)
 save_name += ".npy"
-np.save("traces" + save_name, reach_vectors)
-np.save("vehicles" + save_name, vehicles_per_trace)
+np.save("traces_" + save_name, reach_vectors)
+np.save("vehicles_" + save_name, vehicles_per_trace)
