@@ -35,7 +35,7 @@ def compute_coverage(load_name, return_dict, return_key, base_path):
     total_possible_observations = int(pow(unique_observations_per_cell, total_beams))
 
     print("Processing: " + load_name)
-    traces = np.load(base_path+ "traces" + load_name)
+    traces = np.load(base_path + "traces" + load_name)
     vehicles = np.load(base_path + "vehicles" + load_name)
 
     # Sort the data based on the number of vehicles per test

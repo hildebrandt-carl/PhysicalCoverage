@@ -250,7 +250,7 @@ else:
     exit()
 
 print("Loading: " + load_name)
-traces = np.load(base_path + "traces" + load_name)
+traces = np.load(base_path + "traces_" + args.scenario + load_name)
 
 print("----------------------------------")
 print("--------Crashes vs Coverage-------")
