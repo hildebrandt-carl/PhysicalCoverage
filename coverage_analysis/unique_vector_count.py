@@ -18,7 +18,7 @@ def crashing_vs_noncrashing(print_pos):
     # Compute all unique values for tests with crashes
     unique_vectors = []
     crashing_test_count = 0
-    for i in tqdm(range(traces.shape[0]), position=print_pos):
+    for i in tqdm(range(traces.shape[0]), position=print_pos, mininterval=5):
         trace = traces[i]
         # Only compute traces without a crash
         if np.isnan(trace).any():
@@ -36,7 +36,7 @@ def crashing_vs_noncrashing(print_pos):
 
     # Compute all unique values for tests without crashes
     non_crashing_test_count = 0
-    for i in tqdm(range(traces.shape[0]), position=print_pos):
+    for i in tqdm(range(traces.shape[0]), position=print_pos, mininterval=5):
         trace = traces[i]
         # Only compute traces without a crash
         if not np.isnan(trace).any():
@@ -65,7 +65,7 @@ def noncrashing_vs_crashing(print_pos):
     # Compute all unique values for tests without crashes
     unique_vectors = []
     non_crashing_test_count = 0
-    for i in tqdm(range(traces.shape[0]), position=print_pos):
+    for i in tqdm(range(traces.shape[0]), position=print_pos, mininterval=5):
         trace = traces[i]
         # Only compute traces without a crash
         if not np.isnan(trace).any():
@@ -80,7 +80,7 @@ def noncrashing_vs_crashing(print_pos):
 
     # Compute all unique values for tests with crashes
     crashing_test_count = 0
-    for i in tqdm(range(traces.shape[0]), position=print_pos):
+    for i in tqdm(range(traces.shape[0]), position=print_pos, mininterval=5):
         trace = traces[i]
         # Only compute traces without a crash
         if np.isnan(trace).any():
@@ -176,6 +176,7 @@ pool =  multiprocessing.Pool(total_processors)
 # Call our functions in two different threads
 result_object = []
 result_object.append(pool.apply_async(crashing_vs_noncrashing, args=([1])))
+time.sleep(5)
 result_object.append(pool.apply_async(noncrashing_vs_crashing, args=([2])))
 
 # Get the results
