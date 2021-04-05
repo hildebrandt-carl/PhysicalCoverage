@@ -108,7 +108,7 @@ print("----------------------------------")
 print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
-total_test_suites = 25
+total_test_suites = 10000
 tests_per_test_suite = [50, 100, 250, 500, 1000]
 
 # Create a pool with x processes
