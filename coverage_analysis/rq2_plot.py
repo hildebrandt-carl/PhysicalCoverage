@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 def load_obj(name ):
-    with open("../results/" + name + '.pkl', 'rb') as f:
+    with open(name + '.pkl', 'rb') as f:
         return pickle.load(f)
 
 
@@ -17,7 +17,9 @@ parser.add_argument('--scenario',       type=str, default="",   help="beamng/hig
 parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
 args = parser.parse_args()
 
-return_dict = load_obj("name")
+# Save the results
+save_name = "../results/rq2_" + args.scenario
+return_dict = load_obj(save_name)
 
 # For all the data plot it
 color_index = 0

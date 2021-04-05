@@ -136,8 +136,8 @@ results = np.array(results)
 pool.close()
 
 # Save the results
-np.save("rq1" + str(args.scenario), results)
-results = np.load("r11" + str(args.scenario))
+np.save("../results/rq1" + str(args.scenario), results)
+results = np.load("../results/r11" + str(args.scenario))
 
 # Run the plotting code
 exec(compile(open("rq1_plot.py", "rb").read(), "rq1_plot.py", 'exec'))

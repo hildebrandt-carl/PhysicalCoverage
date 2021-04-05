@@ -9,11 +9,11 @@ from datetime import datetime
 
 
 def save_obj(obj, name ):
-    with open("../results/" + name + '.pkl', 'wb') as f:
+    with open(name + '.pkl', 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 def load_obj(name ):
-    with open("../results/" + name + '.pkl', 'rb') as f:
+    with open(name + '.pkl', 'rb') as f:
         return pickle.load(f)
 
 def isUnique(vector, unique_vectors_seen):
@@ -201,9 +201,9 @@ results = np.array(results)
 pool.close()
 
 # Save the results
-save_name = "rq2_" + args.scenario
-save_obj(return_dict, "name")
-return_dict = load_obj("name")
+save_name = "../results/rq2_" + args.scenario
+save_obj(return_dict, save_name)
+return_dict = load_obj(save_name)
 
 # Run the plotting code
 exec(compile(open("rq2_plot.py", "rb").read(), "rq2_plot.py", 'exec'))
