@@ -1,10 +1,13 @@
+import re
 import glob
 import random 
+import argparse
+
 import numpy as np
 import matplotlib.pyplot as plt
-import re
+
 from tqdm import tqdm
-import argparse
+
 
 
 def string_to_vector(vector_string):

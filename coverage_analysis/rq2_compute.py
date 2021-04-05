@@ -1,12 +1,20 @@
 import glob
-import random 
-import numpy as np
-import matplotlib.pyplot as plt
-import re
-from tqdm import tqdm
 import argparse
 import multiprocessing
+
+import numpy as np
+
+from tqdm import tqdm
 from datetime import datetime
+
+
+def save_obj(obj, name ):
+    with open("../results/" + name + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+def load_obj(name ):
+    with open("../results/" + name + '.pkl', 'rb') as f:
+        return pickle.load(f)
 
 def isUnique(vector, unique_vectors_seen):
     # Return false if the vector contains Nan
@@ -110,6 +118,7 @@ parser.add_argument('--max_distance',   type=int, default=20,   help="The maximu
 parser.add_argument('--accuracy',       type=int, default=5,    help="What each vector is rounded to")
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
+parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
 args = parser.parse_args()
 
 new_steering_angle  = args.steering_angle
@@ -171,7 +180,7 @@ manager = multiprocessing.Manager()
 return_dict = manager.dict()
 
 # Create a pool with x processes
-total_processors = 32
+total_processors = int(args.cores)
 pool =  multiprocessing.Pool(total_processors)
 
 # Call our function total_test_suites times
@@ -184,28 +193,17 @@ for file_index in range(len(file_names)):
 
     result_object.append(pool.apply_async(compute_coverage, args=(file_name, return_dict, return_key, base_path)))
 
-# Get the results
+# Get the results (results are actually stored in return_dict)
 results = [r.get() for r in result_object]
 results = np.array(results)
 
 # Close the pool
 pool.close()
 
-# For all the data plot it
-color_index = 0
-for key in return_dict:
-    # Expand the data
-    accumulative_graph_coverage, acuumulative_graph_vehicle_count, total_beams = return_dict[key]
+# Save the results
+save_name = "rq2_" + args.scenario
+save_obj(return_dict, "name")
+return_dict = load_obj("name")
 
-    # Plotting the coverage per scenario            
-    plt.figure(1)
-    plt.scatter(np.arange(len(accumulative_graph_coverage)), accumulative_graph_coverage, color='C'+str(color_index), marker='o', label=str(total_beams) + " beams", s=1)
-    color_index += 1
-
-# Plot the legend
-plt.legend(loc='upper left', markerscale=7)
-plt.title("Reachable Set Coverage")
-plt.xlabel("Scenario")
-plt.ylabel("Reachable Set Coverage (%)")
-
-plt.show()
+# Run the plotting code
+exec(compile(open("rq2_plot.py", "rb").read(), "rq2_plot.py", 'exec'))
