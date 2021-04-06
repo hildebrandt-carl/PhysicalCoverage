@@ -1,3 +1,4 @@
+import scipy.stats
 import random 
 import argparse
 import multiprocessing
@@ -27,6 +28,8 @@ save_name = "../results/rq3_"
 final_coverage          = np.load(save_name + "coverage_" + str(args.scenario) + ".npy")
 final_number_crashes    = np.load(save_name + "crashes_" + str(args.scenario) + ".npy")
 
+
+
 # Use the tests_per_test_suite
 tests_per_test_suite = [50, 100, 250, 500, 1000]
 
@@ -41,7 +44,11 @@ for ind in range(final_coverage.shape[0]):
     test_number                     = tests_per_test_suite[ind]
 
     # Plot the data
-    plt.scatter(random_selection_coverage_data, random_selection_crash_data, color='C' + str(color_index), marker='o', label="#Tests: " + str(test_number), s=5)
+    plt.scatter(random_selection_coverage_data, random_selection_crash_data, color='C' + str(color_index), marker='o', label="#Tests: " + str(test_number), s=2, alpha=1)
+
+    # Compute Pearson Correlation
+    r = scipy.stats.pearsonr(random_selection_coverage_data, random_selection_crash_data)
+    print("Correlation for #" + str(test_number) + ": " + str(r))
 
     # # Compute the line of best fit
     # m, b = np.polyfit(random_selection_coverage_data, random_selection_crash_data, 1)
@@ -51,5 +58,8 @@ for ind in range(final_coverage.shape[0]):
     # keep track of the color we are plotting
     color_index += 1
 
+plt.title(args.scenario)
+plt.xlabel("Physical Coverage  (%)")
+plt.ylabel("Number of Crashes")
 plt.legend()
 plt.show()

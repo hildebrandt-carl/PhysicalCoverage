@@ -1,3 +1,4 @@
+import time
 import random 
 import argparse
 import multiprocessing
@@ -108,8 +109,11 @@ print("----------------------------------")
 print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
-total_test_suites = 10000
+total_test_suites = 500
 tests_per_test_suite = [50, 100, 250, 500, 1000]
+
+# Start timeing
+start_time = time.time()
 
 # Create a pool with x processes
 total_processors = int(args.cores)
@@ -138,6 +142,7 @@ for r in results:
     position_counter[ind] += 1
 
 print("Done!")
+print("Time To Compute: " + str(time.time() - start_time))
 
 # Save the results
 save_name = "../results/rq3_"
