@@ -6,6 +6,8 @@ import multiprocessing
 import numpy as np
 import matplotlib.pyplot as plt
 
+from prettytable import PrettyTable
+
 
 def load_obj(name ):
     with open(name + '.pkl', 'rb') as f:
@@ -28,13 +30,15 @@ save_name = "../results/rq3_"
 final_coverage          = np.load(save_name + "coverage_" + str(args.scenario) + ".npy")
 final_number_crashes    = np.load(save_name + "crashes_" + str(args.scenario) + ".npy")
 
-
-
 # Use the tests_per_test_suite
 tests_per_test_suite = [50, 100, 250, 500, 1000]
 
 # For all the data plot it
 plt.figure(args.scenario)
+
+# Create a table with the output
+print("Results:")
+t = PrettyTable(['#Test Suites', '#Test', 'Pearson Correlation', 'P-value'])
 
 color_index = 0
 for ind in range(final_coverage.shape[0]):
@@ -47,8 +51,9 @@ for ind in range(final_coverage.shape[0]):
     plt.scatter(random_selection_coverage_data, random_selection_crash_data, color='C' + str(color_index), marker='o', label="#Tests: " + str(test_number), s=2, alpha=1)
 
     # Compute Pearson Correlation
-    r = scipy.stats.pearsonr(random_selection_coverage_data, random_selection_crash_data)
-    print("Correlation for #" + str(test_number) + ": " + str(r))
+    r, p = scipy.stats.pearsonr(random_selection_coverage_data, random_selection_crash_data)
+    # print("Correlation for #" + str(test_number) + ": " + str(r))
+    t.add_row([len(random_selection_coverage_data), test_number, np.round(r,4), np.round(p,4)])
 
     # # Compute the line of best fit
     # m, b = np.polyfit(random_selection_coverage_data, random_selection_crash_data, 1)
@@ -58,8 +63,15 @@ for ind in range(final_coverage.shape[0]):
     # keep track of the color we are plotting
     color_index += 1
 
+# Print the table
+print(t)
+
+# Plot the data
 plt.title(args.scenario)
 plt.xlabel("Physical Coverage  (%)")
 plt.ylabel("Number of Crashes")
 plt.legend()
 plt.show()
+
+
+

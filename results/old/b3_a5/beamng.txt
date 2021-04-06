@@ -1,0 +1,29 @@
+python3 rq3_compute.py --steering_angle 33 --beam_count 3 --max_distance=45 --accuracy 5 --total_samples 1423 --greedy_sample 1000 --scenario beamng --cores 128
+----------------------------------
+-----Reach Set Configuration------
+----------------------------------
+Max steering angle:	33
+Total beams:		3
+Max velocity:		45
+Vector accuracy:	5
+Greedy Sample Size:	1000
+----------------------------------
+-----------Loading Data-----------
+----------------------------------
+Loading: _s33_b3_d45_a5_t1423.npy
+----------------------------------
+--------Crashes vs Coverage-------
+----------------------------------
+Done!
+Time To Compute: 748.6562829017639
+Saving to: ../results/rq3_
+Results:
++-------+---------------------+---------+
+| #Test | Pearson Correlation | P-value |
++-------+---------------------+---------+
+|   50  |        0.0128       |  0.6868 |
+|  100  |        0.0726       |  0.0217 |
+|  250  |        0.0419       |  0.1855 |
+|  500  |        0.0373       |  0.2383 |
+|  1000 |        0.0554       |  0.0801 |
++-------+---------------------+---------+

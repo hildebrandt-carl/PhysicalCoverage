@@ -1,9 +1,10 @@
-import time
 import random 
 import argparse
 import multiprocessing
 
 import numpy as np
+
+from tqdm import tqdm
 
 
 def random_selection(number_of_tests):
@@ -109,25 +110,25 @@ print("----------------------------------")
 print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
-total_test_suites = 500
+total_test_suites = 1000
 tests_per_test_suite = [50, 100, 250, 500, 1000]
-
-# Start timeing
-start_time = time.time()
 
 # Create a pool with x processes
 total_processors = int(args.cores)
-pool =  multiprocessing.Pool(total_processors)
+pool =  multiprocessing.Pool(processes=total_processors)
 
 # Call our function total_test_suites times
-result_object = []
+jobs = []
 for number_of_tests in tests_per_test_suite:
     for i in range(total_test_suites):
-        result_object.append(pool.apply_async(random_selection, args=([number_of_tests])))
+        jobs.append(pool.apply_async(random_selection, args=([number_of_tests])))
 
 # Get the results
-results = [r.get() for r in result_object]
-results = np.array(results)
+results = []
+for job in tqdm(jobs):
+    results.append(job.get())
+
+print("Done!")
 
 # Sort the results based on number of test suites
 final_coverage          = np.zeros((len(tests_per_test_suite), total_test_suites))
@@ -140,9 +141,6 @@ for r in results:
     final_coverage[ind, position_counter[ind]] = r[1]
     final_number_crashes[ind, position_counter[ind]] = r[2]
     position_counter[ind] += 1
-
-print("Done!")
-print("Time To Compute: " + str(time.time() - start_time))
 
 # Save the results
 save_name = "../results/rq3_"
