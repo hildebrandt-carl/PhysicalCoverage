@@ -3,19 +3,19 @@
 ## Creating data
 First you create the data using:
 
-python3 process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 1
-python3 process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 2
-python3 process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 3
-python3 process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 4
-python3 process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 5
-python3 process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 10
+python3 pre_process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 1
+python3 pre_process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 2
+python3 pre_process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 3
+python3 pre_process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 4
+python3 pre_process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 5
+python3 pre_process_data.py --steering_angle 30 --max_distance=30 --accuracy 5 --total_samples -1 --scenario highway --beam_count 10
 
-python3 process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 1
-python3 process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 2
-python3 process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 3
-python3 process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 4
-python3 process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 5
-python3 process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 10
+python3 pre_process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 1
+python3 pre_process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 2
+python3 pre_process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 3
+python3 pre_process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 4
+python3 pre_process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 5
+python3 pre_process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 --total_samples -1 --scenario beamng --beam_count 10
 
 ## Generating Graphs
 Graphs can be generated using:

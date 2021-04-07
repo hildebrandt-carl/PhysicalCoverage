@@ -135,7 +135,7 @@ all_files = None
 if args.scenario == "beamng":
     all_files = glob.glob("../../PhysicalCoverageData/beamng/processed/*.txt")
 elif args.scenario == "highway":
-    all_files = glob.glob("../../PhysicalCoverageData/highway/*/*.txt")
+    all_files = glob.glob("../../PhysicalCoverageData/highway/raw/*/*.txt")
 else:
     exit()
 
@@ -157,7 +157,7 @@ print("Total files selected for processing: " + str(total_files))
 print("----------------------------------")
 print("--------Memory Requirements-------")
 print("----------------------------------")
-
+print(total_files)
 print("Computing size of memory required")
 # Open the first 1000 files to get an estimate of how many vectors in each file
 vectors_per_file = np.zeros(min(total_files, 1000), dtype=int)
