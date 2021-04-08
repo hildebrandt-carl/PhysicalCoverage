@@ -25,13 +25,69 @@ parser.add_argument('--scenario',       type=str, default="",    help="beamng/hi
 parser.add_argument('--cores',          type=int, default=4,     help="The number of CPU cores available")
 args = parser.parse_args()
 
+new_steering_angle  = args.steering_angle
+new_total_lines     = args.beam_count
+new_max_distance    = args.max_distance
+new_accuracy        = args.accuracy
+greedy_sample_size  = args.greedy_sample
+
+print("----------------------------------")
+print("-----------Loading Data-----------")
+print("----------------------------------")
+
 # Load the results
 save_name = "../results/rq3_"
 final_coverage          = np.load(save_name + "coverage_" + str(args.scenario) + ".npy")
 final_number_crashes    = np.load(save_name + "crashes_" + str(args.scenario) + ".npy")
 
+# Load the traces
+load_name = ""
+load_name += "_s" + str(new_steering_angle) 
+load_name += "_b" + str(new_total_lines) 
+load_name += "_d" + str(new_max_distance) 
+load_name += "_a" + str(new_accuracy)
+load_name += "_t" + str(args.total_samples)
+load_name += ".npy"
+
+# Get the file names
+base_path = None
+if args.scenario == "beamng":
+    base_path = '../../PhysicalCoverageData/beamng/numpy_data/'
+elif args.scenario == "highway":
+    base_path = '../../PhysicalCoverageData/highway/numpy_data/' + str(args.total_samples) + "/"
+else:
+    exit()
+
+print("Loading: " + load_name)
+traces = np.load(base_path + "traces_" + args.scenario + load_name)
+
+# Compute the number of crashes
+print("Counting the number of crashes")
+total_crashes = 0
+for t in traces:
+    if np.isnan(t).any():
+        total_crashes += 1
+print("Total Crashes: " + str(total_crashes))
+
+
+print("----------------------------------")
+print("----------Plotting Data-----------")
+print("----------------------------------")
+
+
 # Use the tests_per_test_suite
-tests_per_test_suite = [50, 100, 250, 500, 1000]
+if args.scenario == "beamng":
+    total_random_test_suites = 1000
+    test_suite_size = [50, 100, 200, 500, 1000]
+    total_greedy_test_suites = 100
+    greedy_sample_sizes = [2, 3, 4, 5, 10]
+elif args.scenario == "highway":
+    total_random_test_suites = 1000
+    test_suite_size = [50, 100, 200, 500, 1000]
+    total_greedy_test_suites = 100
+    greedy_sample_sizes = [2, 3, 4, 5, 10]
+else:
+    exit()
 
 # For all the data plot it
 plt.figure(args.scenario)
@@ -45,13 +101,16 @@ for ind in range(final_coverage.shape[0]):
     # Expand the data
     random_selection_coverage_data  = final_coverage[ind,:]
     random_selection_crash_data     = final_number_crashes[ind,:]
-    test_number                     = tests_per_test_suite[ind]
+    test_number                     = test_suite_size[ind]
+
+    # Convert crash data to a percentage
+    random_selection_crash_percentage = (random_selection_crash_data / total_crashes) * 100
 
     # Plot the data
-    plt.scatter(random_selection_coverage_data, random_selection_crash_data, color='C' + str(color_index), marker='o', label="#Tests: " + str(test_number), s=2, alpha=1)
+    plt.scatter(random_selection_coverage_data, random_selection_crash_percentage, color='C' + str(color_index), marker='o', label="#Tests: " + str(test_number), s=2, alpha=1)
 
     # Compute Pearson Correlation
-    r, p = scipy.stats.pearsonr(random_selection_coverage_data, random_selection_crash_data)
+    r, p = scipy.stats.pearsonr(random_selection_coverage_data, random_selection_crash_percentage)
     # print("Correlation for #" + str(test_number) + ": " + str(r))
     t.add_row([len(random_selection_coverage_data), test_number, np.round(r,4), np.round(p,4)])
 
@@ -69,7 +128,7 @@ print(t)
 # Plot the data
 plt.title(args.scenario)
 plt.xlabel("Physical Coverage  (%)")
-plt.ylabel("Number of Crashes")
+plt.ylabel("Total Crashes Found (%)")
 plt.legend()
 plt.show()
 

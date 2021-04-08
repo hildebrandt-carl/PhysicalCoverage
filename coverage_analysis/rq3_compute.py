@@ -1,3 +1,4 @@
+import copy
 import random 
 import argparse
 import multiprocessing
@@ -12,7 +13,7 @@ def random_selection(number_of_tests):
 
     # Generate the test indices
     local_state = np.random.RandomState()
-    indices = local_state.choice(traces.shape[0], number_of_tests, replace=False)
+    indices = local_state.choice(traces.shape[0], size=number_of_tests, replace=False)
     # Init variables
     coverage = 0
     number_of_crashes = 0
@@ -35,7 +36,127 @@ def random_selection(number_of_tests):
         coverage = (len(unique_vectors_seen) / float(total_possible_observations)) * 100
         
     # Return the data
-    return [number_of_tests, coverage, number_of_crashes]
+    return ["random", number_of_tests, 0, coverage, number_of_crashes]
+
+def greedy_selection_best(number_of_tests, greedy_sample_size):
+    global traces
+
+    # Greedy algorithm
+    best_case_vectors = []
+    best_case_crashes = 0
+
+    # Hold indices which we can select from
+    available_indices = set(np.arange(traces.shape[0]))
+
+    for k in np.arange(number_of_tests):
+
+        # Randomly select greedy_sample_size traces to compare over
+        local_state = np.random.RandomState()
+        selected_indices = local_state.choice(list(available_indices), size=min(greedy_sample_size, len(available_indices)),replace=False)
+
+        # Holds the min and max coverage
+        max_coverage = None
+        best_selected_trace_index = -1
+
+        # For each considered trace
+        for i in selected_indices:
+
+            # These hold the new vectors
+            current_best_case_vectors = copy.deepcopy(best_case_vectors)
+
+            # Get the current test we are considering
+            vectors = traces[i]
+
+            # Check to see if any of the vectors are new in this trace
+            for v in vectors:
+                if not np.isnan(v).any():
+                    unique = isUnique(v, current_best_case_vectors)
+                    if unique:
+                        current_best_case_vectors.append(v)
+
+            # See if this is the best we can do
+            if max_coverage is None:
+                best_selected_trace_index = i
+                max_coverage = copy.deepcopy(current_best_case_vectors)
+            elif len(max_coverage) < len(current_best_case_vectors):
+                best_selected_trace_index = i
+                max_coverage = copy.deepcopy(current_best_case_vectors)
+
+        # Update the best and worst coverage data
+        best_case_vectors = copy.deepcopy(max_coverage)
+        # Update the best and worst crash data
+        if np.isnan(traces[best_selected_trace_index]).any():
+            best_case_crashes += 1
+
+        # Remove the selected index from consideration
+        available_indices.remove(best_selected_trace_index)
+
+    best_coverage = (len(best_case_vectors) / float(total_possible_observations)) * 100
+    
+    # Return the data
+    return ["best", number_of_tests, greedy_sample_size, best_coverage, best_case_crashes]
+
+def greedy_selection_worst(number_of_tests, greedy_sample_size):
+    global traces
+
+    # Greedy algorithm
+    worst_case_vectors = []
+    worst_case_crashes = 0
+
+    # Hold indices which we can select from
+    available_indices = set(np.arange(traces.shape[0]))
+
+    for k in np.arange(number_of_tests):
+        
+        # Randomly select greedy_sample_size traces to compare over
+        local_state = np.random.RandomState()
+        
+        selected_indices = local_state.choice(list(available_indices), size=min(greedy_sample_size, len(available_indices)),replace=False)
+
+        # Holds the min and max coverage
+        min_coverage = None
+        max_coverage = []
+        worst_selected_trace_index = -1
+        best_selected_trace_index = -1
+
+        # For each considered trace
+        for i in selected_indices:
+
+            # These hold the new vectors
+            current_worst_case_vectors = copy.deepcopy(worst_case_vectors)
+
+            # Get the current test we are considering
+            vectors = traces[i]
+
+            # Check to see if any of the vectors are new in this trace
+            for v in vectors:
+                if not np.isnan(v).any():
+                    unique = isUnique(v, current_worst_case_vectors)
+                    if unique:
+                        current_worst_case_vectors.append(v)
+
+            # See if this is the worst we can do
+            if min_coverage is None:
+                worst_selected_trace_index = i
+                min_coverage = copy.deepcopy(current_worst_case_vectors)
+            elif len(min_coverage) > len(current_worst_case_vectors):
+                worst_selected_trace_index = i
+                min_coverage = copy.deepcopy(current_worst_case_vectors)
+
+        # Update the best and worst coverage data
+        worst_case_vectors = copy.deepcopy(min_coverage)
+
+        # Update the best and worst crash data
+        if np.isnan(traces[worst_selected_trace_index]).any():
+            worst_case_crashes += 1
+
+        # Remove the selected index from consideration
+        available_indices.remove(worst_selected_trace_index)
+
+    worst_coverage = (len(worst_case_vectors) / float(total_possible_observations)) * 100
+    
+    # Return the data
+    return ["worst", number_of_tests, greedy_sample_size, worst_coverage, worst_case_crashes]
 
 def isUnique(vector, unique_vectors_seen):
     # Return false if the vector contains Nan
@@ -53,11 +174,11 @@ def isUnique(vector, unique_vectors_seen):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--steering_angle', type=int, default=30,    help="The steering angle used to compute the reachable set")
-parser.add_argument('--beam_count',     type=int, default=5,     help="The number of beams used to vectorize the reachable set")
+parser.add_argument('--beam_count',     type=int, default=5,     help="The number of beams used to vectorized the reachable set")
 parser.add_argument('--max_distance',   type=int, default=30,    help="The maximum dist the vehicle can travel in 1 time step")
 parser.add_argument('--accuracy',       type=int, default=5,     help="What each vector is rounded to")
 parser.add_argument('--total_samples',  type=int, default=1000,  help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--greedy_sample',  type=int, default=50,    help="The unumber of samples considered by the greedy search")
+parser.add_argument('--greedy_sample',  type=int, default=50,    help="The number of samples considered by the greedy search")
 parser.add_argument('--scenario',       type=str, default="",    help="beamng/highway")
 parser.add_argument('--cores',          type=int, default=4,     help="The number of CPU cores available")
 args = parser.parse_args()
@@ -110,18 +231,36 @@ print("----------------------------------")
 print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
-total_test_suites = 1000
-tests_per_test_suite = [50, 100, 250, 500, 1000]
+# Use the tests_per_test_suite
+if args.scenario == "beamng":
+    total_random_test_suites = 1000
+    test_suite_size = [50, 100, 200, 500, 1000]
+    total_greedy_test_suites = 100
+    greedy_sample_sizes = [2, 3, 4, 5, 10]
+elif args.scenario == "highway":
+    total_random_test_suites = 1000
+    test_suite_size = [50, 100, 200, 500, 1000]
+    total_greedy_test_suites = 100
+    greedy_sample_sizes = [2, 3, 4, 5, 10]
+else:
+    exit()
 
 # Create a pool with x processes
 total_processors = int(args.cores)
 pool =  multiprocessing.Pool(processes=total_processors)
 
-# Call our function total_test_suites times
+
 jobs = []
-for number_of_tests in tests_per_test_suite:
-    for i in range(total_test_suites):
-        jobs.append(pool.apply_async(random_selection, args=([number_of_tests])))
+# For all the different test suite sizes
+for suite_size in test_suite_size:
+    # Create random samples
+    for i in range(total_random_test_suites):
+        jobs.append(pool.apply_async(random_selection, args=([suite_size])))
+    # Create greedy samples
+    for _ in range(total_greedy_test_suites):
+        for sample_size in greedy_sample_sizes:
+            jobs.append(pool.apply_async(greedy_selection_best, args=([suite_size, sample_size])))
+            jobs.append(pool.apply_async(greedy_selection_worst, args=([suite_size, sample_size])))
 
 # Get the results
 results = []
@@ -131,15 +270,16 @@ for job in tqdm(jobs):
 print("Done!")
 
 # Sort the results based on number of test suites
-final_coverage          = np.zeros((len(tests_per_test_suite), total_test_suites))
-final_number_crashes    = np.zeros((len(tests_per_test_suite), total_test_suites))
-position_counter        = np.zeros(len(tests_per_test_suite), dtype=int)
+total_tests = total_random_test_suites + int(2 * total_greedy_test_suites * len(greedy_sample_sizes))
+final_coverage          = np.zeros((len(test_suite_size), total_tests))
+final_number_crashes    = np.zeros((len(test_suite_size), total_tests))
+position_counter        = np.zeros(len(test_suite_size), dtype=int)
 for r in results:
     # Get the row
-    ind = tests_per_test_suite.index(r[0])
+    ind = test_suite_size.index(r[1])
     # Save in the correct position
-    final_coverage[ind, position_counter[ind]] = r[1]
-    final_number_crashes[ind, position_counter[ind]] = r[2]
+    final_coverage[ind, position_counter[ind]] = r[3]
+    final_number_crashes[ind, position_counter[ind]] = r[4]
     position_counter[ind] += 1
 
 # Save the results
