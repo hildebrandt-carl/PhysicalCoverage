@@ -94,7 +94,7 @@ plt.figure(args.scenario)
 
 # Create a table with the output
 print("Results:")
-t = PrettyTable(['#Test Suites', '#Test', 'Pearson Correlation', 'P-value'])
+t = PrettyTable(['#Test Suites', '#Test', 'Pearson Correlation', 'P-value', "r-squared", "P-Value", "Standard Error"])
 
 color_index = 0
 for ind in range(final_coverage.shape[0]):
@@ -106,18 +106,23 @@ for ind in range(final_coverage.shape[0]):
     # Convert crash data to a percentage
     random_selection_crash_percentage = (random_selection_crash_data / total_crashes) * 100
 
+    # Set the x and y data
+    x = random_selection_coverage_data
+    y = random_selection_crash_percentage
+
     # Plot the data
-    plt.scatter(random_selection_coverage_data, random_selection_crash_percentage, color='C' + str(color_index), marker='o', label="#Tests: " + str(test_number), s=2, alpha=1)
+    plt.scatter(x, y, color='C' + str(color_index), marker='o', label="#Tests: " + str(test_number), s=2, alpha=1)
 
     # Compute Pearson Correlation
-    r, p = scipy.stats.pearsonr(random_selection_coverage_data, random_selection_crash_percentage)
-    # print("Correlation for #" + str(test_number) + ": " + str(r))
-    t.add_row([len(random_selection_coverage_data), test_number, np.round(r,4), np.round(p,4)])
+    r, p = scipy.stats.pearsonr(x, y)
 
-    # # Compute the line of best fit
-    # m, b = np.polyfit(random_selection_coverage_data, random_selection_crash_data, 1)
-    # x_range = np.arange(worst_coverage, best_coverage, 0.1)
-    # plt.plot(x_range, m*x_range + b, c='C' + str(color_index))
+    # Compute the line of best fit
+    slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
+    x_range = np.arange(np.min(x), np.max(x), 0.1)
+    plt.plot(x_range, slope*x_range + intercept, c='C' + str(color_index))
+
+    # Display data
+    t.add_row([len(x), test_number, np.round(r, 4), np.round(p, 4), np.round(r_value, 4), np.round(p_value, 4), np.round(std_err,4)])
     
     # keep track of the color we are plotting
     color_index += 1
