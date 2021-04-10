@@ -1,21 +1,162 @@
-import glob
-import pickle
+import copy
+import random 
 import argparse
 import multiprocessing
 
 import numpy as np
 
 from tqdm import tqdm
-from datetime import datetime
 
 
-def save_obj(obj, name ):
-    with open(name + '.pkl', 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+def random_selection(number_of_tests):
+    global traces
 
-def load_obj(name ):
-    with open(name + '.pkl', 'rb') as f:
-        return pickle.load(f)
+    # Generate the test indices
+    local_state = np.random.RandomState()
+    indices = local_state.choice(traces.shape[0], size=number_of_tests, replace=False)
+    # Init variables
+    coverage = 0
+    number_of_crashes = 0
+    unique_vectors_seen = []
+    # For the X test cases
+    for random_i in indices:
+        # Get the filename
+        vectors = traces[random_i]
+        # Look for a crash
+        if np.isnan(vectors).any():
+            number_of_crashes += 1
+        # Check to see if any of the vectors are new
+        for v in vectors:
+            if not np.isnan(v).any():
+                unique = isUnique(v, unique_vectors_seen)
+                if unique:
+                    unique_vectors_seen.append(v)
+        
+        # Compute coverage
+        coverage = (len(unique_vectors_seen) / float(total_possible_observations)) * 100
+        
+    # Return the data
+    return ["random", number_of_tests, 0, coverage, number_of_crashes]
+
+def greedy_selection_best(number_of_tests, greedy_sample_size):
+    global traces
+
+    # Greedy algorithm
+    best_case_vectors = []
+    best_case_crashes = 0
+
+    # Hold indices which we can select from
+    available_indices = set(np.arange(traces.shape[0]))
+
+    for k in np.arange(number_of_tests):
+
+        # Randomly select greedy_sample_size traces to compare over
+        local_state = np.random.RandomState()
+        selected_indices = local_state.choice(list(available_indices), size=min(greedy_sample_size, len(available_indices)),replace=False)
+
+        # Holds the min and max coverage
+        max_coverage = None
+        best_selected_trace_index = -1
+
+        # For each considered trace
+        for i in selected_indices:
+
+            # These hold the new vectors
+            current_best_case_vectors = copy.deepcopy(best_case_vectors)
+
+            # Get the current test we are considering
+            vectors = traces[i]
+
+            # Check to see if any of the vectors are new in this trace
+            for v in vectors:
+                if not np.isnan(v).any():
+                    unique = isUnique(v, current_best_case_vectors)
+                    if unique:
+                        current_best_case_vectors.append(v)
+
+            # See if this is the best we can do
+            if max_coverage is None:
+                best_selected_trace_index = i
+                max_coverage = copy.deepcopy(current_best_case_vectors)
+            elif len(max_coverage) < len(current_best_case_vectors):
+                best_selected_trace_index = i
+                max_coverage = copy.deepcopy(current_best_case_vectors)
+
+        # Update the best and worst coverage data
+        best_case_vectors = copy.deepcopy(max_coverage)
+        # Update the best and worst crash data
+        if np.isnan(traces[best_selected_trace_index]).any():
+            best_case_crashes += 1
+
+        # Remove the selected index from consideration
+        available_indices.remove(best_selected_trace_index)
+
+    best_coverage = (len(best_case_vectors) / float(total_possible_observations)) * 100
+    
+    # Return the data
+    return ["best", number_of_tests, greedy_sample_size, best_coverage, best_case_crashes]
+
+def greedy_selection_worst(number_of_tests, greedy_sample_size):
+    global traces
+
+    # Greedy algorithm
+    worst_case_vectors = []
+    worst_case_crashes = 0
+
+    # Hold indices which we can select from
+    available_indices = set(np.arange(traces.shape[0]))
+
+    for k in np.arange(number_of_tests):
+        
+        # Randomly select greedy_sample_size traces to compare over
+        local_state = np.random.RandomState()
+        
+        selected_indices = local_state.choice(list(available_indices), size=min(greedy_sample_size, len(available_indices)),replace=False)
+
+        # Holds the min and max coverage
+        min_coverage = None
+        max_coverage = []
+        worst_selected_trace_index = -1
+        best_selected_trace_index = -1
+
+        # For each considered trace
+        for i in selected_indices:
+
+            # These hold the new vectors
+            current_worst_case_vectors = copy.deepcopy(worst_case_vectors)
+
+            # Get the current test we are considering
+            vectors = traces[i]
+
+            # Check to see if any of the vectors are new in this trace
+            for v in vectors:
+                if not np.isnan(v).any():
+                    unique = isUnique(v, current_worst_case_vectors)
+                    if unique:
+                        current_worst_case_vectors.append(v)
+
+            # See if this is the worst we can do
+            if min_coverage is None:
+                worst_selected_trace_index = i
+                min_coverage = copy.deepcopy(current_worst_case_vectors)
+            elif len(min_coverage) > len(current_worst_case_vectors):
+                worst_selected_trace_index = i
+                min_coverage = copy.deepcopy(current_worst_case_vectors)
+
+        # Update the best and worst coverage data
+        worst_case_vectors = copy.deepcopy(min_coverage)
+
+        # Update the best and worst crash data
+        if np.isnan(traces[worst_selected_trace_index]).any():
+            worst_case_crashes += 1
+
+        # Remove the selected index from consideration
+        available_indices.remove(worst_selected_trace_index)
+
+    worst_coverage = (len(worst_case_vectors) / float(total_possible_observations)) * 100
+    
+    # Return the data
+    return ["worst", number_of_tests, greedy_sample_size, worst_coverage, worst_case_crashes]
 
 def isUnique(vector, unique_vectors_seen):
     # Return false if the vector contains Nan
@@ -30,105 +171,23 @@ def isUnique(vector, unique_vectors_seen):
             break
     return unique
 
-def compute_coverage(load_name, return_dict, return_key, base_path):
-    
-    # Get the current time
-    start=datetime.now()
-    total_beams = load_name[load_name.find("_")+1:]
-    total_beams = total_beams[total_beams.find("_")+1:]
-    total_beams = total_beams[total_beams.find("_b")+2:]
-    total_beams = total_beams[0:total_beams.find("_d")]
-    total_beams = int(total_beams)
-
-    # Compute total possible values using the above
-    unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
-    total_possible_observations = int(pow(unique_observations_per_cell, total_beams))
-
-    print("Processing: " + load_name)
-    traces = np.load(base_path + "traces" + load_name)
-    vehicles = np.load(base_path + "vehicles" + load_name)
-
-    # Sort the data based on the number of vehicles per test
-    vehicles_indices = vehicles.argsort()
-    traces = traces[vehicles_indices]
-    vehicles = vehicles[vehicles_indices]
-
-    total_traces = traces.shape[0]
-    total_crashes = 0
-    total_vectors = 0
-
-    unique_vectors_seen                 = []
-    accumulative_graph                  = np.full(total_traces, np.nan)
-    acuumulative_graph_vehicle_count    = np.full(total_traces, np.nan)
-
-    # For each of the traces
-    for i in tqdm(range(total_traces), position=int(return_key[1:]), mininterval=5):
-        # Get the trace
-        trace = traces[i]
-        vehicle_count = vehicles[i]
-        
-        # See if there was a crash
-        if np.isnan(trace).any():
-            total_crashes += 1
-
-        # For each vector in the trace
-        for v in trace:
-            # If this vector does not have any nan
-            if not np.isnan(v).any():
-                # Count it
-                total_vectors += 1
-                # Check if it is unique
-                unique = isUnique(v, unique_vectors_seen)
-                if unique:
-                    unique_vectors_seen.append(v)
-
-        # Used for the accumulative graph
-        unique_vector_length_count          = len(unique_vectors_seen)
-        accumulative_graph[i]               = unique_vector_length_count
-        acuumulative_graph_vehicle_count[i] = vehicle_count
-
-    overall_coverage = round((unique_vector_length_count / float(total_possible_observations)) * 100, 4)
-    crash_percentage = round(total_crashes / float(total_traces) * 100, 4)
-
-    print("\n\n\n\n\n\n")
-    print("Filename:\t\t\t" + load_name)
-    print("Total traces considered:\t" + str(total_vectors))
-    print("Total crashes:\t\t\t" + str(total_crashes))
-    print("Crash percentage:\t\t" + str(crash_percentage) + "%")
-    print("Total vectors considered:\t" + str(total_vectors))
-    print("Total unique vectors seen:\t" + str(unique_vector_length_count))
-    print("Total possible vectors:\t\t" + str(total_possible_observations))
-    print("Total coverage:\t\t\t" + str(overall_coverage) + "%")
-    print("Total time to compute:\t\t" + str(datetime.now()-start))
-
-    # Get all the unique number of external vehicles
-    unique_vehicle_count = list(set(acuumulative_graph_vehicle_count))
-    unique_vehicle_count.sort()
-
-    # Convert to a percentage
-    accumulative_graph_coverage = (accumulative_graph / total_possible_observations) * 100
-
-    # Return both arrays
-    return_dict[return_key] = [accumulative_graph_coverage, acuumulative_graph_vehicle_count, total_beams]
-    return True
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--steering_angle', type=int, default=30,   help="The steering angle used to compute the reachable set")
-parser.add_argument('--beam_count',     type=int, default=4,    help="The number of beams used to vectorize the reachable set")
-parser.add_argument('--max_distance',   type=int, default=20,   help="The maximum dist the vehicle can travel in 1 time step")
-parser.add_argument('--accuracy',       type=int, default=5,    help="What each vector is rounded to")
-parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
-parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
+parser.add_argument('--steering_angle', type=int, default=30,    help="The steering angle used to compute the reachable set")
+parser.add_argument('--beam_count',     type=int, default=5,     help="The number of beams used to vectorized the reachable set")
+parser.add_argument('--max_distance',   type=int, default=30,    help="The maximum dist the vehicle can travel in 1 time step")
+parser.add_argument('--accuracy',       type=int, default=5,     help="What each vector is rounded to")
+parser.add_argument('--total_samples',  type=int, default=1000,  help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--greedy_sample',  type=int, default=50,    help="The number of samples considered by the greedy search")
+parser.add_argument('--scenario',       type=str, default="",    help="beamng/highway")
+parser.add_argument('--cores',          type=int, default=4,     help="The number of CPU cores available")
 args = parser.parse_args()
 
 new_steering_angle  = args.steering_angle
 new_total_lines     = args.beam_count
 new_max_distance    = args.max_distance
 new_accuracy        = args.accuracy
-
-if new_total_lines == -1:
-    new_total_lines = "*"
+greedy_sample_size  = args.greedy_sample
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
@@ -138,6 +197,11 @@ print("Max steering angle:\t" + str(new_steering_angle))
 print("Total beams:\t\t" + str(new_total_lines))
 print("Max velocity:\t\t" + str(new_max_distance))
 print("Vector accuracy:\t" + str(new_accuracy))
+print("Greedy Sample Size:\t" + str(greedy_sample_size))
+
+# Compute total possible values using the above
+unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
+total_possible_observations = pow(unique_observations_per_cell, new_total_lines)
 
 print("----------------------------------")
 print("-----------Loading Data-----------")
@@ -145,7 +209,6 @@ print("----------------------------------")
 
 load_name = ""
 load_name += "_s" + str(new_steering_angle) 
-# load_name += "_b" + str(new_total_lines) 
 load_name += "_b" + str(new_total_lines) 
 load_name += "_d" + str(new_max_distance) 
 load_name += "_a" + str(new_accuracy)
@@ -160,51 +223,73 @@ elif args.scenario == "highway":
     base_path = '../../PhysicalCoverageData/highway/numpy_data/' + str(args.total_samples) + "/"
 else:
     exit()
-    
-trace_file_names = glob.glob(base_path + "traces_" + args.scenario + load_name)
-print(trace_file_names)
-file_names = []
-for f in trace_file_names:
-    name = f.replace(base_path + "traces", "")
-    file_names.append(name)
 
-# Sort the names
-file_names.sort()
-print("Files: " + str(file_names))
-print("Loading Complete")
+print("Loading: " + load_name)
+traces = np.load(base_path + "traces_" + args.scenario + load_name)
 
 print("----------------------------------")
-print("-------Computing Coverage---------")
+print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
-manager = multiprocessing.Manager()
-return_dict = manager.dict()
+# Use the tests_per_test_suite
+if args.scenario == "beamng":
+    total_random_test_suites = 1000
+    test_suite_size = [100, 500, 1000]
+    total_greedy_test_suites = 100
+    greedy_sample_sizes = [2, 3, 4, 5, 10]
+elif args.scenario == "highway":
+    total_random_test_suites = 1000
+    test_suite_size = [100, 500, 1000, 5000, 10000]
+    total_greedy_test_suites = 100
+    greedy_sample_sizes = [2, 3, 4, 5, 10]
+else:
+    exit()
 
 # Create a pool with x processes
 total_processors = int(args.cores)
-pool =  multiprocessing.Pool(total_processors)
+pool =  multiprocessing.Pool(processes=total_processors)
 
-# Call our function total_test_suites times
-result_object = []
-for file_index in range(len(file_names)):
+jobs = []
+# For all the different test suite sizes
+for suite_size in test_suite_size:
+    # Create random samples
+    for i in range(total_random_test_suites):
+        jobs.append(pool.apply_async(random_selection, args=([suite_size])))
+    # Create greedy samples
+    for _ in range(total_greedy_test_suites):
+        for sample_size in greedy_sample_sizes:
+            jobs.append(pool.apply_async(greedy_selection_best, args=([suite_size, sample_size])))
+            jobs.append(pool.apply_async(greedy_selection_worst, args=([suite_size, sample_size])))
 
-    # Get the file name and the return key
-    file_name = file_names[file_index]
-    return_key = 'p' + str(file_index)
+# Get the results
+results = []
+for job in tqdm(jobs):
+    results.append(job.get())
 
-    result_object.append(pool.apply_async(compute_coverage, args=(file_name, return_dict, return_key, base_path)))
+print("Done!")
 
-# Get the results (results are actually stored in return_dict)
-results = [r.get() for r in result_object]
-results = np.array(results)
-
-# Close the pool
-pool.close()
+# Sort the results based on number of test suites
+total_tests = total_random_test_suites + int(2 * total_greedy_test_suites * len(greedy_sample_sizes))
+final_coverage          = np.zeros((len(test_suite_size), total_tests))
+final_number_crashes    = np.zeros((len(test_suite_size), total_tests))
+position_counter        = np.zeros(len(test_suite_size), dtype=int)
+for r in results:
+    # Get the row
+    ind = test_suite_size.index(r[1])
+    # Save in the correct position
+    final_coverage[ind, position_counter[ind]] = r[3]
+    final_number_crashes[ind, position_counter[ind]] = r[4]
+    position_counter[ind] += 1
 
 # Save the results
-save_name = "../results/rq2_" + args.scenario
-save_obj(return_dict, save_name)
-return_dict = load_obj(save_name)
+save_name = "../results/rq2_"
+print("Saving to: " + str(save_name))
+
+np.save(save_name + "coverage_" + str(args.scenario), final_coverage)
+np.save(save_name + "crashes_" + str(args.scenario), final_number_crashes)
+
+final_coverage          = np.load(save_name + "coverage_" + str(args.scenario) + ".npy")
+final_number_crashes    = np.load(save_name + "crashes_" + str(args.scenario) + ".npy")
 
 # Run the plotting code
 exec(compile(open("rq2_plot.py", "rb").read(), "rq2_plot.py", 'exec'))
