@@ -23,5 +23,6 @@ _build
 # Outputs
 output/
 *.npy
+*.pkl
 
 .DS_Store

@@ -20,6 +20,20 @@ python3 pre_process_data.py --steering_angle 33 --max_distance=45 --accuracy 5 -
 ## Generating Graphs
 Graphs can be generated using:
 
+
+### Highway-Env
+
+python3 rq1_compute.py --steering_angle 30 --beam_count -1 --max_distance=30 --accuracy 5 --total_samples 1000 --scenario highway --cores 8
+python3 rq2_compute.py --steering_angle 30 --beam_count 3 --max_distance=30 --accuracy 5 --total_samples 1000000 --scenario highway --cores 64
+
+### BeamNG
+
+python3 rq1_compute.py --steering_angle 33 --beam_count -1 --max_distance=45 --accuracy 5 --total_samples 1000 --scenario beamng --cores 8
+python3 rq2_compute.py --steering_angle 33 --beam_count 3 --max_distance=45 --accuracy 5 --total_samples 2000 --scenario beamng --cores 64
+
+# Old
+
+
 ### Beamng
 
 $ python3 total_coverage.py --steering_angle 33 --beam_count -1 --max_distance=45 --accuracy 5 --total_samples 1423 --scenario beamng

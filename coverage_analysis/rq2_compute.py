@@ -216,13 +216,7 @@ load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the file names
-base_path = None
-if args.scenario == "beamng":
-    base_path = '../../PhysicalCoverageData/beamng/numpy_data/'
-elif args.scenario == "highway":
-    base_path = '../../PhysicalCoverageData/highway/numpy_data/' + str(args.total_samples) + "/"
-else:
-    exit()
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/numpy_data/' + str(args.total_samples) + "/"
 
 print("Loading: " + load_name)
 traces = np.load(base_path + "traces_" + args.scenario + load_name)
