@@ -36,7 +36,7 @@ print("-----------Loading Data-----------")
 print("----------------------------------")
 
 # Load the results
-save_name = "../results/rq2_"
+save_name = "../results/rq3_"
 final_coverage          = np.load(save_name + "coverage_" + str(args.scenario) + ".npy")
 final_number_crashes    = np.load(save_name + "crashes_" + str(args.scenario) + ".npy")
 
@@ -50,14 +50,8 @@ load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the file names
-base_path = None
-if args.scenario == "beamng":
-    base_path = '../../PhysicalCoverageData/beamng/numpy_data/'
-elif args.scenario == "highway":
-    base_path = '../../PhysicalCoverageData/highway/numpy_data/' + str(args.total_samples) + "/"
-else:
-    exit()
-
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/numpy_data/' + str(args.total_samples) + "/"
+   
 print("Loading: " + load_name)
 traces = np.load(base_path + "traces_" + args.scenario + load_name)
 
@@ -74,16 +68,17 @@ print("----------------------------------")
 print("----------Plotting Data-----------")
 print("----------------------------------")
 
-
 # Use the tests_per_test_suite
 if args.scenario == "beamng":
     total_random_test_suites = 1000
-    test_suite_size = [100, 500, 1000]
+    # test_suite_size = [100, 500, 1000]
+    test_suite_size = [100, 500]
     total_greedy_test_suites = 100
     greedy_sample_sizes = [2, 3, 4, 5, 10]
 elif args.scenario == "highway":
     total_random_test_suites = 1000
-    test_suite_size = [100, 500, 1000, 5000, 10000]
+    # test_suite_size = [100, 500, 1000, 5000, 10000]
+    test_suite_size = [100, 500]
     total_greedy_test_suites = 100
     greedy_sample_sizes = [2, 3, 4, 5, 10]
 else:
@@ -94,7 +89,11 @@ plt.figure(args.scenario)
 
 # Create a table with the output
 print("Results:")
-t = PrettyTable(['#Test Suites', '#Test', 'Pearson Correlation', 'P-value', "r-squared", "P-Value", "Standard Error"])
+t = PrettyTable(['#Test Suites', '#Test', 'Slope', 'Intercept', "r-squared", "P-Value", "Standard Error"])
+
+# Proxy for additional label
+plt.plot([], [], ' ', label="Tests per test suite")
+plt.plot([], [], ' ', label="Regression line")
 
 color_index = 0
 for ind in range(final_coverage.shape[0]):
@@ -110,19 +109,34 @@ for ind in range(final_coverage.shape[0]):
     x = random_selection_coverage_data
     y = random_selection_crash_percentage
 
-    # Plot the data
-    plt.scatter(x, y, color='C' + str(color_index), marker='o', label="#Tests: " + str(test_number), s=2, alpha=1)
-
     # Compute Pearson Correlation
-    r, p = scipy.stats.pearsonr(x, y)
+    # r, p = scipy.stats.pearsonr(x, y)
 
     # Compute the line of best fit
     slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
     x_range = np.arange(np.min(x), np.max(x), 0.1)
-    plt.plot(x_range, slope*x_range + intercept, c='C' + str(color_index))
 
+    # Generate the label for the regression line
+    lb = str(np.round(slope,2)) +"x+" + str(np.round(intercept,2))
+    if intercept < 0:
+        lb = str(np.round(slope,2)) +"x" + str(np.round(intercept,2))
+
+    # Plot the line of best fit
+    plt.plot(x_range, slope*x_range + intercept, c='C' + str(color_index), label=lb)
+
+    # Plot the data
+    plt.scatter(x, y, color='C' + str(color_index), marker='o', label=str(test_number), s=2, alpha=1)
+    
     # Display data
-    t.add_row([len(x), test_number, np.round(r, 4), np.round(p, 4), np.round(r_value, 4), np.round(p_value, 4), np.round(std_err,4)])
+    t_row = []
+    t_row.append(len(x))
+    t_row.append(test_number)
+    t_row.append(np.round(slope, 4))
+    t_row.append(np.round(intercept, 4))
+    t_row.append(np.round(r_value, 4))
+    t_row.append(np.round(p_value, 4))
+    t_row.append(np.round(std_err, 4))
+    t.add_row(t_row)
     
     # keep track of the color we are plotting
     color_index += 1
@@ -130,12 +144,30 @@ for ind in range(final_coverage.shape[0]):
 # Print the table
 print(t)
 
+# Get the legend handels so you can order them
+ax = plt.gca()
+handles, labels = ax.get_legend_handles_labels()
+new_handles = [handles[0], handles[1]]
+new_labels = [labels[0], labels[1]]
+
+top_row = 2
+bottom_row = 2 + len(test_suite_size)
+for i in range(len(test_suite_size)):
+    new_handles.append(handles[bottom_row])
+    new_handles.append(handles[top_row])
+    new_labels.append(labels[bottom_row])
+    new_labels.append(labels[top_row])
+    top_row += 1
+    bottom_row += 1
+
 # Plot the data
-plt.title(args.scenario)
 plt.xlabel("Physical Coverage  (%)")
 plt.ylabel("Total Crashes Found (%)")
-plt.legend()
+# plt.legend(markerscale=5)
+plt.legend(new_handles, new_labels, markerscale=5, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=len(test_suite_size) +1)
+plt.tight_layout()
 plt.show()
+
 
 
 

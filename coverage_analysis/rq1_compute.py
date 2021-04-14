@@ -156,7 +156,6 @@ load_name += ".npy"
 base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/numpy_data/' + str(args.total_samples) + "/"
     
 trace_file_names = glob.glob(base_path + "traces_" + args.scenario + load_name)
-print(trace_file_names)
 file_names = []
 for f in trace_file_names:
     name = f.replace(base_path + "traces", "")
@@ -192,12 +191,17 @@ for file_index in range(len(file_names)):
 results = [r.get() for r in result_object]
 results = np.array(results)
 
+# Convert the return_dict results to a normal dictionary
+final_results = {}
+for key in return_dict.keys():
+    final_results[key] = list(return_dict[key])
+
 # Close the pool
 pool.close()
 
 # Save the results
 save_name = "../results/rq1_" + args.scenario
-save_obj(return_dict, save_name)
+save_obj(final_results, save_name)
 return_dict = load_obj(save_name)
 
 # Run the plotting code
