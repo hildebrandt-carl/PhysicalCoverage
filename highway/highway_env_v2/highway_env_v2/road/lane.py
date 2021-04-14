@@ -2,9 +2,9 @@ from abc import ABCMeta, abstractmethod
 from typing import Tuple, List, Optional
 import numpy as np
 
-from highway_env import utils
-from highway_env.types import Vector
-from highway_env.utils import wrap_to_pi
+from highway_env_v2 import utils
+from highway_env_v2.types import Vector
+from highway_env_v2.utils import wrap_to_pi
 
 
 class AbstractLane(object):

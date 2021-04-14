@@ -1,8 +1,8 @@
 import pytest
 
-from highway_env.road.lane import StraightLane
-from highway_env.road.road import Road, RoadNetwork
-from highway_env.vehicle.controller import ControlledVehicle
+from highway_env_v2.road.lane import StraightLane
+from highway_env_v2.road.road import Road, RoadNetwork
+from highway_env_v2.vehicle.controller import ControlledVehicle
 
 
 def test_network():

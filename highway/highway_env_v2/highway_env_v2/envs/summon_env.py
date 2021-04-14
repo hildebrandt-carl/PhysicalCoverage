@@ -1,12 +1,12 @@
 from gym.envs.registration import register
 import numpy as np
 
-from highway_env import utils
-from highway_env.envs import ParkingEnv
-from highway_env.road.lane import StraightLane, LineType
-from highway_env.road.road import Road, RoadNetwork
-from highway_env.vehicle.kinematics import Vehicle
-from highway_env.road.objects import Landmark
+from highway_env_v2 import utils
+from highway_env_v2.envs import ParkingEnv
+from highway_env_v2.road.lane import StraightLane, LineType
+from highway_env_v2.road.road import Road, RoadNetwork
+from highway_env_v2.vehicle.kinematics import Vehicle
+from highway_env_v2.road.objects import Landmark
 
 
 class SummonEnv(ParkingEnv):
@@ -27,7 +27,7 @@ class SummonEnv(ParkingEnv):
         config = super().default_config()
         config.update({
             "vehicles_count": 10,
-            "other_vehicles_type": "highway_env.vehicle.behavior.IDMVehicle",
+            "other_vehicles_type": "highway_env_v2.vehicle.behavior.IDMVehicle",
         })
         return config
 
@@ -125,12 +125,12 @@ class SummonEnvActionRepeat(SummonEnv):
 
 register(
     id='summon-v0',
-    entry_point='highway_env.envs:SummonEnv',
+    entry_point='highway_env_v2.envs:SummonEnv',
     max_episode_steps=100
 )
 
 register(
     id='summon-ActionRepeat-v0',
-    entry_point='highway_env.envs:SummonEnvActionRepeat',
+    entry_point='highway_env_v2.envs:SummonEnvActionRepeat',
     max_episode_steps=20
 )

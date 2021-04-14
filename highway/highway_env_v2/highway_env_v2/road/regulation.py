@@ -2,10 +2,10 @@ from typing import List, Tuple
 
 import numpy as np
 
-from highway_env import utils
-from highway_env.road.road import Road, RoadNetwork
-from highway_env.vehicle.controller import ControlledVehicle, MDPVehicle
-from highway_env.vehicle.kinematics import Vehicle, Obstacle
+from highway_env_v2 import utils
+from highway_env_v2.road.road import Road, RoadNetwork
+from highway_env_v2.vehicle.controller import ControlledVehicle, MDPVehicle
+from highway_env_v2.vehicle.kinematics import Vehicle, Obstacle
 
 
 class RegulatedRoad(Road):

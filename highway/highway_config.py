@@ -23,7 +23,7 @@ class HighwayConfig:
             "reward_speed_range": [20, 30],  # [m/s] The reward for high speed is mapped linearly from this range to [0, HighwayEnv.HIGH_SPEED_REWARD].
             "simulation_frequency": 15,  # [Hz]
             "policy_frequency": policy_freq,  # [Hz]
-            "other_vehicles_type": "highway_env.vehicle.behavior.IDMVehicle",
+            "other_vehicles_type": "highway_env_v2.vehicle.behavior.IDMVehicle",
             "screen_width": 1200,  # [px]
             "screen_height": 520,  # [px]
             "centering_position": [0.3, 0.5],

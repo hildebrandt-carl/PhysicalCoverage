@@ -3,9 +3,9 @@ from typing import Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 
-from highway_env.road.road import Road
-from highway_env.types import Vector
-from highway_env.vehicle.kinematics import Vehicle
+from highway_env_v2.road.road import Road
+from highway_env_v2.types import Vector
+from highway_env_v2.vehicle.kinematics import Vehicle
 
 
 class BicycleVehicle(Vehicle):
@@ -187,7 +187,7 @@ def simulate(dt: float = 0.1) -> None:
     time = np.arange(0, 20, dt)
     vehicle = BicycleVehicle(road=None, position=[0, 5], speed=8.3)
     xx, uu = [], []
-    from highway_env.interval import LPV
+    from highway_env_v2.interval import LPV
     A, B = vehicle.full_lateral_lpv_dynamics()
     K = -np.asarray(control.place(A, B, -np.arange(1, 5)))
     lpv = LPV(x0=vehicle.state[[1, 2, 4, 5]].squeeze(), a0=A, da=[np.zeros(A.shape)], b=B,

@@ -2,11 +2,11 @@ from typing import Callable, Union
 
 import numpy as np
 
-from highway_env.road.road import Road, LaneIndex, Route
-from highway_env.types import Vector
-from highway_env.utils import confidence_polytope, is_consistent_dataset
-from highway_env.vehicle.behavior import LinearVehicle
-from highway_env.vehicle.uncertainty.prediction import IntervalVehicle, Polytope
+from highway_env_v2.road.road import Road, LaneIndex, Route
+from highway_env_v2.types import Vector
+from highway_env_v2.utils import confidence_polytope, is_consistent_dataset
+from highway_env_v2.vehicle.behavior import LinearVehicle
+from highway_env_v2.vehicle.uncertainty.prediction import IntervalVehicle, Polytope
 
 
 class RegressionVehicle(IntervalVehicle):

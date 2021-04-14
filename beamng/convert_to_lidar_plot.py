@@ -1,32 +1,18 @@
 import glob
 import math
-import scipy
-import time
-import multiprocessing
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-from tqdm import tqdm
-from scipy.spatial import distance
 from datetime import datetime
+import time
+import numpy as np
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 from shapely.geometry import LineString
 from shapely.geometry import Polygon, LineString, Point
+import multiprocessing
+import scipy
 
-steering_angle  = 45
-total_lines     = 30
-max_distance    = 60
-
-# # Variables - Used to generate overapproximate for other rqs
-# steering_angle  = 45
-# total_lines     = 30
-# max_distance    = 60
-
-# Variables - Used for timing
-total_lines     = 5
 steering_angle  = 33
+total_lines     = 1
 max_distance    = 45
-
 
 def create_frame_plot(data, origin, orientation, title, fig_num):
     fig = plt.figure(fig_num)
@@ -142,12 +128,23 @@ def estimate_obstacles(ego_vehicle, current_lidar_data):
     for pi in range(len(current_lidar_data)):
         # Get the point
         p = current_lidar_data[pi]
-        s = 0.2
-        new_point = Polygon([(p[0]-s, p[1]-s),
-                            (p[0]+s, p[1]-s),
-                            (p[0]+s, p[1]+s),
-                            (p[0]-s, p[1]+s)])
-        polygons.append(new_point)
+        # Check if the point is inside any of the polygons
+        already_plotted = False
+        for pj in range(len(polygons)):
+            # Make sure you are not comparing the same point
+            if pj != pi:
+                # If the point is inside this polygon
+                if polygons[pj].contains(Point(p)):
+                    already_plotted = True
+                    break
+        # Only create the point if its not been created before
+        if not already_plotted:
+            s = 0.2
+            new_point = Polygon([(p[0]-s, p[1]-s),
+                                (p[0]+s, p[1]-s),
+                                (p[0]+s, p[1]+s),
+                                (p[0]-s, p[1]+s)])
+            polygons.append(new_point)
     return polygons
 
 def vectorize_reachset(lines, accuracy=0.25):
@@ -243,11 +240,11 @@ def process_file(file_name, save_name, external_vehicle_count, file_number):
         current_data["lidar"] = current_data["lidar"] - current_data["position"]
 
         # Select every 25th element
-        # current_data["lidar"] = current_data["lidar"][0::25]
-        # print("Analyzing " + str(current_data["lidar"].shape[0]) + " points")
+        # current_data["lidar"] = current_data["lidar"][0::500]
+        print("Analyzing " + str(current_data["lidar"].shape[0]) + " points")
 
         # Plot the data
-        # plt = create_frame_plot(current_data["lidar"], current_data["origin"], current_data["orientation"], "World frame", 1)
+        plt = create_frame_plot(current_data["lidar"], current_data["origin"], current_data["orientation"], "World frame", 1)
 
         # Compute how much the world is rotated by
         deltaX = current_data["orientation"][0] - current_data['origin'][0]
@@ -260,7 +257,7 @@ def process_file(file_name, save_name, external_vehicle_count, file_number):
         current_data["rotated_lidar"] = rotate(points_xy, origin, rotation)
 
         # Plot rotated points
-        # plt = create_frame_plot(current_data["rotated_lidar"], current_data["origin"], current_data["ego_orientation"] , "Vehicle frame", 2)
+        plt = create_frame_plot(current_data["rotated_lidar"], current_data["origin"], current_data["ego_orientation"] , "Vehicle frame", 2)
 
         # Time our technique
         start_time = datetime.now()
@@ -285,65 +282,65 @@ def process_file(file_name, save_name, external_vehicle_count, file_number):
         # End out time
         end_time = datetime.now()
 
+        # Save the data
         environment_data = {}
         environment_data["polygons"]    = polygons
         environment_data["r_set"]       = r_set
         environment_data["final_r_set"] = final_r_set
+        
+        plt.figure(1)
+        plt.clf()
+        plt.title('Environment - ' + str(len(polygons)) + " lidar points")
 
-        # if plot:
-        #     plt.figure(1)
-        #     plt.clf()
-        #     plt.title('Environment')
+        # Invert the y axis for easier viewing
+        plt.gca().invert_yaxis()
 
-        #     # Invert the y axis for easier viewing
-        #     plt.gca().invert_yaxis()
+        # Display the environment
+        for i in range(len(environment_data["polygons"])):
+            # Get the polygon
+            p = environment_data["polygons"][i]
+            x,y = p.exterior.xy
+            # Get the color
+            c = "g" if i == 0 else "r"
+            # Plot
+            plt.plot(x, y, color=c)
 
-        #     # Display the environment
-        #     for i in range(len(environment_data["polygons"])):
-        #         # Get the polygon
-        #         p = environment_data["polygons"][i]
-        #         x,y = p.exterior.xy
-        #         # Get the color
-        #         c = "g" if i == 0 else "r"
-        #         # Plot
-        #         plt.plot(x, y, color=c)
+        # Display the reachset
+        for i in range(len(environment_data["r_set"])):
+            # Get the polygon
+            p = environment_data["r_set"][i]
+            x,y = p.xy
+            # Get the color
+            c = "r"
+            # Plot
+            plt.plot(x, y, color=c, alpha=0.5)
 
-        #     # Display the reachset
-        #     for i in range(len(environment_data["r_set"])):
-        #         # Get the polygon
-        #         p = environment_data["r_set"][i]
-        #         x,y = p.xy
-        #         # Get the color
-        #         c = "r"
-        #         # Plot
-        #         plt.plot(x, y, color=c, alpha=0.5)
+        # Display the reachset
+        for i in range(len(environment_data["final_r_set"])):
+            # Get the polygon
+            p = environment_data["final_r_set"][i]
+            x,y = p.xy
+            # Get the color
+            c = "g"
+            # Plot
+            plt.plot(x, y, color=c)
 
-        #     # Display the reachset
-        #     for i in range(len(environment_data["final_r_set"])):
-        #         # Get the polygon
-        #         p = environment_data["final_r_set"][i]
-        #         x,y = p.xy
-        #         # Get the color
-        #         c = "g"
-        #         # Plot
-        #         plt.plot(x, y, color=c)
+        # Set the size of the graph
+        plt.xlim([-30, 100])
+        plt.ylim([-40, 40])
 
-        #     # Set the size of the graph
-        #     plt.xlim([-30, 100])
-        #     plt.ylim([-40, 40])
+        # Invert the y axis as negative is up and show ticks
+        ax = plt.gca()
+        ax.set_ylim(ax.get_ylim()[::-1])
+        ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
 
-        #     # Invert the y axis as negative is up and show ticks
-        #     ax = plt.gca()
-        #     ax.set_ylim(ax.get_ylim()[::-1])
-        #     ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
-
-        #     # plot the graph
-        #     plt.pause(0.1)
-        #     plt.savefig('./output/file' + str(file_number) + 'frame' + str(frame_skip_counter) + '.png')
+        # plot the graph
+        plt.pause(0.1)
+        # plt.savefig('./output/file' + str(file_number) + 'frame' + str(frame_skip_counter) + '.png')
 
         # Plot the environment figures
-        # plt = create_lidar_plot(environment_data, "Environment Zoomed", [-15, 45], [-30, 30], 3)
-        # plt = create_lidar_plot(environment_data, "Environment", [-100, 100], [-100, 100], 4)
+        plt = create_lidar_plot(environment_data, "Environment Zoomed", [-15, 45], [-30, 30], 3)
+        plt = create_lidar_plot(environment_data, "Environment", [-100, 100], [-100, 100], 4)
 
         # Compute the vectorized reach set
         output_file.write("Vector: " + str(r_vector) + "\n")
@@ -362,35 +359,31 @@ def process_file(file_name, save_name, external_vehicle_count, file_number):
     return True
 
 raw_file_location       = "../../PhysicalCoverageData/beamng/raw/"
-output_file_location    = "../../PhysicalCoverageData/beamng/processed/"
+output_file_location    = "../../PhysicalCoverageData/beamng/processed_test/"
 file_names = glob.glob(raw_file_location + "/*/*.csv")
 
 # Create a pool with x processes
-total_processors = 120
-pool =  multiprocessing.Pool(total_processors)
-result_object = []
 file_number = 0
 
-for file_name in file_names:
+# for file_name in file_names:
 
-    # Compute the file name in the format vehiclecount-time-run#.txt
-    name_only = file_name[file_name.rfind('/')+1:]
-    folder = file_name[0:file_name.rfind('/')]
-    folder = folder[folder.rfind('/')+1:]
-    external_vehicle_count = folder[0: folder.find('_')]
-    name_only = name_only[name_only.rfind('_')+1:]
-    e = datetime.now()
-    save_name = ""
-    save_name += str(output_file_location)
-    save_name += external_vehicle_count + "-"
-    save_name += str(int(e.timestamp())) +"-"
-    save_name += name_only[0:-4] + ".txt"
+file_name = file_names[-1]
 
-    # Run each of the files in a seperate process
-    result_object.append(pool.apply_async(process_file, args=(file_name, save_name, external_vehicle_count, file_number)))
-    file_number += 1
+# Compute the file name in the format vehiclecount-time-run#.txt
+name_only = file_name[file_name.rfind('/')+1:]
+folder = file_name[0:file_name.rfind('/')]
+folder = folder[folder.rfind('/')+1:]
+external_vehicle_count = folder[0: folder.find('_')]
+name_only = name_only[name_only.rfind('_')+1:]
+e = datetime.now()
+save_name = ""
+save_name += str(output_file_location)
+save_name += external_vehicle_count + "-"
+save_name += str(int(e.timestamp())) +"-"
+save_name += name_only[0:-4] + ".txt"
 
-# Wait to make sure all files are finished
-results = [r.get() for r in result_object]
-pool.close()
+# Run each of the files in a seperate process
+# result_object.append(pool.apply_async(process_file, args=(file_name, save_name, external_vehicle_count, file_number)))
+process_file(file_name, save_name, external_vehicle_count, file_number)
+
 print("All files completed")

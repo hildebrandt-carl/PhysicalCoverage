@@ -4,14 +4,14 @@ from typing import List, Tuple, TYPE_CHECKING
 import numpy as np
 import pygame
 
-from highway_env.types import Vector
-from highway_env.vehicle.dynamics import BicycleVehicle
-from highway_env.vehicle.kinematics import Vehicle
-from highway_env.vehicle.controller import ControlledVehicle, MDPVehicle
-from highway_env.vehicle.behavior import IDMVehicle, LinearVehicle
+from highway_env_v2.types import Vector
+from highway_env_v2.vehicle.dynamics import BicycleVehicle
+from highway_env_v2.vehicle.kinematics import Vehicle
+from highway_env_v2.vehicle.controller import ControlledVehicle, MDPVehicle
+from highway_env_v2.vehicle.behavior import IDMVehicle, LinearVehicle
 
 if TYPE_CHECKING:
-    from highway_env.road.graphics import WorldSurface
+    from highway_env_v2.road.graphics import WorldSurface
 
 
 class VehicleGraphics(object):

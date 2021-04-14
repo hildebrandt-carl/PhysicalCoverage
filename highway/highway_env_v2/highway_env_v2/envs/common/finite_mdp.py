@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 
-from highway_env import utils
-from highway_env.vehicle.kinematics import Vehicle
+from highway_env_v2 import utils
+from highway_env_v2.vehicle.kinematics import Vehicle
 
 if TYPE_CHECKING:
-    from highway_env.envs import AbstractEnv
+    from highway_env_v2.envs import AbstractEnv
 
 
 def finite_mdp(env: 'AbstractEnv',

@@ -5,12 +5,12 @@ from gym import GoalEnv
 import numpy as np
 from numpy.core._multiarray_umath import ndarray
 
-from highway_env.envs.common.abstract import AbstractEnv
-from highway_env.envs.common.observation import MultiAgentObservation
-from highway_env.road.lane import StraightLane, LineType
-from highway_env.road.road import Road, RoadNetwork
-from highway_env.vehicle.kinematics import Vehicle
-from highway_env.road.objects import Landmark
+from highway_env_v2.envs.common.abstract import AbstractEnv
+from highway_env_v2.envs.common.observation import MultiAgentObservation
+from highway_env_v2.road.lane import StraightLane, LineType
+from highway_env_v2.road.road import Road, RoadNetwork
+from highway_env_v2.vehicle.kinematics import Vehicle
+from highway_env_v2.road.objects import Landmark
 
 
 class ParkingEnv(AbstractEnv, GoalEnv):
@@ -136,10 +136,10 @@ class ParkingEnvActionRepeat(ParkingEnv):
 
 register(
     id='parking-v0',
-    entry_point='highway_env.envs:ParkingEnv',
+    entry_point='highway_env_v2.envs:ParkingEnv',
 )
 
 register(
     id='parking-ActionRepeat-v0',
-    entry_point='highway_env.envs:ParkingEnvActionRepeat'
+    entry_point='highway_env_v2.envs:ParkingEnvActionRepeat'
 )

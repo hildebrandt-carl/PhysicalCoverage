@@ -6,7 +6,7 @@ import highway_env_v2
 def test_preprocessors():
     env = gym.make('highway-v0')
     env = env.simplify()
-    env = env.change_vehicles("highway_env.vehicle.behavior.IDMVehicle")
+    env = env.change_vehicles("highway_env_v2.vehicle.behavior.IDMVehicle")
     env = env.set_preferred_lane(0)
     env = env.set_route_at_intersection("random")
     env = env.set_vehicle_field(("crashed", False))

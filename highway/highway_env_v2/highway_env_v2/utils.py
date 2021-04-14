@@ -5,7 +5,7 @@ from typing import Tuple, Dict, Callable
 
 import numpy as np
 
-from highway_env.types import Vector, Interval
+from highway_env_v2.types import Vector, Interval
 
 
 def do_every(duration: float, timer: float) -> bool:

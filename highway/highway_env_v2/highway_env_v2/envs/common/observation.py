@@ -3,13 +3,13 @@ from gym import spaces
 import numpy as np
 import pandas as pd
 
-from highway_env import utils
-from highway_env.envs.common.finite_mdp import compute_ttc_grid
-from highway_env.road.lane import AbstractLane
-from highway_env.vehicle.controller import MDPVehicle
+from highway_env_v2 import utils
+from highway_env_v2.envs.common.finite_mdp import compute_ttc_grid
+from highway_env_v2.road.lane import AbstractLane
+from highway_env_v2.vehicle.controller import MDPVehicle
 
 if TYPE_CHECKING:
-    from highway_env.envs.common.abstract import AbstractEnv
+    from highway_env_v2.envs.common.abstract import AbstractEnv
 
 
 class ObservationType(object):

@@ -4,13 +4,13 @@ import numpy as np
 import pygame
 from gym.spaces import Discrete
 
-from highway_env.envs.common.action import ActionType, DiscreteMetaAction, ContinuousAction
-from highway_env.road.graphics import WorldSurface, RoadGraphics
-from highway_env.vehicle.graphics import VehicleGraphics
+from highway_env_v2.envs.common.action import ActionType, DiscreteMetaAction, ContinuousAction
+from highway_env_v2.road.graphics import WorldSurface, RoadGraphics
+from highway_env_v2.vehicle.graphics import VehicleGraphics
 
 if TYPE_CHECKING:
-    from highway_env.envs import AbstractEnv
-    from highway_env.envs.common.abstract import Action
+    from highway_env_v2.envs import AbstractEnv
+    from highway_env_v2.envs.common.abstract import Action
 
 
 class EnvViewer(object):

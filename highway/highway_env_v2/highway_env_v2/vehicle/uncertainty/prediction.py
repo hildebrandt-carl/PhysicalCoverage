@@ -2,18 +2,18 @@ import copy
 from typing import List, Tuple, Callable, Union, TYPE_CHECKING
 import numpy as np
 
-from highway_env import utils
-from highway_env.interval import polytope, vector_interval_section, integrator_interval, \
+from highway_env_v2 import utils
+from highway_env_v2.interval import polytope, vector_interval_section, integrator_interval, \
     interval_negative_part, intervals_diff, intervals_product, LPV, interval_absolute_to_local, \
     interval_local_to_absolute
-from highway_env.road.road import Route, LaneIndex, Road
-from highway_env.types import Vector
-from highway_env.vehicle.behavior import LinearVehicle
-from highway_env.vehicle.controller import MDPVehicle
-from highway_env.vehicle.kinematics import Vehicle
+from highway_env_v2.road.road import Route, LaneIndex, Road
+from highway_env_v2.types import Vector
+from highway_env_v2.vehicle.behavior import LinearVehicle
+from highway_env_v2.vehicle.controller import MDPVehicle
+from highway_env_v2.vehicle.kinematics import Vehicle
 
 if TYPE_CHECKING:
-    from highway_env.road.objects import RoadObject
+    from highway_env_v2.road.objects import RoadObject
 
 Polytope = Tuple[np.ndarray, List[np.ndarray]]
 

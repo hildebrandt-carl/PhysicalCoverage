@@ -1,12 +1,12 @@
 import numpy as np
 from gym.envs.registration import register
 
-from highway_env import utils
-from highway_env.envs.common.abstract import AbstractEnv
-from highway_env.road.lane import LineType, StraightLane, SineLane
-from highway_env.road.road import Road, RoadNetwork
-from highway_env.vehicle.controller import ControlledVehicle, MDPVehicle
-from highway_env.road.objects import Obstacle
+from highway_env_v2 import utils
+from highway_env_v2.envs.common.abstract import AbstractEnv
+from highway_env_v2.road.lane import LineType, StraightLane, SineLane
+from highway_env_v2.road.road import Road, RoadNetwork
+from highway_env_v2.vehicle.controller import ControlledVehicle, MDPVehicle
+from highway_env_v2.road.objects import Obstacle
 
 
 class MergeEnv(AbstractEnv):
@@ -120,5 +120,5 @@ class MergeEnv(AbstractEnv):
 
 register(
     id='merge-v0',
-    entry_point='highway_env.envs:MergeEnv',
+    entry_point='highway_env_v2.envs:MergeEnv',
 )

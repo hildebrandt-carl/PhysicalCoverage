@@ -58,12 +58,17 @@ class ReachableSet:
         steering_angle = math.radians(steering_angle)
 
         # Compute the intervals 
-        intervals = (steering_angle * 2) / float(total_lines - 1)
+        intervals = 0 
+        if total_lines > 1:
+            intervals = (steering_angle * 2) / float(total_lines - 1)
         
         # Create each line
         for i in range(total_lines):
             # Compute the angle of the beam
-            theta = (-1 * steering_angle) + (i * intervals) +  self.ego_heading
+            if total_lines > 1:
+                theta = (-1 * steering_angle) + (i * intervals) +  self.ego_heading
+            else:
+                theta = self.ego_heading
 
             # Compute the new point
             p2 = (self.ego_position[0] + (max_distance * math.cos(theta)), self.ego_position[1] + (max_distance * math.sin(theta)))

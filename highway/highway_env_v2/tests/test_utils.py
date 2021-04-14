@@ -1,6 +1,6 @@
 import numpy as np
 
-from highway_env.utils import rotated_rectangles_intersect
+from highway_env_v2.utils import rotated_rectangles_intersect
 
 
 def test_rotated_rectangles_intersect():

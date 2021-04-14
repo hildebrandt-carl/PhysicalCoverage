@@ -18,9 +18,14 @@ parser.add_argument('--environment_vehicles', type=int, default=15, help="total_
 parser.add_argument('--no_plot', action='store_true')
 args = parser.parse_args()
 
-# Variables
-total_lines     = 30
-steering_angle  = 60
+# # Variables - Used to generate overapproximate for other rqs
+# total_lines     = 30
+# steering_angle  = 60
+# max_distance    = 30
+
+# Variables - Used for timing
+total_lines     = 3
+steering_angle  = 30
 max_distance    = 30
 
 # Save the output file
@@ -74,6 +79,9 @@ while not done:
     tracker.track(obs)
     tracked_objects = tracker.get_observations()
 
+    # Track the time for this opperation
+    start_time = datetime.datetime.now()
+
     # Get the reach set simulation
     polygons    = reach.compute_environment(tracked_objects)
     r_set       = reach.estimate_raw_reachset(total_lines=total_lines, 
@@ -81,6 +89,10 @@ while not done:
                                               max_distance=max_distance)
     final_r_set = reach.estimate_true_reachset(polygons, r_set)
     r_vector    = reach.vectorize_reachset(final_r_set, accuracy=0.001)
+
+    # Track the time for this opperation
+    current_time = datetime.datetime.now()
+    elapsed_time = (current_time - start_time).total_seconds()
 
     if not args.no_plot:
         plt.figure(1)
@@ -140,6 +152,7 @@ while not done:
 
     text_file.write("Vector: " + str(r_vector) + "\n")
     text_file.write("Crash: " + str(info["crashed"]) + "\n")
+    text_file.write("Time: " + str(elapsed_time) + "\n")
     text_file.write("\n")
 
     print("---------------------------------------")

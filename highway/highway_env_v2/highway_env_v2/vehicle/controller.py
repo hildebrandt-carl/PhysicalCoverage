@@ -2,10 +2,10 @@ from typing import List, Tuple, Union
 
 import numpy as np
 import copy
-from highway_env import utils
-from highway_env.road.road import Road, LaneIndex, Route
-from highway_env.types import Vector
-from highway_env.vehicle.kinematics import Vehicle
+from highway_env_v2 import utils
+from highway_env_v2.road.road import Road, LaneIndex, Route
+from highway_env_v2.types import Vector
+from highway_env_v2.vehicle.kinematics import Vehicle
 
 
 class ControlledVehicle(Vehicle):

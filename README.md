@@ -1,5 +1,23 @@
 # PhysicalStack
 
+
+# Creating the Highway data
+cd into highway
+./create_data.sh
+
+you need
+python3 -m pip install --upgrade pip
+python3 -m pip install gym
+sudo apt install llvm-8
+python3 -m pip install -e highway_env_v2
+python3 -m pip install llvmlite==0.31.0
+python3 -m pip install rl_agents_v2
+python3 -m pip install networkx
+
+Create an output folder on your desktop
+then run
+python3 main.py --environment_vehicles 10 --save_name test.txt
+
 ## Creating data
 First you create the data using:
 

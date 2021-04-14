@@ -1,11 +1,11 @@
 import numpy as np
 from gym.envs.registration import register
 
-from highway_env import utils
-from highway_env.envs.common.abstract import AbstractEnv
-from highway_env.road.lane import LineType, StraightLane
-from highway_env.road.road import Road, RoadNetwork
-from highway_env.vehicle.controller import MDPVehicle
+from highway_env_v2 import utils
+from highway_env_v2.envs.common.abstract import AbstractEnv
+from highway_env_v2.road.lane import LineType, StraightLane
+from highway_env_v2.road.road import Road, RoadNetwork
+from highway_env_v2.vehicle.controller import MDPVehicle
 
 
 class TwoWayEnv(AbstractEnv):
@@ -117,6 +117,6 @@ class TwoWayEnv(AbstractEnv):
 
 register(
     id='two-way-v0',
-    entry_point='highway_env.envs:TwoWayEnv',
+    entry_point='highway_env_v2.envs:TwoWayEnv',
     max_episode_steps=15
 )

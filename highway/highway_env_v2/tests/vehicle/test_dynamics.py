@@ -1,8 +1,8 @@
 import pytest
 
-from highway_env.road.road import Road, RoadNetwork
-from highway_env.vehicle.kinematics import Vehicle
-from highway_env.road.objects import Obstacle, Landmark
+from highway_env_v2.road.road import Road, RoadNetwork
+from highway_env_v2.vehicle.kinematics import Vehicle
+from highway_env_v2.road.objects import Obstacle, Landmark
 
 FPS = 15
 

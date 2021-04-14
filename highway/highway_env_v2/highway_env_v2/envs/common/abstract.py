@@ -6,14 +6,14 @@ from gym import Wrapper
 from gym.utils import seeding
 import numpy as np
 
-from highway_env import utils
-from highway_env.envs.common.action import action_factory, Action, DiscreteMetaAction, ActionType
-from highway_env.envs.common.observation import observation_factory, ObservationType
-from highway_env.envs.common.finite_mdp import finite_mdp
-from highway_env.envs.common.graphics import EnvViewer
-from highway_env.vehicle.behavior import IDMVehicle, LinearVehicle
-from highway_env.vehicle.controller import MDPVehicle
-from highway_env.vehicle.kinematics import Vehicle
+from highway_env_v2 import utils
+from highway_env_v2.envs.common.action import action_factory, Action, DiscreteMetaAction, ActionType
+from highway_env_v2.envs.common.observation import observation_factory, ObservationType
+from highway_env_v2.envs.common.finite_mdp import finite_mdp
+from highway_env_v2.envs.common.graphics import EnvViewer
+from highway_env_v2.vehicle.behavior import IDMVehicle, LinearVehicle
+from highway_env_v2.vehicle.controller import MDPVehicle
+from highway_env_v2.vehicle.kinematics import Vehicle
 
 Observation = np.ndarray
 
@@ -97,7 +97,7 @@ class AbstractEnv(gym.Env):
             },
             "simulation_frequency": 15,  # [Hz]
             "policy_frequency": 1,  # [Hz]
-            "other_vehicles_type": "highway_env.vehicle.behavior.IDMVehicle",
+            "other_vehicles_type": "highway_env_v2.vehicle.behavior.IDMVehicle",
             "screen_width": 600,  # [px]
             "screen_height": 150,  # [px]
             "centering_position": [0.3, 0.5],
@@ -327,7 +327,7 @@ class AbstractEnv(gym.Env):
         Change the type of all vehicles on the road
 
         :param vehicle_class_path: The path of the class of behavior for other vehicles
-                             Example: "highway_env.vehicle.behavior.IDMVehicle"
+                             Example: "highway_env_v2.vehicle.behavior.IDMVehicle"
         :return: a new environment with modified behavior model for other vehicles
         """
         vehicle_class = utils.class_from_path(vehicle_class_path)

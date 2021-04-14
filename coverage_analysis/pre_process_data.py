@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
-
 def string_to_vector(vector_string):
     vector_str = vector_string[vector_string.find(": ")+3:-2]
     vector = np.fromstring(vector_str, dtype=float, sep=', ')
@@ -40,8 +39,6 @@ def vector_conversion(vector, steering_angle, max_distance, total_lines):
         left_index -= 1
         right_index += 1
         current_steering_angle += line_space
-        
-    # print("Overapproximated the steering angle by: " + str(current_steering_angle - steering_angle))
 
     # Get the corrected steering angle
     steering_angle_corrected_vector = vector[left_index:right_index+1]
@@ -90,14 +87,6 @@ def processFile(f, total_vectors, vector_size):
             crash = True
 
     return vehicle_count, crash, test_vectors
-
-# # Test code to see everything works
-# a = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
-# b = vector_conversion(a, 30, 30, 5)
-# c = getStep(b, 5)
-# print(a)
-# print(b)
-# print(c)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--steering_angle', type=int, default=30,   help="The steering angle used to compute the reachable set")
@@ -149,10 +138,6 @@ if args.total_samples != -1:
 
 total_files = len(file_names)
 print("Total files selected for processing: " + str(total_files))
-
-
-# Sort the file names based on the total number of vehicles
-# file_names = sorted(file_names, key = lambda x: int(re.split(r'\-|/', x)[2]))
 
 print("----------------------------------")
 print("--------Memory Requirements-------")

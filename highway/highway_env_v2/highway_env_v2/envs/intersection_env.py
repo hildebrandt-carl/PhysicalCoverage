@@ -3,12 +3,12 @@ from typing import Dict, Tuple
 from gym.envs.registration import register
 import numpy as np
 
-from highway_env import utils
-from highway_env.envs.common.abstract import AbstractEnv, MultiAgentWrapper
-from highway_env.road.lane import LineType, StraightLane, CircularLane, AbstractLane
-from highway_env.road.regulation import RegulatedRoad
-from highway_env.road.road import RoadNetwork
-from highway_env.vehicle.kinematics import Vehicle
+from highway_env_v2 import utils
+from highway_env_v2.envs.common.abstract import AbstractEnv, MultiAgentWrapper
+from highway_env_v2.road.lane import LineType, StraightLane, CircularLane, AbstractLane
+from highway_env_v2.road.regulation import RegulatedRoad
+from highway_env_v2.road.road import RoadNetwork
+from highway_env_v2.vehicle.kinematics import Vehicle
 
 
 class IntersectionEnv(AbstractEnv):
@@ -267,15 +267,15 @@ TupleMultiAgentIntersectionEnv = MultiAgentWrapper(MultiAgentIntersectionEnv)
 
 register(
     id='intersection-v0',
-    entry_point='highway_env.envs:IntersectionEnv',
+    entry_point='highway_env_v2.envs:IntersectionEnv',
 )
 
 register(
     id='intersection-multi-agent-v0',
-    entry_point='highway_env.envs:MultiAgentIntersectionEnv',
+    entry_point='highway_env_v2.envs:MultiAgentIntersectionEnv',
 )
 
 register(
     id='intersection-multi-agent-v1',
-    entry_point='highway_env.envs:TupleMultiAgentIntersectionEnv',
+    entry_point='highway_env_v2.envs:TupleMultiAgentIntersectionEnv',
 )
