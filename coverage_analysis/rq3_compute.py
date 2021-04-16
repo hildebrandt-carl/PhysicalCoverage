@@ -225,14 +225,12 @@ print("----------------------------------")
 # Use the tests_per_test_suite
 if args.scenario == "beamng":
     total_random_test_suites = 1000
-    # test_suite_size = [100, 500, 1000]
-    test_suite_size = [100, 500]
+    test_suite_size = [100, 500, 1000]
     total_greedy_test_suites = 100
     greedy_sample_sizes = [2, 3, 4, 5, 10]
 elif args.scenario == "highway":
     total_random_test_suites = 1000
-    # test_suite_size = [100, 500, 1000, 5000, 10000]
-    test_suite_size = [100, 500]
+    test_suite_size = [1000, 5000, 10000]
     total_greedy_test_suites = 100
     greedy_sample_sizes = [2, 3, 4, 5, 10]
 else:

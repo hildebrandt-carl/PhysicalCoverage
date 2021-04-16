@@ -71,14 +71,12 @@ print("----------------------------------")
 # Use the tests_per_test_suite
 if args.scenario == "beamng":
     total_random_test_suites = 1000
-    # test_suite_size = [100, 500, 1000]
-    test_suite_size = [100, 500]
+    test_suite_size = [100, 500, 1000]
     total_greedy_test_suites = 100
     greedy_sample_sizes = [2, 3, 4, 5, 10]
 elif args.scenario == "highway":
     total_random_test_suites = 1000
-    # test_suite_size = [100, 500, 1000, 5000, 10000]
-    test_suite_size = [100, 500]
+    test_suite_size = [1000, 5000, 10000]
     total_greedy_test_suites = 100
     greedy_sample_sizes = [2, 3, 4, 5, 10]
 else:
@@ -104,6 +102,7 @@ for ind in range(final_coverage.shape[0]):
 
     # Convert crash data to a percentage
     random_selection_crash_percentage = (random_selection_crash_data / total_crashes) * 100
+    # random_selection_crash_percentage = (random_selection_crash_data / test_number) * 100
 
     # Set the x and y data
     x = random_selection_coverage_data
@@ -117,9 +116,9 @@ for ind in range(final_coverage.shape[0]):
     x_range = np.arange(np.min(x), np.max(x), 0.1)
 
     # Generate the label for the regression line
-    lb = str(np.round(slope,2)) +"x+" + str(np.round(intercept,2))
+    lb = str(np.round(slope,3)) +"x+" + str(int(np.round(intercept,0)))
     if intercept < 0:
-        lb = str(np.round(slope,2)) +"x" + str(np.round(intercept,2))
+        lb = str(np.round(slope,3)) +"x" + str(int(np.round(intercept,0)))
 
     # Plot the line of best fit
     plt.plot(x_range, slope*x_range + intercept, c='C' + str(color_index), label=lb)
@@ -164,8 +163,8 @@ for i in range(len(test_suite_size)):
 plt.xlabel("Physical Coverage  (%)")
 plt.ylabel("Total Crashes Found (%)")
 # plt.legend(markerscale=5)
-plt.legend(new_handles, new_labels, markerscale=5, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=len(test_suite_size) +1)
-plt.tight_layout()
+plt.legend(new_handles, new_labels, markerscale=5, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=len(test_suite_size) + 1)
+# plt.tight_layout()
 plt.show()
 
 

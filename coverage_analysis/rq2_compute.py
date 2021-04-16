@@ -49,14 +49,10 @@ highway_data = []
 # For each beam and scenario
 for num_beam in number_beams:
     for scenario in scenarios:
-
-        print("Processing: Beam Count - " + str(num_beam))
-
-        print("----------------------------------")
-        print("----------Locating Files----------")
-        print("----------------------------------")
-
         
+        print("----------------------------------------------------")
+        print("Processing: Beam Count - " + str(num_beam))
+       
         all_files = None
         if scenario == "beamng":
             all_files = glob.glob("../../PhysicalCoverageData/beamng/processed_timing/b" + str(num_beam) + "/*/*.txt")
@@ -69,10 +65,6 @@ for num_beam in number_beams:
         total_files = len(all_files)
         print("Total files found: " + str(total_files))
 
-        print("----------------------------------")
-        print("---------Processing files---------")
-        print("----------------------------------")
-
         # Create the array
         timing_array = np.array([])
 
@@ -82,7 +74,7 @@ for num_beam in number_beams:
 
             # For each file
             file_count = 0
-            for i in tqdm(range(total_files)):
+            for i in range(total_files):
                 # Get the filename
                 file_name = all_files[i]
 
@@ -107,6 +99,26 @@ for num_beam in number_beams:
         else:
             highway_data.append(timing_array)
 
+        # Compute mean per file
+        total_per_file = []
+        for file_data in timing_information_per_file:
+            total_per_file.append(np.sum(file_data))
+
+        # Compute mean per scenario
+        mean_per_scenario = np.mean(timing_array)
+        median_per_scenario = np.median(timing_array)
+
+        # Compute overall mean per file
+        mean_per_file = np.mean(total_per_file)
+        median_per_file = np.median(total_per_file)
+
+        print("Scenario: " + str(scenario))
+        print("Beam Count: " + str(num_beam))
+        print("Mean time per scenario: " + str(np.round(mean_per_scenario, 4)))
+        print("Mean time per scenario: " + str(np.round(median_per_scenario, 4)))
+        print("Mean time per file: " + str(np.round(mean_per_file, 4)))
+        print("Mean time per file: " + str(np.round(median_per_file, 4)))
+
 # Create the plot
 plt.figure("Final")
 bpl = plt.boxplot(highway_data, positions=np.array(range(len(highway_data)))*2.0-0.4, sym='', widths=0.6)
@@ -121,7 +133,7 @@ plt.legend()
 
 plt.xticks(range(0, len(number_beams) * 2, 2), number_beams)
 plt.xlim(-2, len(number_beams)*2)
-plt.xlabel("Vector Size")
+plt.xlabel("Total Vectors")
 plt.ylabel("Time per Scenario (s)")
 plt.tight_layout()
 
@@ -131,7 +143,7 @@ b = plt.boxplot(highway_data, sym='')
 plt.xticks(range(1, len(number_beams) +1, 1), number_beams)
 plt.plot([], c='#D7191C', label='HighwayEnv')
 set_box_color(b, '#D7191C')
-plt.xlabel("Vector Size")
+plt.xlabel("Total Vectors")
 plt.ylabel("Time per Scenario (s)")
 plt.tight_layout()
 
@@ -140,7 +152,7 @@ b = plt.boxplot(beamng_data, sym='')
 plt.xticks(range(1, len(number_beams) +1, 1), number_beams)
 plt.plot([], c='#2C7BB6', label='BeamNG')
 set_box_color(b, '#2C7BB6')
-plt.xlabel("Vector Size")
+plt.xlabel("Total Vectors")
 plt.ylabel("Time per Scenario (s)")
 plt.tight_layout()
 
