@@ -1,4 +1,4 @@
-python3 rq2_compute.py                                                                                    
+python3 rq2_compute.py
 ----------------------------------------------------
 Processing: Beam Count - 1
 Total files found: 2000

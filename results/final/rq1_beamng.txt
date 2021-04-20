@@ -1,89 +1,85 @@
-python3 rq1_compute.py --steering_angle 30 --beam_count -1 --max_distance=30 --accuracy 5 --total_samples 1000000 --scenario highway --cores 10
+python3 rq1_compute.py --steering_angle 33 --beam_count -1 --max_distance=45 --accuracy 5 --total_samples 2000 --scenario beamng --cores 8
 ----------------------------------
 -----Reach Set Configuration------
 ----------------------------------
-Max steering angle:	30
+Max steering angle:	33
 Total beams:		*
-Max velocity:		30
+Max velocity:		45
 Vector accuracy:	5
 ----------------------------------
 -----------Loading Data-----------
 ----------------------------------
-Files: ['_highway_s30_b10_d30_a5_t1000000.npy', '_highway_s30_b1_d30_a5_t1000000.npy', '_highway_s30_b2_d30_a5_t1000000.npy', '_highway_s30_b3_d30_a5_t1000000.npy', '_highway_s30_b4_d30_a5_t1000000.npy', '_highway_s30_b5_d30_a5_t1000000.npy']
+Files: ['_beamng_s33_b10_d45_a5_t2000.npy', '_beamng_s33_b1_d45_a5_t2000.npy', '_beamng_s33_b2_d45_a5_t2000.npy', '_beamng_s33_b3_d45_a5_t2000.npy', '_beamng_s33_b4_d45_a5_t2000.npy', '_beamng_s33_b5_d45_a5_t2000.npy']
 Loading Complete
 ----------------------------------
 -------Computing Coverage---------
 ----------------------------------
-Processing: _highway_s30_b1_d30_a5_t1000000.npy
-Processing: _highway_s30_b10_d30_a5_t1000000.npy
-Processing: _highway_s30_b3_d30_a5_t1000000.npy
-Processing: _highway_s30_b2_d30_a5_t1000000.npy
-Processing: _highway_s30_b4_d30_a5_t1000000.npy
-Processing: _highway_s30_b5_d30_a5_t1000000.npy
+Processing: _beamng_s33_b10_d45_a5_t2000.npy
+Processing: _beamng_s33_b1_d45_a5_t2000.npy
+Processing: _beamng_s33_b3_d45_a5_t2000.npy
+Processing: _beamng_s33_b4_d45_a5_t2000.npy
+Processing: _beamng_s33_b5_d45_a5_t2000.npy
+Processing: _beamng_s33_b2_d45_a5_t2000.npy
 
-Filename:			_highway_s30_b1_d30_a5_t1000000.npy
-Total traces considered:	287945377
-Total crashes:			301060
-Crash percentage:		30.106%
-Total vectors considered:	287945377
-Total unique vectors seen:	7
-Total possible vectors:		7
+Filename:			_beamng_s33_b1_d45_a5_t2000.npy
+Total traces considered:	346249
+Total crashes:			141
+Crash percentage:		7.05%
+Total vectors considered:	346249
+Total unique vectors seen:	10
+Total possible vectors:		10
 Total coverage:			100.0%
-Total time to compute:		0:58:01.694937
+Total time to compute:		0:00:04.984607
+
+Filename:			_beamng_s33_b2_d45_a5_t2000.npy
+Total traces considered:	346249
+Total crashes:			141
+Crash percentage:		7.05%
+Total vectors considered:	346249
+Total unique vectors seen:	99
+Total possible vectors:		100
+Total coverage:			99.0%
+Total time to compute:		0:00:19.614771
+
+Filename:			_beamng_s33_b3_d45_a5_t2000.npy
+Total traces considered:	346249
+Total crashes:			141
+Crash percentage:		7.05%
+Total vectors considered:	346249
+Total unique vectors seen:	761
+Total possible vectors:		1000
+Total coverage:			76.1%
+Total time to compute:		0:00:34.194499
+
+Filename:			_beamng_s33_b4_d45_a5_t2000.npy
+Total traces considered:	346249
+Total crashes:			141
+Crash percentage:		7.05%
+Total vectors considered:	346249
+Total unique vectors seen:	3294
+Total possible vectors:		10000
+Total coverage:			32.94%
+Total time to compute:		0:01:57.157525
+
+Filename:			_beamng_s33_b5_d45_a5_t2000.npy
+Total traces considered:	346249
+Total crashes:			141
+Crash percentage:		7.05%
+Total vectors considered:	346249
+Total unique vectors seen:	7665
+Total possible vectors:		100000
+Total coverage:			7.665%
+Total time to compute:		0:06:41.693290
+
+Filename:			_beamng_s33_b10_d45_a5_t2000.npy
+Total traces considered:	346249
+Total crashes:			141
+Crash percentage:		7.05%
+Total vectors considered:	346249
+Total unique vectors seen:	40405
+Total possible vectors:		10000000000
+Total coverage:			0.0004%
+Total time to compute:		1:24:02.966857
 
 
-Filename:			_highway_s30_b2_d30_a5_t1000000.npy
-Total traces considered:	287945377
-Total crashes:			301060
-Crash percentage:		30.106%
-Total vectors considered:	287945377
-Total unique vectors seen:	43
-Total possible vectors:		49
-Total coverage:			87.7551%
-Total time to compute:		1:38:59.865564
-
-Filename:			_highway_s30_b3_d30_a5_t1000000.npy
-Total traces considered:	287945377
-Total crashes:			301060
-Crash percentage:		30.106%
-Total vectors considered:	287945377
-Total unique vectors seen:	274
-Total possible vectors:		343
-Total coverage:			79.8834%
-Total time to compute:		2:29:30.208215
-
-Filename:			_highway_s30_b4_d30_a5_t1000000.npy
-Total traces considered:	287945377
-Total crashes:			301060
-Crash percentage:		30.106%
-Total vectors considered:	287945377
-Total unique vectors seen:	1187
-Total possible vectors:		2401
-Total coverage:			49.4377%
-Total time to compute:		3:42:12.191997
-
-Filename:			_highway_s30_b5_d30_a5_t1000000.npy
-Total traces considered:	287945377
-Total crashes:			301060
-Crash percentage:		30.106%
-Total vectors considered:	287945377
-Total unique vectors seen:	4625
-Total possible vectors:		16807
-Total coverage:			27.5183%
-Total time to compute:		7:15:00.187929
-100%|
-
-Filename:			_highway_s30_b10_d30_a5_t1000000.npy
-Total traces considered:	287945377
-Total crashes:			301060
-Crash percentage:		30.106%
-Total vectors considered:	287945377
-Total unique vectors seen:	99264
-Total possible vectors:		282475249
-Total coverage:			0.0351%
-Total time to compute:		4 days, 8:11:15.980365
-
-100%|███████████████████████████████████████| 1000000/1000000 [104:10:32<00:00,  2.67it/s]
-
-
-Index where #vehicles increased - [0, 83359, 166709, 250056, 333400, 416740, 500075, 583409, 666738, 750061, 833380, 916693]
+Index where #vehicles increased - [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800]
