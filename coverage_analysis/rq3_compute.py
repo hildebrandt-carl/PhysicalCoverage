@@ -6,10 +6,14 @@ import multiprocessing
 import numpy as np
 
 from tqdm import tqdm
-
+from rq3_configuration import plot_config, unique_vector_config, compute_crash_hash
 
 def random_selection(number_of_tests):
     global traces
+
+    # Get the hash size
+    hash_size = unique_vector_config(args.scenario, number_of_seconds=1)
+    unique_crashes_seen = []
 
     # Generate the test indices
     local_state = np.random.RandomState()
@@ -24,7 +28,15 @@ def random_selection(number_of_tests):
         vectors = traces[random_i]
         # Look for a crash
         if np.isnan(vectors).any():
-            number_of_crashes += 1
+
+            # Compute the hash value for this
+            hash_value = compute_crash_hash(vectors, hash_size)
+
+            # Check if this is a unique crash (only if its a unique crash count it)
+            if len(np.unique(unique_crashes_seen+[hash_value])) > len(np.unique(unique_crashes_seen)):
+                unique_crashes_seen.append(hash_value)
+                number_of_crashes += 1
+
         # Check to see if any of the vectors are new
         for v in vectors:
             if not np.isnan(v).any():
@@ -40,6 +52,10 @@ def random_selection(number_of_tests):
 
 def greedy_selection_best(number_of_tests, greedy_sample_size):
     global traces
+
+    # Get the hash size
+    hash_size = unique_vector_config(args.scenario, number_of_seconds=1)
+    unique_crashes_seen = []
 
     # Greedy algorithm
     best_case_vectors = []
@@ -84,9 +100,15 @@ def greedy_selection_best(number_of_tests, greedy_sample_size):
 
         # Update the best and worst coverage data
         best_case_vectors = copy.deepcopy(max_coverage)
-        # Update the best and worst crash data
+
+        # Look for a crash
         if np.isnan(traces[best_selected_trace_index]).any():
-            best_case_crashes += 1
+            # Compute the hash value for this
+            hash_value = compute_crash_hash(traces[best_selected_trace_index], hash_size)
+            # Check if this is a unique crash (only if its a unique crash count it)
+            if len(np.unique(unique_crashes_seen+[hash_value])) > len(np.unique(unique_crashes_seen)):
+                unique_crashes_seen.append(hash_value)
+                best_case_crashes += 1
 
         # Remove the selected index from consideration
         available_indices.remove(best_selected_trace_index)
@@ -98,6 +120,11 @@ def greedy_selection_best(number_of_tests, greedy_sample_size):
 
 def greedy_selection_worst(number_of_tests, greedy_sample_size):
     global traces
+
+    # Get the hash size
+    hash_size = unique_vector_config(args.scenario, number_of_seconds=1)
+    unique_crashes_seen = []
+
 
     # Greedy algorithm
     worst_case_vectors = []
@@ -146,9 +173,14 @@ def greedy_selection_worst(number_of_tests, greedy_sample_size):
         # Update the best and worst coverage data
         worst_case_vectors = copy.deepcopy(min_coverage)
 
-        # Update the best and worst crash data
+        # Look for a crash
         if np.isnan(traces[worst_selected_trace_index]).any():
-            worst_case_crashes += 1
+            # Compute the hash value for this
+            hash_value = compute_crash_hash(traces[worst_selected_trace_index], hash_size)
+            # Check if this is a unique crash (only if its a unique crash count it)
+            if len(np.unique(unique_crashes_seen+[hash_value])) > len(np.unique(unique_crashes_seen)):
+                unique_crashes_seen.append(hash_value)
+                worst_case_crashes += 1
 
         # Remove the selected index from consideration
         available_indices.remove(worst_selected_trace_index)
@@ -222,19 +254,8 @@ print("----------------------------------")
 print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
-# Use the tests_per_test_suite
-if args.scenario == "beamng":
-    total_random_test_suites = 1000
-    test_suite_size = [100, 500, 1000]
-    total_greedy_test_suites = 100
-    greedy_sample_sizes = [2, 3, 4, 5, 10]
-elif args.scenario == "highway":
-    total_random_test_suites = 1000
-    test_suite_size = [1000, 5000, 10000, 50000]
-    total_greedy_test_suites = 100
-    greedy_sample_sizes = [2, 3, 4, 5, 10]
-else:
-    exit()
+# Get the configuration
+total_random_test_suites, test_suite_size, total_greedy_test_suites, greedy_sample_sizes = plot_config(args.scenario)
 
 # Create a pool with x processes
 total_processors = int(args.cores)

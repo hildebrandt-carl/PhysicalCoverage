@@ -1,5 +1,6 @@
 import re
 import glob
+import math
 import random 
 import argparse
 
@@ -131,11 +132,45 @@ else:
 total_files = len(all_files)
 print("Total files found: " + str(total_files))
 
-# Select all or part of the files
+# Select all of the files
 file_names = all_files
-if args.total_samples != -1:
-    file_names = random.sample(all_files, args.total_samples)
 
+# If you don't want all files, select a random portion of the files
+if args.total_samples != -1:
+
+    # Only sample this way if using highway
+    if args.scenario == "highway":
+        folders = glob.glob("../../PhysicalCoverageData/highway/raw/*")
+        files_per_folder = int(math.ceil(args.total_samples / len(folders)))
+        print("There are {} categories, thus we need to select {} from each".format(len(folders), files_per_folder))
+        print("")
+        file_names = []
+        for f in folders:
+            print("Selecting {} random files from - {}".format(files_per_folder, f))
+            all_files = glob.glob(f + "/*.txt")
+            names = random.sample(all_files, files_per_folder)
+            file_names.append(names)
+
+    # Do this for the other scenarios
+    else:
+        print("Selecting {} random files".format(args.total_samples))
+        file_names = random.sample(all_files, args.total_samples)
+
+
+# Flatten the list
+file_names_flat = []
+for subl in file_names:
+    for item in subl:
+        file_names_flat.append(item)
+file_names = file_names_flat
+
+# Make sure your list is the exact right size
+print("")
+if len(file_names) > args.total_samples:
+    print("Currently there are {} files, cropping to {}".format(len(file_names), args.total_samples))
+    file_names = file_names[0:args.total_samples]
+
+# Get the file size
 total_files = len(file_names)
 print("Total files selected for processing: " + str(total_files))
 

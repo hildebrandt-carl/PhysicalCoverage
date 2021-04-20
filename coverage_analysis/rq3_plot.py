@@ -7,7 +7,29 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from prettytable import PrettyTable
+from rq3_configuration import plot_config, unique_vector_config, compute_crash_hash
 
+
+def crash_hasher(trace_number, hash_size):
+    global traces
+
+    # Determine if there is a crash
+    trace = traces[trace_number]
+
+    # Used to hold the last vectors before a crash
+    last_seen_vectors = np.zeros((hash_size, trace[0].shape[0]))
+
+    # Create the hash
+    hash_value = np.nan
+
+    # If there is no crash return none
+    if not np.isnan(trace).any():
+        return [np.nan]
+    # Else return the hash
+    else:
+        hash_value = compute_crash_hash(trace, hash_size)
+
+    return [hash_value]
 
 def load_obj(name ):
     with open(name + '.pkl', 'rb') as f:
@@ -55,32 +77,43 @@ base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/numpy_data/' +
 print("Loading: " + load_name)
 traces = np.load(base_path + "traces_" + args.scenario + load_name)
 
-# Compute the number of crashes
-print("Counting the number of crashes")
-total_crashes = 0
-for t in traces:
-    if np.isnan(t).any():
-        total_crashes += 1
-print("Total Crashes: " + str(total_crashes))
+# Get the hash_size
+hash_size = unique_vector_config(args.scenario, number_of_seconds=1)
 
+# Create a pool with x processes
+total_processors = int(args.cores)
+pool =  multiprocessing.Pool(processes=total_processors)
+
+jobs = []
+# For all the different test suite sizes
+for trace_i in range(len(traces)):
+    jobs.append(pool.apply_async(crash_hasher, args=(trace_i, hash_size)))
+    
+# Get the results
+results = []
+for job in tqdm(jobs):
+    results.append(job.get())
+
+print("Done computing all the hash functions")
+
+# Get the crash data
+print("Computing unique crash values")
+print("")
+results = np.array(results).reshape(-1)
+total_crashes = results[np.logical_not(np.isnan(results))]
+print("Total crash count: " + str(total_crashes.shape[0]))
+
+# Count the unique elements in an array
+unique = np.unique(total_crashes)
+print("Total unique crashes count: " + str(unique.shape[0]))
+total_crashes = unique.shape[0]
 
 print("----------------------------------")
 print("----------Plotting Data-----------")
 print("----------------------------------")
 
-# Use the tests_per_test_suite
-if args.scenario == "beamng":
-    total_random_test_suites = 1000
-    test_suite_size = [100, 500, 1000]
-    total_greedy_test_suites = 100
-    greedy_sample_sizes = [2, 3, 4, 5, 10]
-elif args.scenario == "highway":
-    total_random_test_suites = 1000
-    test_suite_size = [1000, 5000, 10000, 50000]
-    total_greedy_test_suites = 100
-    greedy_sample_sizes = [2, 3, 4, 5, 10]
-else:
-    exit()
+# Get the configuration
+total_random_test_suites, test_suite_size, total_greedy_test_suites, greedy_sample_sizes = plot_config(args.scenario)
 
 # For all the data plot it
 plt.figure(args.scenario)
@@ -161,7 +194,7 @@ for i in range(len(test_suite_size)):
 
 # Plot the data
 plt.xlabel("Physical Coverage  (%)")
-plt.ylabel("Total Crashes Found (%)")
+plt.ylabel("Total Unique Crashes Found (%)")
 # plt.legend(markerscale=5)
 plt.legend(new_handles, new_labels, markerscale=5, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=len(test_suite_size) + 1)
 # plt.tight_layout()
