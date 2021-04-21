@@ -1,6 +1,7 @@
 import pickle
 import argparse
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -55,10 +56,10 @@ for i in range(len(accumulative_graph_vehicle_count)):
 print("Index where #vehicles increased - " + str(vehicle_count_index_change))
 
 # Plot the legend
-plt.xlabel("Scenario")
-plt.ylabel("Reachable Set Coverage (%)")
+plt.xlabel("Tests")
+plt.ylabel("Physical Coverage (%)")
 plt.ylim([-5,110])
-plt.legend(markerscale=7, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=7)
+plt.legend(markerscale=7, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=7, handletextpad=0.1)
 plt.tight_layout()
 
 plt.show()

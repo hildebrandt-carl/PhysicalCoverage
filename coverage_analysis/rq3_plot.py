@@ -150,9 +150,9 @@ for ind in range(final_coverage.shape[0]):
     x_range = np.arange(np.min(x), np.max(x), 0.1)
 
     # Generate the label for the regression line
-    lb = str(np.round(slope,3)) +"x+" + str(int(np.round(intercept,0)))
+    lb = str(np.round(slope,2)) +"x+" + str(int(np.round(intercept,0)))
     if intercept < 0:
-        lb = str(np.round(slope,3)) +"x" + str(int(np.round(intercept,0)))
+        lb = str(np.round(slope,2)) +"x" + str(int(np.round(intercept,0)))
 
     # Plot the line of best fit
     plt.plot(x_range, slope*x_range + intercept, c='C' + str(color_index), label=lb)
@@ -197,7 +197,7 @@ for i in range(len(test_suite_size)):
 plt.xlabel("Physical Coverage  (%)")
 plt.ylabel("Total Unique Crashes Found (%)")
 # plt.legend(markerscale=5)
-plt.legend(new_handles, new_labels, markerscale=5, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=len(test_suite_size) + 1)
+plt.legend(new_handles, new_labels, markerscale=5, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=len(test_suite_size) + 1, handletextpad=0.1)
 # plt.tight_layout()
 plt.show()
 
