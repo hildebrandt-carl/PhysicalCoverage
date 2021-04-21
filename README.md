@@ -106,30 +106,3 @@ python3 rq3_compute_unique_crash_count.py --steering_angle 33 --beam_count 3 --m
 
 
 
-
-HighwayEnv 100K tests
-Considering the last 1 seconds
-Total crash count: 30020
-Total unique crashes count: 12177
-
-Considering the last 2 seconds
-Total crash count: 30020
-Total unique crashes count: 24236
-
-Considering the last 3 seconds
-Total crash count: 30020
-Total unique crashes count: 26856
-
-Considering the last 4 seconds
-Total crash count: 30020
-Total unique crashes count: 27766
-
-
-BeamNG 2K tests
-Considering the last 1 seconds
-Total crash count: 141
-Total unique crashes count: 138
-
-Considering the last 2 seconds
-Total crash count: 141
-Total unique crashes count: 141

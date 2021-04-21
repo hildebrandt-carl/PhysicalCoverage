@@ -59,7 +59,7 @@ print("-----------Loading Data-----------")
 print("----------------------------------")
 
 # Load the results
-save_name = "../results/rq3_"
+save_name = "rq3_"
 final_coverage          = np.load(save_name + "coverage_" + str(args.scenario) + ".npy")
 final_number_crashes    = np.load(save_name + "crashes_" + str(args.scenario) + ".npy")
 

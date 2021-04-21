@@ -8,12 +8,13 @@ def plot_config(scenario):
         total_greedy_test_suites = 100
         greedy_sample_sizes = [2, 3, 4, 5, 10]
     elif scenario == "highway":
-        total_random_test_suites = 1000
+        total_random_test_suites = 10
         test_suite_size = [10000, 25000, 50000]
-        total_greedy_test_suites = 100
+        total_greedy_test_suites = 1
         greedy_sample_sizes = [2, 3, 4, 5, 10]
     else:
         exit()
+
 
     return total_random_test_suites, test_suite_size, total_greedy_test_suites, greedy_sample_sizes
 
