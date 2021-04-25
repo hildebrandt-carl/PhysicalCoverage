@@ -1,0 +1,16 @@
+----------------------------------
+-----Reach Set Configuration------
+----------------------------------
+Max steering angle:	30
+Total beams:		3
+Max velocity:		30
+Vector accuracy:	5
+----------------------------------
+-----------Loading Data-----------
+----------------------------------
+Loading: _s30_b3_d30_a5_t100000.npy
+----------------------------------
+--------Crashes vs Coverage-------
+----------------------------------
+Done!
+Saving to: ./output/test34_rq3_

@@ -115,9 +115,9 @@ for num_beam in number_beams:
         print("Scenario: " + str(scenario))
         print("Beam Count: " + str(num_beam))
         print("Mean time per scenario: " + str(np.round(mean_per_scenario, 4)))
-        print("Mean time per scenario: " + str(np.round(median_per_scenario, 4)))
+        print("Median time per scenario: " + str(np.round(median_per_scenario, 4)))
         print("Mean time per file: " + str(np.round(mean_per_file, 4)))
-        print("Mean time per file: " + str(np.round(median_per_file, 4)))
+        print("Median time per file: " + str(np.round(median_per_file, 4)))
 
 # Create the plot
 plt.figure("Final")
