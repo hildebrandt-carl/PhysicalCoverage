@@ -1,6 +1,7 @@
 import time
 import numpy as np
-from tracked_obj import TrackedObject
+
+from misc.tracked_obj import TrackedObject
 
 
 class Tracker:
@@ -12,7 +13,7 @@ class Tracker:
         self.current_id = 0
         
     def track(self, current_obs):
-        
+
         # For each observation
         for obs in current_obs:
 

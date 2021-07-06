@@ -10,7 +10,7 @@ class action_enum(Enum):
 
 
 class EgoController:
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, spawn_location=None):
         self.last_obs = None
         self.current_lane = None
         self.current_action = None

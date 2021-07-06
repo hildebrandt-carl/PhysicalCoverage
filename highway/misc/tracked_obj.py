@@ -11,7 +11,10 @@ class TrackedObject:
         self.color_id = color_id
         self.last_update = time.time()
         self.velocity = [velocity]
-        self.current_heading = 0
+        if abs(velocity[0]) < 1e-6:
+            self.current_heading = 0
+        else:
+            self.current_heading = math.atan(velocity[1]/velocity[0])
 
         self.traj_p1 = None
         self.traj_p2 = None

@@ -8,6 +8,9 @@ import numpy as np
 from tqdm import tqdm
 from datetime import datetime
 
+from environment_configurations import RSRConfig
+from environment_configurations import HighwayKinematics
+
 
 def save_obj(obj, name):
     with open(name + '.pkl', 'wb') as f:
@@ -18,8 +21,10 @@ def load_obj(name):
         return pickle.load(f)
 
 def isUnique(vector, unique_vectors_seen):
-    # Return false if the vector contains Nan
+    # Return false if the vector contains Nan or inf
     if np.isnan(vector).any():
+        return False
+    if np.isinf(vector).any():
         return False
     # Assume True
     unique = True
@@ -40,6 +45,9 @@ def compute_coverage(load_name, return_dict, return_key, base_path):
     total_beams = total_beams[0:total_beams.find("_d")]
     total_beams = int(total_beams)
 
+    scenario = load_name[1:]
+    scenario = scenario[:scenario.find("_")]
+
     # Compute total possible values using the above
     unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
     total_possible_observations = int(pow(unique_observations_per_cell, total_beams))
@@ -57,9 +65,14 @@ def compute_coverage(load_name, return_dict, return_key, base_path):
     total_crashes = 0
     total_vectors = 0
 
+    # Load the feasible trajectories
+    fname = '../../PhysicalCoverageData/' + str(scenario) +'/feasibility/processed/FeasibleVectors_b' + str(total_beams) + ".npy"
+    feasible_vectors = list(np.load(fname))
+    total_feasible_observations = np.shape(feasible_vectors)[0]
+
     unique_vectors_seen                 = []
     accumulative_graph                  = np.full(total_traces, np.nan)
-    acuumulative_graph_vehicle_count    = np.full(total_traces, np.nan)
+    accumulative_graph_vehicle_count    = np.full(total_traces, np.nan)
 
     # For each of the traces
     for i in tqdm(range(total_traces), position=int(return_key[1:]), mininterval=5):
@@ -82,60 +95,66 @@ def compute_coverage(load_name, return_dict, return_key, base_path):
                 if unique:
                     unique_vectors_seen.append(v)
 
+                    # Check if any of the vectors are infeasible
+                    # infeasible = isUnique(v, feasible_vectors)
+                    # if infeasible:
+                    #     print(v)
+                    #     print("Infeasible vector found?")
+
         # Used for the accumulative graph
         unique_vector_length_count          = len(unique_vectors_seen)
         accumulative_graph[i]               = unique_vector_length_count
-        acuumulative_graph_vehicle_count[i] = vehicle_count
+        accumulative_graph_vehicle_count[i] = vehicle_count
 
-    overall_coverage = round((unique_vector_length_count / float(total_possible_observations)) * 100, 4)
+    feasible_coverage = round((unique_vector_length_count / float(total_feasible_observations)) * 100, 4)
+    possible_coverage = round((unique_vector_length_count / float(total_possible_observations)) * 100, 4)
     crash_percentage = round(total_crashes / float(total_traces) * 100, 4)
 
     print("\n\n\n\n\n\n")
     print("Filename:\t\t\t" + load_name)
-    print("Total traces considered:\t" + str(total_vectors))
+    print("Total traces considered:\t" + str(total_traces))
     print("Total crashes:\t\t\t" + str(total_crashes))
     print("Crash percentage:\t\t" + str(crash_percentage) + "%")
     print("Total vectors considered:\t" + str(total_vectors))
     print("Total unique vectors seen:\t" + str(unique_vector_length_count))
+    print("Total feasible vectors:\t\t" + str(total_feasible_observations))
+    print("Total feasible coverage:\t" + str(feasible_coverage) + "%")
     print("Total possible vectors:\t\t" + str(total_possible_observations))
-    print("Total coverage:\t\t\t" + str(overall_coverage) + "%")
+    print("Total possible coverage:\t" + str(possible_coverage) + "%")
     print("Total time to compute:\t\t" + str(datetime.now()-start))
 
     # Get all the unique number of external vehicles
-    unique_vehicle_count = list(set(acuumulative_graph_vehicle_count))
+    unique_vehicle_count = list(set(accumulative_graph_vehicle_count))
     unique_vehicle_count.sort()
 
     # Convert to a percentage
-    accumulative_graph_coverage = (accumulative_graph / total_possible_observations) * 100
+    accumulative_graph_possible_coverage = (accumulative_graph / total_possible_observations) * 100
+    accumulative_graph_feasible_coverage = (accumulative_graph / total_feasible_observations) * 100
 
     # Return both arrays
-    return_dict[return_key] = [accumulative_graph_coverage, acuumulative_graph_vehicle_count, total_beams]
+    return_dict[return_key] = [accumulative_graph_possible_coverage, accumulative_graph_feasible_coverage, accumulative_graph_vehicle_count, total_beams]
     return True
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--steering_angle', type=int, default=30,   help="The steering angle used to compute the reachable set")
-parser.add_argument('--beam_count',     type=int, default=4,    help="The number of beams used to vectorize the reachable set")
-parser.add_argument('--max_distance',   type=int, default=20,   help="The maximum dist the vehicle can travel in 1 time step")
-parser.add_argument('--accuracy',       type=int, default=5,    help="What each vector is rounded to")
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
 parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
 args = parser.parse_args()
 
-new_steering_angle  = args.steering_angle
-new_total_lines     = args.beam_count
-new_max_distance    = args.max_distance
-new_accuracy        = args.accuracy
+# Create the configuration classes
+HK = HighwayKinematics()
+RSR = RSRConfig()
 
-if new_total_lines == -1:
-    new_total_lines = "*"
+# Save the kinematics and RSR parameters
+new_steering_angle  = HK.steering_angle
+new_max_distance    = HK.max_velocity
+new_accuracy        = RSR.accuracy
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
 print("----------------------------------")
 
 print("Max steering angle:\t" + str(new_steering_angle))
-print("Total beams:\t\t" + str(new_total_lines))
 print("Max velocity:\t\t" + str(new_max_distance))
 print("Vector accuracy:\t" + str(new_accuracy))
 
@@ -145,16 +164,14 @@ print("----------------------------------")
 
 load_name = ""
 load_name += "_s" + str(new_steering_angle) 
-# load_name += "_b" + str(new_total_lines) 
-load_name += "_b" + str(new_total_lines) 
+load_name += "_b" + str('*') 
 load_name += "_d" + str(new_max_distance) 
 load_name += "_a" + str(new_accuracy)
 load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/numpy_data/' + str(args.total_samples) + "/"
-    
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/processed/' + str(args.total_samples) + "/"
 trace_file_names = glob.glob(base_path + "traces_" + args.scenario + load_name)
 file_names = []
 for f in trace_file_names:
@@ -205,4 +222,4 @@ save_obj(final_results, save_name)
 return_dict = load_obj(save_name)
 
 # Run the plotting code
-exec(compile(open("rq1_plot.py", "rb").read(), "rq1_plot.py", 'exec'))
+exec(compile(open("accumulate_coverage_plot.py", "rb").read(), "accumulate_coverage_plot.py", 'exec'))

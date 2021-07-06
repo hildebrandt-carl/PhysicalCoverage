@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 from typing import Tuple
 from gym.envs.registration import register
@@ -6,7 +8,7 @@ from highway_env_v2 import utils
 from highway_env_v2.envs.common.abstract import AbstractEnv
 from highway_env_v2.envs.common.action import Action
 from highway_env_v2.road.road import Road, RoadNetwork
-from highway_env_v2.vehicle.controller import ControlledVehicle
+from highway_env_v2.vehicle.controller import ControlledVehicle, ManualVehicle
 
 
 class HighwayEnv(AbstractEnv):
@@ -44,7 +46,9 @@ class HighwayEnv(AbstractEnv):
             "vehicles_density": 1,
             "collision_reward": -1,  # The reward received when colliding with a vehicle.
             "reward_speed_range": [20, 30],
-            "offroad_terminal": False
+            "offroad_terminal": False,
+            "ego_position": None,
+            "ego_heading": None
         })
         return config
 
@@ -65,12 +69,24 @@ class HighwayEnv(AbstractEnv):
             self.road.vehicles.append(vehicles_type.create_random(self.road, spacing=1 / self.config["vehicles_density"]))
 
         self.controlled_vehicles = []
-        for _ in range(self.config["controlled_vehicles"]):
-            vehicle = self.action_type.vehicle_class.create_random(self.road,
-                                                                   speed=25,
-                                                                   lane_id=self.config["initial_lane_id"],
-                                                                   spacing=self.config["ego_spacing"])
-            vehicle.color_id = -1
+        for j in range(self.config["controlled_vehicles"]):
+            if j == 0:
+                if self.config["ego_position"] is not None and self.config["ego_heading"] is not None:
+                    vehicle = self.action_type.vehicle_class(self.road,
+                                                             position=self.config["ego_position"],
+                                                             heading=self.config["ego_heading"],
+                                                             speed=25)
+                else:
+                    vehicle = self.action_type.vehicle_class.create_random(self.road,
+                                                                        speed=25,
+                                                                        lane_id=self.config["initial_lane_id"],
+                                                                        spacing=self.config["ego_spacing"])
+                vehicle.color_id = -1
+            else:
+                vehicle = ManualVehicle.create_random(self.road,
+                                                      speed=25,
+                                                      lane_id=self.config["initial_lane_id"],
+                                                      spacing=self.config["ego_spacing"])
             self.controlled_vehicles.append(vehicle)
             self.road.vehicles.append(vehicle)
 

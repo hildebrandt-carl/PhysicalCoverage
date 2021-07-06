@@ -8,7 +8,10 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from prettytable import PrettyTable
-from rq3_configuration import plot_config, unique_vector_config, compute_crash_hash
+
+from environment_configurations import RSRConfig
+from environment_configurations import HighwayKinematics
+from test_selection_config import plot_config, unique_vector_config, compute_crash_hash
 
 
 def crash_hasher(trace_number, hash_size):
@@ -38,21 +41,21 @@ def load_obj(name ):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--steering_angle', type=int, default=30,    help="The steering angle used to compute the reachable set")
-parser.add_argument('--beam_count',     type=int, default=5,     help="The number of beams used to vectorize the reachable set")
-parser.add_argument('--max_distance',   type=int, default=30,    help="The maximum dist the vehicle can travel in 1 time step")
-parser.add_argument('--accuracy',       type=int, default=5,     help="What each vector is rounded to")
+parser.add_argument('--beam_count',     type=int, default=5,     help="The number of beams used to vectorized the reachable set")
 parser.add_argument('--total_samples',  type=int, default=1000,  help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--greedy_sample',  type=int, default=50,    help="The unumber of samples considered by the greedy search")
 parser.add_argument('--scenario',       type=str, default="",    help="beamng/highway")
 parser.add_argument('--cores',          type=int, default=4,     help="The number of CPU cores available")
 args = parser.parse_args()
 
-new_steering_angle  = args.steering_angle
-new_total_lines     = args.beam_count
-new_max_distance    = args.max_distance
-new_accuracy        = args.accuracy
-greedy_sample_size  = args.greedy_sample
+# Create the configuration classes
+HK = HighwayKinematics()
+RSR = RSRConfig(beam_count=args.beam_count)
+
+# Save the kinematics and RSR parameters
+new_steering_angle  = HK.steering_angle
+new_max_distance    = HK.max_velocity
+new_accuracy        = RSR.accuracy
+new_total_lines     = RSR.beam_count
 
 print("----------------------------------")
 print("-----------Loading Data-----------")
@@ -73,7 +76,7 @@ load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/numpy_data/' + str(args.total_samples) + "/"
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/processed/' + str(args.total_samples) + "/"
    
 print("Loading: " + load_name)
 traces = np.load(base_path + "traces_" + args.scenario + load_name)

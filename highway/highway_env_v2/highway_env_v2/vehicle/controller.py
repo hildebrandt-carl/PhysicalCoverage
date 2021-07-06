@@ -297,3 +297,43 @@ class MDPVehicle(ControlledVehicle):
                 if (t % int(trajectory_timestep / dt)) == 0:
                     states.append(copy.deepcopy(v))
         return states
+
+
+class ManualVehicle(Vehicle):
+
+    SPEED_MIN: float = 20  # [m/s]
+    SPEED_MAX: float = 30  # [m/s]
+    MAX_STEERING_ANGLE = np.pi / 3  # [rad]
+
+    def __init__(self,
+                 road: Road,
+                 position: Vector,
+                 heading: float = 0,
+                 speed: float = 0,
+                 target_lane_index: LaneIndex = None,
+                 target_speed: float = None,
+                 route: Route = None):
+        super().__init__(road, position, heading, speed)
+
+    @classmethod
+    def create_from(cls, vehicle: "ManualVehicle") -> "ManualVehicle":
+        """
+        Create a new vehicle from an existing one.
+
+        The vehicle dynamics and target dynamics are copied, other properties are default.
+
+        :param vehicle: a vehicle
+        :return: a new vehicle at the same dynamical state
+        """
+        v = cls(vehicle.road, vehicle.position, heading=vehicle.heading, speed=vehicle.speed,
+                target_lane_index=vehicle.target_lane_index, target_speed=vehicle.target_speed,
+                route=vehicle.route)
+        return v
+
+    def act(self, action = None) -> None:
+        if action is None:
+            super().act()
+        else:
+            action['steering'] = np.clip(action['steering'], -self.MAX_STEERING_ANGLE, self.MAX_STEERING_ANGLE)
+            super().act(action)
+

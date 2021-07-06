@@ -106,6 +106,8 @@ def isUnique(vector, unique_vectors_seen):
     # Return false if the vector contains Nan
     if np.isnan(vector).any():
         return False
+    if np.isinf(vector).any():
+        return False
     # Assume True
     unique = True
     for v2 in unique_vectors_seen:

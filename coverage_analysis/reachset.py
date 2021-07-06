@@ -15,9 +15,10 @@ class ReachableSet:
     compute_environment takes in a list of tracked objects and returns a list of polygons that are in the same position as the tracked objects and rotated to match the objects heading
 
     :param tracked_objects: a list of tracked objects
+    :param lanes: an array containing the upper and lower lane bounds
     :return: a list of polygons
     """ 
-    def compute_environment(self, tracked_objects):
+    def compute_environment(self, tracked_objects, lanes=None):
         
         # Save the ego_position
         ego_pos = tracked_objects[0].position[-1]
@@ -40,6 +41,21 @@ class ReachableSet:
             # Save for printing
             obstacles.append(obs_instance)
 
+        # Create an upper and lower bound if the lanes are given
+        if lanes is not None:
+            # Get the x and y values
+            x1 = lanes[0][0][0]
+            x2 = lanes[0][1][0]
+            y1 = lanes[0][0][1]
+            y2 = lanes[1][0][1]
+
+            # Create the obstacles
+            l1 = Polygon([(x1, y1), (x2, y1),(x2, y1 + 0.001), (x1, y1 + 0.001)])
+            l2 = Polygon([(x1, y2), (x2, y2),(x2, y2 - 0.001), (x1, y2 - 0.001)])
+
+            obstacles.append(l1)
+            obstacles.append(l2)
+             
         return obstacles
 
     """
@@ -131,3 +147,26 @@ class ReachableSet:
             vector.append(l_len)
 
         return vector
+
+
+
+    """
+    Take a reachable set into a series of points that represent the possible readings 
+
+    :param line: A list of lines
+    :param accuracy: The accuracy you want the points to be. i.e. 0.5 will round to the closest 0.5
+    :return: a list of lines where each line is described as a series of points
+    """ 
+    def line_to_points(self, lines, accuracy=0.25):
+        segmented_lines = []
+        # For each line:
+        for l in lines:
+            points = []
+            current_dist = 0
+            while current_dist <= l.length:
+                new_point = l.interpolate(current_dist)
+                current_dist += accuracy
+                points.append(new_point)
+            segmented_lines.append(points)
+
+        return segmented_lines

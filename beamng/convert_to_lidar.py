@@ -169,204 +169,216 @@ def rotate(p, origin=(0, 0), angle=0):
 
 def process_file(file_name, save_name, external_vehicle_count, file_number):
 
-    # Open the file and count vectors
-    input_file = open(file_name, "r")
-    print("(" + str(file_number) + ") Processing: " + file_name)
-    print("Saving output to: " + str(save_name))
-    print("-----------------------")
-    
-    # Get the time
-    start_time = datetime.now()
+    output_success = True
 
-    # Open a text file to save output
-    output_file = open(save_name, "w")
-    output_file.write("Name: %s\n" % file_name)
-    output_file.write("Date: %s/%s/%s\n" % (start_time.day, start_time.month, start_time.year))
-    output_file.write("Time: %s:%s:%s\n" % (start_time.hour, start_time.minute, start_time.second))
-    output_file.write("External Vehicles: %s\n" % external_vehicle_count)
-    output_file.write("Reach set total lines: %d\n" % total_lines)
-    output_file.write("Reach set steering angle: %d\n" % steering_angle)
-    output_file.write("Reach set max distance: %d\n" % max_distance)
-    output_file.write("------------------------------\n")
-
-    frame_skip_counter =  0
-
-    # Print the file
-    for line in input_file:
-
-        # Skip the first second of data (this needs to be atleast 1 which is the heading)
-        frame_skip_counter += 1
-        if frame_skip_counter < 5:
-            continue
+    try:
+        # Open the file and count vectors
+        input_file = open(file_name, "r")
+        print("(" + str(file_number) + ") Processing: " + file_name)
         
-        # Remove unnecessary characters and split the data correctly
-        data = line.split("],")
-        time_step_position = data[0].split(",[")
-        crash_vehicle_count = data[-1].split(",")
-        data = data[1:]
-        data.insert(0, time_step_position[0])
-        data.insert(1, time_step_position[1])
-        data = data[:-1]
-        data.append(crash_vehicle_count[0])
-        data.append(crash_vehicle_count[1])
-
-        # Get the data
-        current_data = {}
-        current_data["position"]        = data[1]
-        current_data["orientation"]     = data[2]
-        current_data["velocity"]        = data[3]
-        current_data["lidar"]           = data[4]
-        current_data["crash"]           = data[5]
-        current_data["veh_count"]       = data[6]
-        current_data['origin']          = "[0, 0, 0]"
-        current_data["ego_orientation"] = "[1, 0, 0]"
-
-        # Clean the data
-        for key in current_data:
-            current_data[key] = current_data[key].replace('[', '') 
-            current_data[key] = current_data[key].replace(']', '') 
-
-        # Convert to numpy
-        for key in current_data:
-            current_data[key] = current_data[key].split(", ")
-            current_data[key] = np.array(current_data[key], dtype=float)
-
-        if current_data["veh_count"] != int(external_vehicle_count):
-            print("Vehicle count does not match: " + str(current_data["veh_count"]) + " - " + external_vehicle_count)
-            exit()
-
-        # Get the lidar data into the right shape
-        unique_entries = int(current_data["lidar"].shape[0] / 3)
-        current_data["lidar"] = current_data["lidar"].reshape(unique_entries, -1)
-
-        # Subtract the cars position from the data
-        current_data["lidar"] = current_data["lidar"] - current_data["position"]
-
-        # Select every 25th element
-        # current_data["lidar"] = current_data["lidar"][0::25]
-        # print("Analyzing " + str(current_data["lidar"].shape[0]) + " points")
-
-        # Plot the data
-        # plt = create_frame_plot(current_data["lidar"], current_data["origin"], current_data["orientation"], "World frame", 1)
-
-        # Compute how much the world is rotated by
-        deltaX = current_data["orientation"][0] - current_data['origin'][0]
-        deltaY = current_data["orientation"][1] - current_data['origin'][1]
-        rotation = -1 * math.atan2(deltaY, deltaX)
-
-        # Rotate all points 
-        points_xy   = current_data["lidar"][:,0:2]
-        origin      = current_data["origin"][0:2]
-        current_data["rotated_lidar"] = rotate(points_xy, origin, rotation)
-
-        # Plot rotated points
-        # plt = create_frame_plot(current_data["rotated_lidar"], current_data["origin"], current_data["ego_orientation"] , "Vehicle frame", 2)
-
-        # Time our technique
+        # Get the time
         start_time = datetime.now()
 
-        # Create the car as an object
-        ego_position = [0, 0]
-        s = 1
-        ego_vehicle = Polygon([(ego_position[0]-(2*s), ego_position[1]-s),
-                               (ego_position[0]+(2*s), ego_position[1]-s),
-                               (ego_position[0]+(2*s), ego_position[1]+s),
-                               (ego_position[0]-(2*s), ego_position[1]+s)])
+        # Save the output to a string which will be saved in the final file
+        output_string = "Name: %s\n" % file_name
+        output_string += "Date: %s/%s/%s\n" % (start_time.day, start_time.month, start_time.year)
+        output_string += "Time: %s:%s:%s\n" % (start_time.hour, start_time.minute, start_time.second)
+        output_string += "External Vehicles: %s\n" % external_vehicle_count
+        output_string += "Reach set total lines: %d\n" % total_lines
+        output_string += "Reach set steering angle: %d\n" % steering_angle
+        output_string += "Reach set max distance: %d\n" % max_distance
+        output_string += "------------------------------\n"
 
-        # Estimate the reachset
-        r_set = estimate_reachset(ego_position, steering_angle, total_lines)
-        # Create a list of all polygons for plotting
-        polygons = estimate_obstacles(ego_vehicle, current_data["rotated_lidar"])
-        # Get the final reach set
-        final_r_set = combine_environment_and_reachset(r_set, polygons)
-        # Vectorize the reach set and round it
-        r_vector = vectorize_reachset(final_r_set, accuracy=0.001)
+        frame_skip_counter =  0
+
+        # Print the file
+        for line in input_file:
+
+            # Skip the first second of data (this needs to be atleast 1 which is the heading)
+            frame_skip_counter += 1
+            if frame_skip_counter < 5:
+                continue
+            
+            # Remove unnecessary characters and split the data correctly
+            data = line.split("],")
+            time_step_position = data[0].split(",[")
+            crash_vehicle_count = data[-1].split(",")
+            data = data[1:]
+            data.insert(0, time_step_position[0])
+            data.insert(1, time_step_position[1])
+            data = data[:-1]
+            data.append(crash_vehicle_count[0])
+            data.append(crash_vehicle_count[1])
+
+            # Get the data
+            current_data = {}
+            current_data["position"]        = data[1]
+            current_data["orientation"]     = data[2]
+            current_data["velocity"]        = data[3]
+            current_data["lidar"]           = data[4]
+            current_data["crash"]           = data[5]
+            current_data["veh_count"]       = data[6]
+            current_data['origin']          = "[0, 0, 0]"
+            current_data["ego_orientation"] = "[1, 0, 0]"
+
+            # Clean the data
+            for key in current_data:
+                current_data[key] = current_data[key].replace('[', '') 
+                current_data[key] = current_data[key].replace(']', '') 
+
+            # Convert to numpy
+            for key in current_data:
+                current_data[key] = current_data[key].split(", ")
+                current_data[key] = np.array(current_data[key], dtype=float)
+
+
+            # if current_data["veh_count"] != int(external_vehicle_count):
+            #     print("Vehicle count does not match: " + str(current_data["veh_count"]) + " - " + external_vehicle_count)
+            #     exit()
+
+            # Get the lidar data into the right shape
+            unique_entries = int(current_data["lidar"].shape[0] / 3)
+            current_data["lidar"] = current_data["lidar"].reshape(unique_entries, -1)
+
+            # Subtract the cars position from the data
+            current_data["lidar"] = current_data["lidar"] - current_data["position"]
+
+            # Select every 25th element
+            # current_data["lidar"] = current_data["lidar"][0::25]
+            # print("Analyzing " + str(current_data["lidar"].shape[0]) + " points")
+
+            # Plot the data
+            # plt = create_frame_plot(current_data["lidar"], current_data["origin"], current_data["orientation"], "World frame", 1)
+
+            # Compute how much the world is rotated by
+            deltaX = current_data["orientation"][0] - current_data['origin'][0]
+            deltaY = current_data["orientation"][1] - current_data['origin'][1]
+            rotation = -1 * math.atan2(deltaY, deltaX)
+
+            # Rotate all points 
+            points_xy   = current_data["lidar"][:,0:2]
+            origin      = current_data["origin"][0:2]
+            current_data["rotated_lidar"] = rotate(points_xy, origin, rotation)
+
+            # Plot rotated points
+            # plt = create_frame_plot(current_data["rotated_lidar"], current_data["origin"], current_data["ego_orientation"] , "Vehicle frame", 2)
+
+            # Time our technique
+            start_time = datetime.now()
+
+            # Create the car as an object
+            ego_position = [0, 0]
+            s = 1
+            ego_vehicle = Polygon([(ego_position[0]-(2*s), ego_position[1]-s),
+                                (ego_position[0]+(2*s), ego_position[1]-s),
+                                (ego_position[0]+(2*s), ego_position[1]+s),
+                                (ego_position[0]-(2*s), ego_position[1]+s)])
+
+            # Estimate the reachset
+            r_set = estimate_reachset(ego_position, steering_angle, total_lines)
+            # Create a list of all polygons for plotting
+            polygons = estimate_obstacles(ego_vehicle, current_data["rotated_lidar"])
+            # Get the final reach set
+            final_r_set = combine_environment_and_reachset(r_set, polygons)
+            # Vectorize the reach set and round it
+            r_vector = vectorize_reachset(final_r_set, accuracy=0.001)
+            
+            # End out time
+            end_time = datetime.now()
+
+            environment_data = {}
+            environment_data["polygons"]    = polygons
+            environment_data["r_set"]       = r_set
+            environment_data["final_r_set"] = final_r_set
+
+            # if plot:
+            #     plt.figure(1)
+            #     plt.clf()
+            #     plt.title('Environment')
+
+            #     # Invert the y axis for easier viewing
+            #     plt.gca().invert_yaxis()
+
+            #     # Display the environment
+            #     for i in range(len(environment_data["polygons"])):
+            #         # Get the polygon
+            #         p = environment_data["polygons"][i]
+            #         x,y = p.exterior.xy
+            #         # Get the color
+            #         c = "g" if i == 0 else "r"
+            #         # Plot
+            #         plt.plot(x, y, color=c)
+
+            #     # Display the reachset
+            #     for i in range(len(environment_data["r_set"])):
+            #         # Get the polygon
+            #         p = environment_data["r_set"][i]
+            #         x,y = p.xy
+            #         # Get the color
+            #         c = "r"
+            #         # Plot
+            #         plt.plot(x, y, color=c, alpha=0.5)
+
+            #     # Display the reachset
+            #     for i in range(len(environment_data["final_r_set"])):
+            #         # Get the polygon
+            #         p = environment_data["final_r_set"][i]
+            #         x,y = p.xy
+            #         # Get the color
+            #         c = "g"
+            #         # Plot
+            #         plt.plot(x, y, color=c)
+
+            #     # Set the size of the graph
+            #     plt.xlim([-30, 100])
+            #     plt.ylim([-40, 40])
+
+            #     # Invert the y axis as negative is up and show ticks
+            #     ax = plt.gca()
+            #     ax.set_ylim(ax.get_ylim()[::-1])
+            #     ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+
+            #     # plot the graph
+            #     plt.pause(0.1)
+            #     plt.savefig('./output/file' + str(file_number) + 'frame' + str(frame_skip_counter) + '.png')
+
+            # Plot the environment figures
+            # plt = create_lidar_plot(environment_data, "Environment Zoomed", [-15, 45], [-30, 30], 3)
+            # plt = create_lidar_plot(environment_data, "Environment", [-100, 100], [-100, 100], 4)
+
+            # Compute the vectorized reach set
+            output_string += "Vector: " + str(r_vector) + "\n"
+            output_string += "Crash: " + str(bool(current_data["crash"])) + "\n"
+            elapsed_time = (end_time - start_time).total_seconds()
+            output_string += "Time: " + str(elapsed_time) +"\n"
+            output_string += "\n"
+
+            # If we crashed end the trace
+            if bool(current_data["crash"]):
+                break
+
+        # Close the input files
+        input_file.close()
+    except:
+        output_success = False
+        print("Error in file: {}".format(file_name))
+
+    # Save the data to a file
+    if output_success:
+        output_file = open(save_name, "w")
+        output_file.write(output_string)
+        output_file.close()
+        print("Saving output to: " + str(save_name))
         
-        # End out time
-        end_time = datetime.now()
-
-        environment_data = {}
-        environment_data["polygons"]    = polygons
-        environment_data["r_set"]       = r_set
-        environment_data["final_r_set"] = final_r_set
-
-        # if plot:
-        #     plt.figure(1)
-        #     plt.clf()
-        #     plt.title('Environment')
-
-        #     # Invert the y axis for easier viewing
-        #     plt.gca().invert_yaxis()
-
-        #     # Display the environment
-        #     for i in range(len(environment_data["polygons"])):
-        #         # Get the polygon
-        #         p = environment_data["polygons"][i]
-        #         x,y = p.exterior.xy
-        #         # Get the color
-        #         c = "g" if i == 0 else "r"
-        #         # Plot
-        #         plt.plot(x, y, color=c)
-
-        #     # Display the reachset
-        #     for i in range(len(environment_data["r_set"])):
-        #         # Get the polygon
-        #         p = environment_data["r_set"][i]
-        #         x,y = p.xy
-        #         # Get the color
-        #         c = "r"
-        #         # Plot
-        #         plt.plot(x, y, color=c, alpha=0.5)
-
-        #     # Display the reachset
-        #     for i in range(len(environment_data["final_r_set"])):
-        #         # Get the polygon
-        #         p = environment_data["final_r_set"][i]
-        #         x,y = p.xy
-        #         # Get the color
-        #         c = "g"
-        #         # Plot
-        #         plt.plot(x, y, color=c)
-
-        #     # Set the size of the graph
-        #     plt.xlim([-30, 100])
-        #     plt.ylim([-40, 40])
-
-        #     # Invert the y axis as negative is up and show ticks
-        #     ax = plt.gca()
-        #     ax.set_ylim(ax.get_ylim()[::-1])
-        #     ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
-
-        #     # plot the graph
-        #     plt.pause(0.1)
-        #     plt.savefig('./output/file' + str(file_number) + 'frame' + str(frame_skip_counter) + '.png')
-
-        # Plot the environment figures
-        # plt = create_lidar_plot(environment_data, "Environment Zoomed", [-15, 45], [-30, 30], 3)
-        # plt = create_lidar_plot(environment_data, "Environment", [-100, 100], [-100, 100], 4)
-
-        # Compute the vectorized reach set
-        output_file.write("Vector: " + str(r_vector) + "\n")
-        output_file.write("Crash: " + str(bool(current_data["crash"])) + "\n")
-        elapsed_time = (end_time - start_time).total_seconds()
-        output_file.write("Time: " + str(elapsed_time) +"\n")
-        output_file.write("\n")
-
-        # If we crashed end the trace
-        if bool(current_data["crash"]):
-            break
-
-    # Close both files
-    output_file.close()
-    input_file.close()
-    return True
+    print("-----------------------")
+    return output_success
 
 raw_file_location       = "../../PhysicalCoverageData/beamng/raw/"
 output_file_location    = "../../PhysicalCoverageData/beamng/processed/"
 file_names = glob.glob(raw_file_location + "/*/*.csv")
 
 # Create a pool with x processes
-total_processors = 120
+total_processors = 6
 pool =  multiprocessing.Pool(total_processors)
 result_object = []
 file_number = 0

@@ -4,14 +4,18 @@ import numpy as np
 def plot_config(scenario):
     if scenario == "beamng":
         total_random_test_suites = 1000
-        test_suite_size = [200, 500, 1000]
+        test_suite_size = [20, 50, 100]
         total_greedy_test_suites = 100
         greedy_sample_sizes = [2, 3, 4, 5, 10]
     elif scenario == "highway":
         total_random_test_suites = 1000
-        test_suite_size = [10000, 25000, 50000]
+        test_suite_size = [5000, 12500, 25000]
         total_greedy_test_suites = 100
         greedy_sample_sizes = [2, 3, 4, 5, 10]
+        # total_random_test_suites = 1000
+        # test_suite_size = [10000, 25000, 50000]
+        # total_greedy_test_suites = 100
+        # greedy_sample_sizes = [2, 3, 4, 5, 10]
     else:
         exit()
 

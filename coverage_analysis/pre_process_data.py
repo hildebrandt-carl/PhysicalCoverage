@@ -1,3 +1,5 @@
+
+import os
 import re
 import glob
 import math
@@ -8,6 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
+from environment_configurations import RSRConfig
+from environment_configurations import HighwayKinematics
 
 
 def string_to_vector(vector_string):
@@ -67,7 +71,7 @@ def countVectorsInFile(f):
     return vector_count, crash
 
 def processFile(f, total_vectors, vector_size):
-    test_vectors    = np.full((total_vectors, vector_size), np.nan, dtype='float64')
+    test_vectors    = np.full((total_vectors, vector_size), np.inf, dtype='float64')
     crash           = False
     vehicle_count   = -1
     current_vector  = 0
@@ -86,22 +90,29 @@ def processFile(f, total_vectors, vector_size):
         # Look for crashes
         if "Crash: True" in line:
             crash = True
+            # File the rest of the test vector up with np.nan
+            while current_vector < test_vectors.shape[0]:
+                test_vectors[current_vector] = np.full(test_vectors.shape[1], np.nan, dtype='float64')
+                current_vector += 1
 
     return vehicle_count, crash, test_vectors
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--steering_angle', type=int, default=30,   help="The steering angle used to compute the reachable set")
+
 parser.add_argument('--beam_count',     type=int, default=4,    help="The number of beams used to vectorize the reachable set")
-parser.add_argument('--max_distance',   type=int, default=20,   help="The maximum dist the vehicle can travel in 1 time step")
-parser.add_argument('--accuracy',       type=int, default=5,    help="What each vector is rounded to")
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
 args = parser.parse_args()
 
-new_steering_angle  = args.steering_angle
-new_total_lines     = args.beam_count
-new_max_distance    = args.max_distance
-new_accuracy        = args.accuracy
+# Create the configuration classes
+HK = HighwayKinematics()
+RSR = RSRConfig(beam_count = args.beam_count)
+
+# Save the kinematics and RSR parameters
+new_steering_angle  = HK.steering_angle
+new_max_distance    = HK.max_velocity
+new_total_lines     = RSR.beam_count
+new_accuracy        = RSR.accuracy
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
@@ -120,12 +131,13 @@ print("----------------------------------")
 print("----------Locating Files----------")
 print("----------------------------------")
 
-
 all_files = None
 if args.scenario == "beamng":
     all_files = glob.glob("../../PhysicalCoverageData/beamng/processed/*.txt")
 elif args.scenario == "highway":
     all_files = glob.glob("../../PhysicalCoverageData/highway/raw/*/*.txt")
+elif args.scenario == "highway_unseen":
+    all_files = glob.glob("../../PhysicalCoverageData/highway/unseen/{}/results/{}_beams/*.txt".format(args.total_samples, new_total_lines))
 else:
     exit()
 
@@ -135,40 +147,48 @@ print("Total files found: " + str(total_files))
 # Select all of the files
 file_names = all_files
 
+# If no files are found exit
+if len(file_names) <= 0:
+    print("No files found")
+    exit()
+
 # If you don't want all files, select a random portion of the files
-if args.total_samples != -1:
+if args.scenario != "highway_unseen":
+    if args.total_samples != -1:
 
-    # Only sample this way if using highway
-    if args.scenario == "highway":
-        folders = glob.glob("../../PhysicalCoverageData/highway/raw/*")
-        files_per_folder = int(math.ceil(args.total_samples / len(folders)))
-        print("There are {} categories, thus we need to select {} from each".format(len(folders), files_per_folder))
-        print("")
-        file_names = []
-        for f in folders:
-            print("Selecting {} random files from - {}".format(files_per_folder, f))
-            all_files = glob.glob(f + "/*.txt")
-            names = random.sample(all_files, files_per_folder)
-            file_names.append(names)
+        # Only sample this way if using highway
+        if args.scenario == "highway":
+            folders = glob.glob("../../PhysicalCoverageData/highway/raw/*")
+            files_per_folder = int(math.ceil(args.total_samples / len(folders)))
+            print("There are {} categories, thus we need to select {} from each".format(len(folders), files_per_folder))
+            print("")
+            file_names = []
+            for f in folders:
+                print("Selecting {} random files from - {}".format(files_per_folder, f))
+                all_files = glob.glob(f + "/*.txt")
+                names = random.sample(all_files, files_per_folder)
+                file_names.append(names)
 
-    # Do this for the other scenarios
-    else:
-        print("Selecting {} random files".format(args.total_samples))
-        file_names = random.sample(all_files, args.total_samples)
+        # Do this for the other scenarios
+        else:
+            print("Selecting {} random files".format(args.total_samples))
+            file_names = random.sample(all_files, args.total_samples)
 
 
 # Flatten the list
-file_names_flat = []
-for subl in file_names:
-    for item in subl:
-        file_names_flat.append(item)
-file_names = file_names_flat
+if len(np.shape(file_names)) > 1:
+    file_names_flat = []
+    for subl in file_names:
+        for item in subl:
+            file_names_flat.append(item)
+    file_names = file_names_flat
 
 # Make sure your list is the exact right size
 print("")
-if len(file_names) > args.total_samples:
-    print("Currently there are {} files, cropping to {}".format(len(file_names), args.total_samples))
-    file_names = file_names[0:args.total_samples]
+if args.total_samples >= 1:
+    if len(file_names) > args.total_samples:
+        print("Currently there are {} files, cropping to {}".format(len(file_names), args.total_samples))
+        file_names = file_names[0:args.total_samples]
 
 # Get the file size
 total_files = len(file_names)
@@ -197,14 +217,13 @@ for i in tqdm(range(min(total_files, 1000))):
 vec_per_file = np.max(vectors_per_file)
 
 # Compute the estimated size of the numpy array
-
+print("Computed vectors per file as: {}".format(vec_per_file))
 dummy_array = np.zeros((1, vec_per_file, new_total_lines), dtype='float64')
 memory_required = dummy_array.nbytes * total_files
 
 # Convert to GB
 memory_required = round(memory_required / 1024 / 1024 / 1024, 2)
 print("Memory required: " + str(memory_required) + "GB")
-
 
 print("----------------------------------")
 print("---------Processing files---------")
@@ -235,5 +254,14 @@ save_name += "_d" + str(new_max_distance)
 save_name += "_a" + str(new_accuracy)
 save_name += "_t" + str(total_files)
 save_name += ".npy"
-np.save("traces_" + save_name, reach_vectors)
-np.save("vehicles_" + save_name, vehicles_per_trace)
+
+if args.scenario == "highway_unseen":
+    total_files = args.total_samples
+    
+# Create the output directory if it doesn't exists
+if not os.path.exists('output/{}'.format(total_files)):
+    os.makedirs('output/{}'.format(total_files))
+
+print("Saving data")
+np.save("output/{}/traces_{}".format(total_files, save_name), reach_vectors)
+np.save("output/{}/vehicles_{}".format(total_files, save_name), vehicles_per_trace)

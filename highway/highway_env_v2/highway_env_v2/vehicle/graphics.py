@@ -164,11 +164,13 @@ class VehicleGraphics(object):
             color = cls.YELLOW
         elif isinstance(vehicle, IDMVehicle):
             # Print the color based on the color_id
-            # print(vehicle.color_id)
             color = cls.C[vehicle.color_id]
-            # color = cls.BLUE
+            print("c")
         elif isinstance(vehicle, MDPVehicle):
-            color = cls.EGO_COLOR
+            if vehicle.color_id == -1:
+                color = cls.EGO_COLOR
+            else:
+                color = cls.C[vehicle.color_id]
         if transparent:
             color = (color[0], color[1], color[2], 30)
         return color
