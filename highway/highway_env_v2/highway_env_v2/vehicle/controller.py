@@ -325,6 +325,7 @@ class ManualVehicle(Vehicle):
         :param vehicle: a vehicle
         :return: a new vehicle at the same dynamical state
         """
+
         v = cls(vehicle.road, vehicle.position, heading=vehicle.heading, speed=vehicle.speed,
                 target_lane_index=vehicle.target_lane_index, target_speed=vehicle.target_speed,
                 route=vehicle.route)
@@ -337,3 +338,33 @@ class ManualVehicle(Vehicle):
             action['steering'] = np.clip(action['steering'], -self.MAX_STEERING_ANGLE, self.MAX_STEERING_ANGLE)
             super().act(action)
 
+    def check_collision(self, other: Union['Vehicle', 'RoadObject']) -> None:
+        """
+        Check for collision with another vehicle.
+
+        :param other: the other vehicle or object
+        """
+        if self.crashed or other is self:
+            return
+
+        # Ignore if a manual vehicle crashes into another manual vehicle
+        if isinstance(other, ManualVehicle):
+            return
+
+        if isinstance(other, Vehicle):
+            if not self.COLLISIONS_ENABLED or not other.COLLISIONS_ENABLED:
+                return
+
+            if self._is_colliding(other):
+                self.speed = other.speed = min([self.speed, other.speed], key=abs)
+                self.crashed = other.crashed = True
+        elif isinstance(other, Obstacle):
+            if not self.COLLISIONS_ENABLED:
+                return
+
+            if self._is_colliding(other):
+                self.speed = min([self.speed, 0], key=abs)
+                self.crashed = other.hit = True
+        elif isinstance(other, Landmark):
+            if self._is_colliding(other):
+                other.hit = True

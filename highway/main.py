@@ -70,7 +70,6 @@ action = car_controller.default_action()
 lanes = env.road.network.graph['0']['1']
 lane_width = np.array([0, lanes[0].width/2.0])
 
-
 # Main loop
 done = False
 while not done:
@@ -113,6 +112,10 @@ while not done:
     # Track the time for this opperation
     current_time = datetime.datetime.now()
     elapsed_time = (current_time - start_time).total_seconds()
+
+    print("")
+    print("Vector: " + str(r_vector))
+    print("---------------------------------------")
 
     if not args.no_plot:
         plt.figure(1)
@@ -167,14 +170,11 @@ while not done:
         # Render environment
         env.render()
 
-    print("")
-    print("Vector: " + str(r_vector))
-
     text_file.write("Vector: " + str(r_vector) + "\n")
     text_file.write("Crash: " + str(info["crashed"]) + "\n")
     text_file.write("Time: " + str(elapsed_time) + "\n")
     text_file.write("\n")
 
-    print("---------------------------------------")
+    
 
 text_file.close()

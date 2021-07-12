@@ -9,7 +9,7 @@ def plot_config(scenario):
         greedy_sample_sizes = [2, 3, 4, 5, 10]
     elif scenario == "highway":
         total_random_test_suites = 1000
-        test_suite_size = [5000, 12500, 25000]
+        test_suite_size_percentage = [0.01, 0.025, 0.05]
         total_greedy_test_suites = 100
         greedy_sample_sizes = [2, 3, 4, 5, 10]
         # total_random_test_suites = 1000
@@ -19,7 +19,7 @@ def plot_config(scenario):
     else:
         exit()
 
-    return total_random_test_suites, test_suite_size, total_greedy_test_suites, greedy_sample_sizes
+    return total_random_test_suites, test_suite_size_percentage, total_greedy_test_suites, greedy_sample_sizes
 
 
 def unique_vector_config(scenario, number_of_seconds):

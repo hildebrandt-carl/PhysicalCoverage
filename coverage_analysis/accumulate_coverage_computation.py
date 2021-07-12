@@ -20,21 +20,6 @@ def load_obj(name):
     with open(name + '.pkl', 'rb') as f:
         return pickle.load(f)
 
-def isUnique(vector, unique_vectors_seen):
-    # Return false if the vector contains Nan or inf
-    if np.isnan(vector).any():
-        return False
-    if np.isinf(vector).any():
-        return False
-    # Assume True
-    unique = True
-    for v2 in unique_vectors_seen:
-        # If we have seen this vector break out of this loop
-        if np.array_equal(vector, v2):
-            unique = False
-            break
-    return unique
-
 def compute_coverage(load_name, return_dict, return_key, base_path):
     
     # Get the current time
@@ -68,9 +53,20 @@ def compute_coverage(load_name, return_dict, return_key, base_path):
     # Load the feasible trajectories
     fname = '../../PhysicalCoverageData/' + str(scenario) +'/feasibility/processed/FeasibleVectors_b' + str(total_beams) + ".npy"
     feasible_vectors = list(np.load(fname))
-    total_feasible_observations = np.shape(feasible_vectors)[0]
 
-    unique_vectors_seen                 = []
+    # Turn the feasible_vectors into a set
+    feasible_vectors_set = set()
+    previous_size = 0
+    for vector in feasible_vectors:
+        feasible_vectors_set.add(tuple(vector))
+        if previous_size >= len(feasible_vectors_set):
+            print("Something is wrong with your feasible vector set, as it contains duplicates")
+            exit()
+        previous_size = len(feasible_vectors_set)
+
+    total_feasible_observations = len(feasible_vectors_set)
+
+    unique_vectors_seen                 = set()
     accumulative_graph                  = np.full(total_traces, np.nan)
     accumulative_graph_vehicle_count    = np.full(total_traces, np.nan)
 
@@ -85,26 +81,35 @@ def compute_coverage(load_name, return_dict, return_key, base_path):
             total_crashes += 1
 
         # For each vector in the trace
-        for v in trace:
-            # If this vector does not have any nan
-            if not np.isnan(v).any():
-                # Count it
-                total_vectors += 1
-                # Check if it is unique
-                unique = isUnique(v, unique_vectors_seen)
-                if unique:
-                    unique_vectors_seen.append(v)
+        for vector in trace:
+            # If this vector contains nan it means it crashed (and so we can ignore it, this traces crash was already counted)
+            if np.isnan(vector).any():
+                continue
 
-                    # Check if any of the vectors are infeasible
-                    # infeasible = isUnique(v, feasible_vectors)
-                    # if infeasible:
-                    #     print(v)
-                    #     print("Infeasible vector found?")
+            # If this vector contains inf it means that the trace was extended to match sizes with the maximum sized trace
+            if np.isinf(vector).any():
+                continue
+
+            # Count the traces
+            total_vectors += 1
+            
+            # Check if it is unique
+            unique_vectors_seen.add(tuple(vector))
+
+            # Check if any of the vectors are infeasible
+            l = len(feasible_vectors_set)
+            feasible_vectors_set.add(tuple(vector))
+            # Added therefor it must be infeasible
+            if l != len(feasible_vectors_set):
+                print("Error - Infeasible vector found: {}".format(vector))
 
         # Used for the accumulative graph
         unique_vector_length_count          = len(unique_vectors_seen)
         accumulative_graph[i]               = unique_vector_length_count
         accumulative_graph_vehicle_count[i] = vehicle_count
+
+    print("Total observations: {}".format(len(unique_vectors_seen)))
+    print("Total feasible observations: {}".format(len(feasible_vectors_set)))
 
     feasible_coverage = round((unique_vector_length_count / float(total_feasible_observations)) * 100, 4)
     possible_coverage = round((unique_vector_length_count / float(total_possible_observations)) * 100, 4)

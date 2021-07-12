@@ -1,4 +1,4 @@
-# PhysicalStack
+<!-- # PhysicalStack
 
 Below is the artifact for the paper.
 
@@ -95,7 +95,7 @@ python3 rq3_compute_unique_crash_count.py --steering_angle 33 --beam_count 3 --m
 ```
 
 
-Latest update
+Latest update -->
 
 To start you will need to run the `./create_data.sh`. Each script will generate 1000 runs.
 ```bash
@@ -128,8 +128,8 @@ $ rm -r PhysicalCoverage/highway/output
 
 Next we need to convert the data into a numpy file which we can process. To do that you need to run:
 ```bash
-$ cd PhysicalCoverage/coverage_analysis
-$ ./scripts/preprocess_highway.sh
+$ cd PhysicalCoverage/coverage_analysis 
+$ ./scripts/preprocess_highway.sh 1000
 ```
 
 Next we need to process the feasibility data. To do that we need to run:
@@ -151,14 +151,14 @@ $ rm -r PhysicalCoverage/coverage_analysis/output
 Now we can start using to the data and analyzing it. First we will start by running rq1. To do that you can run:
 ```bash
 $ cd PhysicalCoverage/coverage_analysis
-$ ./scripts/rq1_highway.sh
-$ ./scripts/rq3_highway.sh
+$ ./scripts/rq1_highway.sh 1000
+$ ./scripts/rq3_highway.sh 1000
 ```
 
 When you are ready you can generate new scenarios by first identifying scenarios which have not yet been seen. To do that you can run:
 ```bash
 $ cd PhysicalCoverage/coverage_analysis
-$ ./scripts/rq4_highway.sh
+$ ./scripts/rq4_highway.sh 1000
 ```
 
 Then you need to move that data out of the folder into the data folder using:
@@ -168,6 +168,7 @@ $ cd ..
 $ mkdir -p PhysicalCoverageData/highway/unseen
 $ mv PhysicalCoverage/coverage_analysis/output/* PhysicalCoverageData/highway/unseen
 $ rm -r PhysicalCoverage/coverage_analysis/output
+$ rm -r PhysicalCoverage/coverage_analysis/tmp
 ```
 
 Next we need to run those scenarios in highway to get the data from them. To do that we need to run. At this point we should know the number of samples we are using. In this case we are using 1000 samples.
@@ -180,20 +181,25 @@ Then we need to move the output data to the correct folder **Note you will need 
 ```bash
 $ cd PhysicalCoverage
 $ cd ..
-$ mv  PhysicalCoverage/highway/output/50000/* PhysicalCoverageData/highway/unseen/50000/
+$ mv  PhysicalCoverage/highway/output/1000/* PhysicalCoverageData/highway/unseen/1000/
 $ rm -r PhysicalCoverage/highway/output
 ```
 
 Next you need to preprocess the new data. You can do that using:
 ```bash
 $ cd PhysicalCoverage/coverage_analysis
-$ ./scripts/preprocess_highway_unseen.sh
+$ ./scripts/preprocess_highway_unseen.sh 1000
 ```
 
 Next we need to move that new data into the data folder. To do that you can use the following commands:
 ```bash
 $ $ cd PhysicalCoverage
 $ cd ..
-$ mv PhysicalCoverage/coverage_analysis/output/* PhysicalCoverageData/highway/unseen/50000/processed
+$ mv PhysicalCoverage/coverage_analysis/output/* PhysicalCoverageData/highway/unseen/1000/processed
 $ rm -r PhysicalCoverage/coverage_analysis/output
+```
+
+Now we can compute what the new tests did to the coverage. To do that you need to run:
+```bash
+$ python3 unseen_accumulate_coverage_computation.py --total_samples 1000 --scenario highway --cores 100
 ```

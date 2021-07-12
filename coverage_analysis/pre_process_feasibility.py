@@ -118,6 +118,8 @@ table_beam = []
 file_names = glob.glob("../../PhysicalCoverageData/highway/feasibility/raw/feasible_vectors*.txt")
 file_names.sort()
 
+print("Files found: {}".format(file_names))
+
 print("Done")
 
 for file_name in file_names:
@@ -132,8 +134,8 @@ for file_name in file_names:
     beams = file_name[file_name.rfind('s')+1:file_name.rfind('.')]
     new_total_lines = int(beams)
 
-    if new_total_lines == 10:
-        continue
+    # if new_total_lines == 10:
+    #     continue
 
     # Process the data
     f = open(file_name, "r")    

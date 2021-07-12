@@ -50,8 +50,11 @@ environment_vehicles = total_lines
 if not os.path.exists('output/{}/results/{}_beams'.format(args.total_samples, beams)):
     os.makedirs('output/{}/results/{}_beams'.format(args.total_samples, beams))
 
+# Create the save name
+save_name = args.test_name + "_" + str(datetime.datetime.now().time())
+
 # Save the output file
-text_file = open('output/{}/results/{}_beams/{}.txt'.format(args.total_samples, beams, args.test_name), "w")
+text_file = open('output/{}/results/{}_beams/{}.txt'.format(args.total_samples, beams, save_name), "w")
 text_file.write("Name: %s\n" % args.test_name)
 e = datetime.datetime.now()
 text_file.write("Date: %s/%s/%s\n" % (e.day, e.month, e.year))
@@ -82,6 +85,10 @@ action = car_controller.default_action()
 # Create the traffic controller
 traffic = TrafficController(env.controlled_vehicles[1:], test_path)
 
+# Get the roadway - used when calculating the edge of the road
+lanes = env.road.network.graph['0']['1']
+lane_width = np.array([0, lanes[0].width/2.0])
+
 # Main loop
 done = False
 first = True
@@ -92,7 +99,7 @@ while not done:
     obs = np.round(obs, 4)
 
     # Update the traffic vehicles
-    complete = traffic.compute_traffic_commands(env.controlled_vehicles[0].position, simulation_steps_intervals=20)
+    complete = traffic.compute_traffic_commands(env.controlled_vehicles[0].position)
 
     # End if we are complete
     if complete:
@@ -116,8 +123,14 @@ while not done:
     # Track the time for this opperation
     start_time = datetime.datetime.now()
 
+    # Convert the lane positions to be relative to the ego_vehicle
+    ego_position = env.controlled_vehicles[0].position
+    upperlane = [lanes[0].start-lane_width, lanes[0].end-lane_width] - ego_position
+    lowerlane = [lanes[-1].start+lane_width, lanes[-1].end+lane_width] - ego_position
+    lane_positions = [upperlane, lowerlane]
+
     # Get the reach set simulation
-    polygons    = reach.compute_environment(tracked_objects)
+    polygons    = reach.compute_environment(tracked_objects, lane_positions)
     r_set       = reach.estimate_raw_reachset(total_lines=total_lines, 
                                               steering_angle=steering_angle,
                                               max_distance=max_distance)
@@ -127,6 +140,10 @@ while not done:
     # Track the time for this opperation
     current_time = datetime.datetime.now()
     elapsed_time = (current_time - start_time).total_seconds()
+
+    print("")
+    print("Vector: " + str(r_vector))
+    print("---------------------------------------")
 
     if not args.no_plot:
         plt.figure(1)
@@ -184,14 +201,9 @@ while not done:
         # Render environment
         env.render()
 
-    print("")
-    print("Vector: " + str(r_vector))
-
     text_file.write("Vector: " + str(r_vector) + "\n")
     text_file.write("Crash: " + str(info["crashed"]) + "\n")
     text_file.write("Time: " + str(elapsed_time) + "\n")
     text_file.write("\n")
-
-    print("---------------------------------------")
 
 text_file.close()

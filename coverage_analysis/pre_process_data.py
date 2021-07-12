@@ -21,7 +21,7 @@ def string_to_vector(vector_string):
 
 # This function was written as if the data had a steering angle of 60, total lines of 30, max_distance of 30
 def vector_conversion(vector, steering_angle, max_distance, total_lines):
-    original_steering_angle = 60
+    original_steering_angle = 30
     original_total_lines = 30
     original_max_distance = 30
 

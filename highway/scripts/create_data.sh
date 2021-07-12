@@ -4,7 +4,7 @@
 vehicle_count=(2 4 6 8 10 12 14 16 18 20)
 
 # Run it 
-for value in {1..600}
+for value in {1..1000}
 do
     for tot_vehicle in "${vehicle_count[@]}"
     do

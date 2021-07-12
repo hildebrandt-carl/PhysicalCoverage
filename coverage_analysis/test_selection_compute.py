@@ -25,7 +25,7 @@ def random_selection(number_of_tests):
     # Init variables
     coverage = 0
     number_of_crashes = 0
-    unique_vectors_seen = []
+    unique_vectors_seen = set()
     # For the X test cases
     for random_i in indices:
         # Get the filename
@@ -42,11 +42,15 @@ def random_selection(number_of_tests):
                 number_of_crashes += 1
 
         # Check to see if any of the vectors are new
-        for v in vectors:
-            if not np.isnan(v).any():
-                unique = isUnique(v, unique_vectors_seen)
-                if unique:
-                    unique_vectors_seen.append(v)
+        for vector in vectors:
+            # If this vector contains nan it means it crashed (and so we can ignore it, this traces crash was already counted)
+            if np.isnan(vector).any():
+                continue
+
+            # If this vector contains inf it means that the trace was extended to match sizes with the maximum sized trace
+            if np.isinf(vector).any():
+                continue
+            unique_vectors_seen.add(tuple(vector))
         
         # Compute coverage
         coverage = (len(unique_vectors_seen) / float(total_possible_observations)) * 100
@@ -62,7 +66,7 @@ def greedy_selection_best(number_of_tests, greedy_sample_size):
     unique_crashes_seen = []
 
     # Greedy algorithm
-    best_case_vectors = []
+    best_case_vectors = set()
     best_case_crashes = 0
 
     # Hold indices which we can select from
@@ -87,12 +91,17 @@ def greedy_selection_best(number_of_tests, greedy_sample_size):
             # Get the current test we are considering
             vectors = traces[i]
 
-            # Check to see if any of the vectors are new in this trace
-            for v in vectors:
-                if not np.isnan(v).any():
-                    unique = isUnique(v, current_best_case_vectors)
-                    if unique:
-                        current_best_case_vectors.append(v)
+            # Check to see if any of the vectors are new
+            for vector in vectors:
+                # If this vector contains nan it means it crashed (and so we can ignore it, this traces crash was already counted)
+                if np.isnan(vector).any():
+                    continue
+
+                # If this vector contains inf it means that the trace was extended to match sizes with the maximum sized trace
+                if np.isinf(vector).any():
+                    continue
+
+                current_best_case_vectors.add(tuple(vector))
 
             # See if this is the best we can do
             if max_coverage is None:
@@ -131,7 +140,7 @@ def greedy_selection_worst(number_of_tests, greedy_sample_size):
 
 
     # Greedy algorithm
-    worst_case_vectors = []
+    worst_case_vectors = set()
     worst_case_crashes = 0
 
     # Hold indices which we can select from
@@ -159,12 +168,17 @@ def greedy_selection_worst(number_of_tests, greedy_sample_size):
             # Get the current test we are considering
             vectors = traces[i]
 
-            # Check to see if any of the vectors are new in this trace
-            for v in vectors:
-                if not np.isnan(v).any():
-                    unique = isUnique(v, current_worst_case_vectors)
-                    if unique:
-                        current_worst_case_vectors.append(v)
+            # Check to see if any of the vectors are new
+            for vector in vectors:
+                # If this vector contains nan it means it crashed (and so we can ignore it, this traces crash was already counted)
+                if np.isnan(vector).any():
+                    continue
+
+                # If this vector contains inf it means that the trace was extended to match sizes with the maximum sized trace
+                if np.isinf(vector).any():
+                    continue
+
+                current_worst_case_vectors.add(tuple(vector))
 
             # See if this is the worst we can do
             if min_coverage is None:
@@ -193,22 +207,6 @@ def greedy_selection_worst(number_of_tests, greedy_sample_size):
     
     # Return the data
     return ["worst", number_of_tests, greedy_sample_size, worst_coverage, worst_case_crashes]
-
-def isUnique(vector, unique_vectors_seen):
-    # Return false if the vector contains Nan
-    if np.isnan(vector).any():
-        return False
-    if np.isinf(vector).any():
-        return False
-    # Assume True
-    unique = True
-    for v2 in unique_vectors_seen:
-        # If we have seen this vector break out of this loop
-        if np.array_equal(vector, v2):
-            unique = False
-            break
-    return unique
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--beam_count',     type=int, default=5,     help="The number of beams used to vectorized the reachable set")
@@ -263,11 +261,18 @@ print("--------Crashes vs Coverage-------")
 print("----------------------------------")
 
 # Get the configuration
-total_random_test_suites, test_suite_size, total_greedy_test_suites, greedy_sample_sizes = plot_config(args.scenario)
+total_random_test_suites, test_suite_size_percentage, total_greedy_test_suites, greedy_sample_sizes = plot_config(args.scenario)
 
 # Create a pool with x processes
 total_processors = int(args.cores)
 pool =  multiprocessing.Pool(processes=total_processors)
+
+test_suite_size = []
+for percentage in test_suite_size_percentage:
+    test_size = int(int(args.total_samples) * percentage)
+    test_suite_size.append(test_size)
+
+print("Test suite sizes are: {}".format(test_suite_size))
 
 jobs = []
 # For all the different test suite sizes

@@ -1,10 +1,6 @@
-import math
-
+from shapely.geometry import Polygon, LineString, Point
 from shapely import affinity
-from shapely.geometry import Polygon
-from shapely.geometry import LineString
-from shapely.geometry import Point
-
+import math
 
 def getStep(a, MinClip):
     return round(float(a) / MinClip) * MinClip
@@ -79,6 +75,7 @@ class ReachableSet:
 
         # Compute the intervals 
         intervals = 0 
+        print(total_lines)
         if total_lines > 1:
             intervals = (steering_angle * 2) / float(total_lines - 1)
         
@@ -151,3 +148,26 @@ class ReachableSet:
             vector.append(l_len)
 
         return vector
+
+
+
+    """
+    Take a reachable set into a series of points that represent the possible readings 
+
+    :param line: A list of lines
+    :param accuracy: The accuracy you want the points to be. i.e. 0.5 will round to the closest 0.5
+    :return: a list of lines where each line is described as a series of points
+    """ 
+    def line_to_points(self, lines, accuracy=0.25):
+        segmented_lines = []
+        # For each line:
+        for l in lines:
+            points = []
+            current_dist = 0
+            while current_dist <= l.length:
+                new_point = l.interpolate(current_dist)
+                current_dist += accuracy
+                points.append(new_point)
+            segmented_lines.append(points)
+
+        return segmented_lines
