@@ -165,7 +165,6 @@ class VehicleGraphics(object):
         elif isinstance(vehicle, IDMVehicle):
             # Print the color based on the color_id
             color = cls.C[vehicle.color_id]
-            print("c")
         elif isinstance(vehicle, MDPVehicle):
             if vehicle.color_id == -1:
                 color = cls.EGO_COLOR

@@ -65,8 +65,10 @@ class HighwayEnv(AbstractEnv):
         """Create some new random vehicles of a given type, and add them on the road."""
 
         vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
-        for _ in range(int(self.config["vehicles_count"] / 2)):
-            self.road.vehicles.append(vehicles_type.create_random(self.road, spacing=1 / self.config["vehicles_density"]))
+
+        # # Place vehicles behind the ego car
+        # for _ in range(int(self.config["vehicles_count"] / 2)):
+        #     self.road.vehicles.append(vehicles_type.create_random(self.road, spacing=1 / self.config["vehicles_density"]))
 
         self.controlled_vehicles = []
         for j in range(self.config["controlled_vehicles"]):
@@ -90,7 +92,8 @@ class HighwayEnv(AbstractEnv):
             self.controlled_vehicles.append(vehicle)
             self.road.vehicles.append(vehicle)
 
-        for _ in range(int(self.config["vehicles_count"] / 2)):
+        # Place vehicles in front of the ego car
+        for _ in range(int(self.config["vehicles_count"])):
             self.road.vehicles.append(vehicles_type.create_random(self.road, spacing=1 / self.config["vehicles_density"]))
 
     def _reward(self, action: Action) -> float:

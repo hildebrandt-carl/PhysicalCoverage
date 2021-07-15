@@ -1,4 +1,0 @@
-{
-    "id": "dynamics-v0",
-    "import_module": "utils.envs.dynamics"
-}

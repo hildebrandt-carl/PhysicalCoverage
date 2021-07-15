@@ -16,7 +16,7 @@ $ python3 -m pip install tqdm
 $ sudo apt install llvm-8
 $ python3 -m pip install -e highway_env_v2
 $ python3 -m pip install llvmlite==0.31.0
-$ python3 -m pip install rl_agents_v2
+$ python3 -m pip install -e rl_agents_v2
 $ python3 -m pip install networkx
 ```
 
@@ -96,6 +96,24 @@ python3 rq3_compute_unique_crash_count.py --steering_angle 33 --beam_count 3 --m
 
 
 Latest update -->
+
+Install
+```bash
+$ sudo apt install python3-pip -y
+$ python3 -m pip install --upgrade pip
+$ python3 -m pip install gym
+$ python3 -m pip install numpy
+$ python3 -m pip install matplotlib
+$ python3 -m pip install tqdm
+$ sudo apt install llvm-8 -y
+$ python3 -m pip install -e highway_env_v2
+$ python3 -m pip install llvmlite==0.31.0
+$ python3 -m pip install stable-baselines
+$ python3 -m pip install networkx
+$ python3 -m pip install shapely
+```
+
+Running
 
 To start you will need to run the `./create_data.sh`. Each script will generate 1000 runs.
 ```bash

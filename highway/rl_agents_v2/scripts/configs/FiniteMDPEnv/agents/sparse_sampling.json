@@ -1,6 +1,0 @@
-{
-    "__class__": "<class 'rl_agents.agents.tree_search.sparse_sampling.SparseSamplingAgent'>",
-    "gamma": 0.7,
-    "horizon": 3,
-    "C": 3
-}

@@ -1,7 +1,0 @@
-{
-    "handlers": {
-        "default": {
-            "level": "DEBUG"
-        }
-    }
-}

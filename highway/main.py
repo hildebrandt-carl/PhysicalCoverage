@@ -49,11 +49,11 @@ text_file.write("Reach set steering angle: %d\n" % steering_angle)
 text_file.write("Reach set max distance: %d\n" % max_distance)
 text_file.write("------------------------------\n")
 
-# Suppress exponetial notation
+# Suppress exponential notation
 np.set_printoptions(suppress=True)
 
 # Create the controllers
-hw_config = HighwayEnvironmentConfig(environment_vehicles=args.environment_vehicles + 1)
+hw_config = HighwayEnvironmentConfig(environment_vehicles=args.environment_vehicles)
 car_controller = EgoController(debug=True)
 tracker = Tracker(distance_threshold=5, time_threshold=2, debug=True)
 reach = ReachableSet()

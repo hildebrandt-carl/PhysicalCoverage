@@ -1,7 +1,0 @@
-{
-    "base_config": "configs/IntersectionEnv/agents/DQNAgent/baseline.json",
-    "model": {
-        "type": "MultiLayerPerceptron",
-        "layers": [48, 48]
-    }
-}
