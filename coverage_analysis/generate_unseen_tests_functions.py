@@ -29,7 +29,7 @@ def compute_coverage(load_name, return_dict, return_key, base_path, new_max_dist
     total_beams = int(total_beams)
 
     # Compute total possible values using the above
-    unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
+    unique_observations_per_cell = (new_max_distance / float(new_accuracy))
     total_possible_observations = int(pow(unique_observations_per_cell, total_beams))
 
     print("Processing: " + load_name)
@@ -284,8 +284,13 @@ def save_unseen_data_to_file(data, distance_tracker, segmented_lines, new_accura
 
     # Init variables
     final_points = []
+    final_indices = []
     counter = 0 
-    min_vectors_per_test = 0
+    vectors_per_test = 0
+
+    # Set some config
+    min_vectors_per_test = 5
+    max_vectors_per_test = 10
 
     # Start the final points with the init data
     final_points.append(init_position)
@@ -295,16 +300,15 @@ def save_unseen_data_to_file(data, distance_tracker, segmented_lines, new_accura
 
     for i in range(len(data)):
         row = data[i]
-        min_vectors_per_test += 1
 
         # Save the data
-        if (distance_tracker[i] > 5) and (min_vectors_per_test > 5):
+        if ((distance_tracker[i] > 5) and (vectors_per_test > min_vectors_per_test)) or (vectors_per_test >= max_vectors_per_test):
             np.save("output/{}/tests/{}_beams/test{}.npy".format(total_samples, beams, counter), final_points)
             final_points = []
             # Start the final points with the init data
             final_points.append(init_position)
             counter += 1
-            min_vectors_per_test = 0
+            vectors_per_test = 0
 
         physical_row = []
         # For each of the elements, convert it into a physical point
@@ -313,8 +317,6 @@ def save_unseen_data_to_file(data, distance_tracker, segmented_lines, new_accura
             item = row[i]
             # Convert that element to the right index
             index = int(item / new_accuracy)
-            # This is now an index, which cant be 0/1 to avoid crashes
-            index = max(1, index)
             # Get the physical point
             new_point = segmented_lines[i][index]
             x, y = new_point.xy
@@ -322,9 +324,63 @@ def save_unseen_data_to_file(data, distance_tracker, segmented_lines, new_accura
             physical_row.append(new_data)
 
         # print(physical_row)
+        final_indices.append(row)
         final_points.append(physical_row)
+        vectors_per_test += 1
 
     # Save the final test
-    np.save("output/{}/tests/{}_beams/test{}.npy".format(total_samples, beams, counter), final_points)
+    np.save("output/{}/tests/{}_beams/test{}_points.npy".format(total_samples, beams, counter), final_points)
+    np.save("output/{}/tests/{}_beams/test{}_index.npy".format(total_samples, beams, counter), final_indices)
 
     return counter + 1
+
+def save_unseen_data_to_file_single(data, segmented_lines, new_accuracy, total_samples, beams):
+
+    # Start each test with the max value vectors
+    init_position = []
+    for i in range(beams):
+        index = int(len(segmented_lines[i]) / 2)
+        # Get the physical point
+        new_point = segmented_lines[i][index]
+        x, y = new_point.xy
+        new_data = np.array([x[0], y[0]])
+        init_position.append(new_data)
+
+    # Init variables
+    final_points = []
+    final_indices = []
+    counter = 0 
+    min_vectors_per_test = 0
+
+    # Start the final points with the init data
+    final_points.append(init_position)
+    final_indices.append(np.full(beams, index * new_accuracy))
+
+    if not os.path.exists('output/{}/tests_single/{}_beams'.format(total_samples, beams)):
+        os.makedirs('output/{}/tests_single/{}_beams'.format(total_samples, beams))
+
+    for i in range(len(data)):
+        row = data[i]
+        physical_row = []
+        # For each of the elements, convert it into a physical point
+        for i in range(len(row)):
+            # Get the element
+            item = row[i]
+            # Convert that element to the right index
+            index = int(item / new_accuracy)
+            # Get the physical point
+            new_point = segmented_lines[i][index]
+            x, y = new_point.xy
+            new_data = np.array([x[0], y[0]])
+            physical_row.append(new_data)
+
+        final_indices.append(row)
+        final_points.append(physical_row)
+        np.save("output/{}/tests_single/{}_beams/test{}_points.npy".format(total_samples, beams, counter), final_points)
+        np.save("output/{}/tests_single/{}_beams/test{}_index.npy".format(total_samples, beams, counter), final_indices)
+        final_points = []
+        # Start the final points with the init data
+        final_points.append(init_position)
+        counter += 1
+
+    return counter

@@ -59,7 +59,7 @@ class ReachableSet:
         return obstacles
 
     """
-    estimate_raw_reachset creates an esimtation of the reachable set from the ego vehicle. It estimates the reachable set using a set of lines starting from the center of the ego vehicle
+    estimate_raw_reachset creates an estimation of the reachable set from the ego vehicle. It estimates the reachable set using a set of lines starting from the center of the ego vehicle
 
     :param total_lines: The total number of lines required for the estimated reachable set
     :param steering_angle: The maximum steering angle of the ego vehicle (determines how broad the reach set will be)

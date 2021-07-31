@@ -202,7 +202,7 @@ class MDPVehicle(ControlledVehicle):
     """A controlled vehicle with a specified discrete range of allowed target speeds."""
 
     SPEED_COUNT: int = 3  # []
-    SPEED_MIN: float = 20  # [m/s]
+    SPEED_MIN: float = 15  # [m/s]
     SPEED_MAX: float = 30  # [m/s]
 
     def __init__(self,
@@ -344,6 +344,7 @@ class ManualVehicle(Vehicle):
 
         :param other: the other vehicle or object
         """
+        # self.COLLISIONS_ENABLED = False
         if self.crashed or other is self:
             return
 

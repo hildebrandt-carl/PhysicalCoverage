@@ -9,5 +9,5 @@ beamcount=(1 2 3 4 5 10)
 for totallines in "${beamcount[@]}"
 do
     # Run the script
-    python3 pre_process_data.py --scenario highway_unseen --beam_count $totallines --total_samples $1
+    python3 pre_process_data.py --scenario highway_unseen --beam_count $totallines --total_samples $1 &
 done

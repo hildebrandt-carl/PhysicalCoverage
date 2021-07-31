@@ -1,7 +1,7 @@
 class HighwayEnvironmentConfig:
-    def __init__(self, environment_vehicles=20, controlled_vehicle_count=1, ego_position=None, ego_heading=None):
+    def __init__(self, environment_vehicles=20, controlled_vehicle_count=1, ego_position=None, ego_heading=None, duration=20):
         policy_freq = 5 #[hz]
-        duration = 20 #[s]
+        duration = duration #[s]
         self.env_configuration = {
             "observation": {
                 "type": "Kinematics",

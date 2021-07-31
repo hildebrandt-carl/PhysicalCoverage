@@ -1,27 +1,22 @@
+import os
 import gym
 import argparse
-import highway_env_v2
+import highway_env
 
 import numpy as np
-
 from stable_baselines import DQN
-from misc.highway_config import HighwayEnvironmentConfig
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--environment_vehicles', type=int, default=15, help="total_number of vehicles in the environment")
+parser.add_argument('--model_name',             type=str,   default="output",       help="The save name of the run")
 args = parser.parse_args()
 
-# Suppress exponential notation
-np.set_printoptions(suppress=True)
-
-# Setup the configuration
-hw_config = HighwayEnvironmentConfig(environment_vehicles=args.environment_vehicles)
+# Make the output directory
+if not os.path.exists('output/dqn_models/models/'):
+    os.makedirs('output/dqn_models/models/')
 
 # Create the environment
 env = gym.make("highway-v0")
-env.config = hw_config.env_configuration
 obs = env.reset()
-obs = np.round(obs, 4)
 
 # Create the model
 model = DQN('MlpPolicy', env,
@@ -32,22 +27,21 @@ model = DQN('MlpPolicy', env,
             exploration_fraction=0.6,
             batch_size=128,
             verbose=1,
-            tensorboard_log="logs/")
+            tensorboard_log="output/dqn_models/logs/" + str(args.model_name))
 
-# model.learn(total_timesteps=int(2e5))
-# model.save("dqn_test")
-model.load("dqn_test")
+# Train the model
+model.learn(total_timesteps=int(5e4))
+model.save('output/dqn_models/models/' + str(args.model_name))
+model.load('output/dqn_models/models/' + str(args.model_name))
 
 # Run the algorithm
 done = False
+obs = env.reset()
 while not done:
     # Predict
     action, _states = model.predict(obs)
-
     # Get reward
     obs, reward, done, info = env.step(action)
-    print(reward)
-
     # Render
     env.render()
 

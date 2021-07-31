@@ -81,6 +81,9 @@ for key in results:
     u_possible_coverage, u_feasible_coverage, u_veh_count, u_unique_vectors = unseen_data
     all_possible_vector_count, feasible_vectors                             = misc_data
 
+    if total_beams == 3:
+        print(np.array(u_unique_vectors))
+
     # Create a Ven diagram showing the additional coverage added by the new tests
     print("Generating ven diagrams")
     plt = create_venn(o_unique_vectors, u_unique_vectors, feasible_vectors, all_possible_vector_count, total_beams)

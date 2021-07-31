@@ -17,7 +17,7 @@ from misc.highway_config import HighwayEnvironmentConfig
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--save_name', type=str, default="output.txt", help="The save name of the run")
-parser.add_argument('--environment_vehicles', type=int, default=15, help="total_number of vehicles in the environment")
+parser.add_argument('--environment_vehicles', type=int, default=10, help="total_number of vehicles in the environment")
 parser.add_argument('--no_plot', action='store_true')
 args = parser.parse_args()
 
@@ -29,6 +29,9 @@ RSR = RSRConfig(beam_count=30)
 total_lines     = RSR.beam_count
 steering_angle  = HK.steering_angle
 max_distance    = HK.max_velocity
+
+# Declare the obstacle size (1 - car; 0.5 - motorbike)
+obstacle_size = 1
 
 # Create the output directory if it doesn't exists
 if not os.path.exists('output'):
@@ -53,10 +56,10 @@ text_file.write("------------------------------\n")
 np.set_printoptions(suppress=True)
 
 # Create the controllers
-hw_config = HighwayEnvironmentConfig(environment_vehicles=args.environment_vehicles)
+hw_config = HighwayEnvironmentConfig(environment_vehicles=args.environment_vehicles, duration=20)
 car_controller = EgoController(debug=True)
 tracker = Tracker(distance_threshold=5, time_threshold=2, debug=True)
-reach = ReachableSet()
+reach = ReachableSet(obstacle_size=obstacle_size)
 
 # Create the environment
 env = gym.make("highway-v0")
@@ -176,5 +179,5 @@ while not done:
     text_file.write("\n")
 
     
-
+env.close()
 text_file.close()

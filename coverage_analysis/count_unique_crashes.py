@@ -60,7 +60,7 @@ print("Max velocity:\t\t" + str(new_max_distance))
 print("Vector accuracy:\t" + str(new_accuracy))
 
 # Compute total possible values using the above
-unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
+unique_observations_per_cell = (new_max_distance / float(new_accuracy))
 total_possible_observations = pow(unique_observations_per_cell, new_total_lines)
 
 print("----------------------------------")

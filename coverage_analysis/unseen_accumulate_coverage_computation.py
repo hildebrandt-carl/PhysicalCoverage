@@ -81,7 +81,8 @@ def compute_accumulative_coverage(traces, vehicles, print_position, scenario, to
             feasible_vectors_set.add(tuple(vector))
             # Added therefor it must be infeasible
             if l != len(feasible_vectors_set):
-                print("Error - Infeasible vector found: {}".format(vector))
+                pass
+                # print("Error - Infeasible vector found: {}".format(vector))
 
         # Used for the accumulative graph
         unique_vector_count                 = len(unique_vectors_seen_set)
@@ -119,9 +120,9 @@ def compute_coverage(save_name, return_dict, return_key):
     print("Processing beam count{}: ".format(total_beams))
 
     # Compute total possible values using the above
-    unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
+    unique_observations_per_cell = (new_max_distance / float(new_accuracy))
     total_possible_observations = int(pow(unique_observations_per_cell, total_beams))
-
+    
     # Sort the data based on the number of vehicles per test
     combined_indices = combined_vehicles.argsort()
     original_indices = original_vehicles.argsort()
@@ -256,7 +257,7 @@ load_name += "_s" + str(new_steering_angle)
 load_name += "_b" + str('*') 
 load_name += "_d" + str(new_max_distance) 
 load_name += "_a" + str(new_accuracy)
-load_name += "_t" + str(args.total_samples)
+load_name += "_t" + str("*")
 load_name += ".npy"
 
 # Get the file names
@@ -323,10 +324,29 @@ for i in range(len(unseen_file_names)):
         filler = np.full((u_traces.shape[0], size_difference, u_traces.shape[2]), -1, dtype='float64')
         print("Correcting unseen dimensions using shape: {}".format(np.shape(filler)))
         u_traces = np.hstack([u_traces, filler])
+    elif size_difference < 0:
+        filler = np.full((o_traces.shape[0], -1 * size_difference, o_traces.shape[2]), -1, dtype='float64')
+        print("Correcting unseen dimensions using shape: {}".format(np.shape(filler)))
+        o_traces = np.hstack([o_traces, filler])
         
     # Load the traces
     o_veh = np.load(original_data_path + "vehicles" + original_file)
     u_veh = np.load(unseen_data_path + "vehicles" + file_name)
+
+    # DELETE
+    if not os.path.exists('combined_data/'):
+        os.makedirs('combined_data/')
+    combined_trace_data = np.concatenate([o_traces, u_traces], axis=0)
+    combined_vehicle_data = np.concatenate([o_veh, u_veh], axis=0)
+    save_name = args.scenario
+    save_name += "_s" + str(new_steering_angle) 
+    save_name += "_b" + str(beam_number) 
+    save_name += "_d" + str(new_max_distance) 
+    save_name += "_a" + str(new_accuracy)
+    save_name += "_t" + str(np.shape(combined_trace_data)[0])
+    save_name += ".npy"
+    np.save("combined_data/traces_{}".format(save_name), combined_trace_data)
+    np.save("combined_data/vehicles_{}".format(save_name), combined_vehicle_data)
 
     # Add 1000 to the number of vehicles so its easy to identify which are the new tests.
     # Thus the vehicle count will now be 1001, 1002, etc for the unseen tests, making them get appended to the end of the set

@@ -235,7 +235,7 @@ print("Max velocity:\t\t" + str(new_max_distance))
 print("Vector accuracy:\t" + str(new_accuracy))
 
 # Compute total possible values using the above
-unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
+unique_observations_per_cell = (new_max_distance / float(new_accuracy))
 total_possible_observations = pow(unique_observations_per_cell, new_total_lines)
 
 print("----------------------------------")
@@ -318,3 +318,5 @@ final_number_crashes    = np.load(save_name + "crashes_" + str(args.scenario) + 
 
 # Run the plotting code
 exec(compile(open("test_selection_plot.py", "rb").read(), "test_selection_plot.py", 'exec'))
+
+print("YOU STILL NEED TO ADD FEASIBLE ONLY TESTS TO THIS!!!!!!!!!!!!!!!!!!!")

@@ -22,6 +22,7 @@ _build
 
 # Outputs
 output/
+logs/
 *.npy
 *.pkl
 

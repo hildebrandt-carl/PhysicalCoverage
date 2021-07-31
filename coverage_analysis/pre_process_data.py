@@ -13,92 +13,14 @@ from tqdm import tqdm
 from environment_configurations import RSRConfig
 from environment_configurations import HighwayKinematics
 
+from pre_process_functions import getStep
+from pre_process_functions import processFile
+from pre_process_functions import string_to_vector
+from pre_process_functions import vector_conversion
+from pre_process_functions import countVectorsInFile
 
-def string_to_vector(vector_string):
-    vector_str = vector_string[vector_string.find(": ")+3:-2]
-    vector = np.fromstring(vector_str, dtype=float, sep=', ')
-    return vector
-
-# This function was written as if the data had a steering angle of 60, total lines of 30, max_distance of 30
-def vector_conversion(vector, steering_angle, max_distance, total_lines):
-    original_steering_angle = 30
-    original_total_lines = 30
-    original_max_distance = 30
-
-    # Fix the vector to have to correct max_distance
-    vector = np.clip(vector, 0, max_distance)
-
-    # Get how many degrees between each line
-    line_space = (original_steering_angle * 2) / float(original_total_lines - 1)
-
-    # Get the starting lines angle
-    left_index = int(len(vector) / 2)
-    right_index = int(len(vector) / 2)
-    current_steering_angle = 0
-    if (original_total_lines % 2) == 0: 
-        current_steering_angle = line_space / 2
-        left_index -= 1
-
-    # This is an overapproximation
-    while current_steering_angle < steering_angle:
-        left_index -= 1
-        right_index += 1
-        current_steering_angle += line_space
-
-    # Get the corrected steering angle
-    steering_angle_corrected_vector = vector[left_index:right_index+1]
-
-    # Select the correct number of lines
-    if len(steering_angle_corrected_vector) < total_lines:
-        pass
-        # print("Requested moer lines than we have, extrapolating")
-    idx = np.round(np.linspace(0, len(steering_angle_corrected_vector) - 1, total_lines)).astype(int)
-    final_vector = steering_angle_corrected_vector[idx]
-
-    return final_vector
-
-def getStep(vector, accuracy):
-    return np.round(np.array(vector, dtype=float) / accuracy) * accuracy
-
-def countVectorsInFile(f):
-    vector_count = 0
-    crash = False
-    for line in f: 
-        if "Vector: " in line:
-            vector_count += 1
-        if "Crash: True" in line:
-            crash = True
-    return vector_count, crash
-
-def processFile(f, total_vectors, vector_size):
-    test_vectors    = np.full((total_vectors, vector_size), np.inf, dtype='float64')
-    crash           = False
-    vehicle_count   = -1
-    current_vector  = 0
-    for line in f: 
-        # Get the number of external vehicles
-        if "External Vehicles: " in line:
-            vehicle_count = int(line[line.find(": ")+2:])
-        # Get each of the vectors
-        if "Vector: " in line:
-            vector_str = line[line.find(": ")+3:-2]
-            vector = np.fromstring(vector_str, dtype=float, sep=', ')
-            vector = vector_conversion(vector, new_steering_angle, new_max_distance, new_total_lines)
-            vector = getStep(vector, new_accuracy)
-            test_vectors[current_vector] = vector
-            current_vector += 1
-        # Look for crashes
-        if "Crash: True" in line:
-            crash = True
-            # File the rest of the test vector up with np.nan
-            while current_vector < test_vectors.shape[0]:
-                test_vectors[current_vector] = np.full(test_vectors.shape[1], np.nan, dtype='float64')
-                current_vector += 1
-
-    return vehicle_count, crash, test_vectors
 
 parser = argparse.ArgumentParser()
-
 parser.add_argument('--beam_count',     type=int, default=4,    help="The number of beams used to vectorize the reachable set")
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
@@ -124,7 +46,7 @@ print("Max velocity:\t\t" + str(new_max_distance))
 print("Vector accuracy:\t" + str(new_accuracy))
 
 # Compute total possible values using the above
-unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
+unique_observations_per_cell = (new_max_distance / float(new_accuracy))
 total_possible_observations = pow(unique_observations_per_cell, new_total_lines)
 
 print("----------------------------------")
@@ -185,10 +107,11 @@ if len(np.shape(file_names)) > 1:
 
 # Make sure your list is the exact right size
 print("")
-if args.total_samples >= 1:
-    if len(file_names) > args.total_samples:
-        print("Currently there are {} files, cropping to {}".format(len(file_names), args.total_samples))
-        file_names = file_names[0:args.total_samples]
+if args.scenario != "highway_unseen":
+    if args.total_samples >= 1:
+        if len(file_names) > args.total_samples:
+            print("Currently there are {} files, cropping to {}".format(len(file_names), args.total_samples))
+            file_names = file_names[0:args.total_samples]
 
 # Get the file size
 total_files = len(file_names)
@@ -241,7 +164,7 @@ for i in tqdm(range(total_files)):
 
     # Process the file
     f = open(file_name, "r")    
-    vehicle_count, crash, test_vectors = processFile(f, vec_per_file, new_total_lines)
+    vehicle_count, crash, test_vectors = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy)
     f.close()
 
     reach_vectors[i] = test_vectors

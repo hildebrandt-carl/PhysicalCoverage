@@ -24,7 +24,8 @@ parser.add_argument('--no_plot',        action='store_true')
 args = parser.parse_args()
 
 # Get the full file path
-test_path = "../../PhysicalCoverageData/highway/unseen/{}/tests/{}_beams/{}.npy".format(args.total_samples, args.total_beams, args.test_name)
+test_path = "../../PhysicalCoverageData/highway/unseen/{}/tests_single/{}_beams/{}.npy".format(args.total_samples, args.total_beams, args.test_name)
+index_path = test_path[:test_path.rfind("_")] + "_index.npy"
 
 # Figure out how many beam this test was generated using
 test_data = np.load(test_path)
@@ -43,6 +44,9 @@ RSR = RSRConfig(beam_count=beams)
 total_lines     = RSR.beam_count
 steering_angle  = HK.steering_angle
 max_distance    = HK.max_velocity
+
+# Declare the obstacle size (1 - car; 0.5 - motorbike)
+obstacle_size = 0.5
 
 # Decalare how many traffic vehicles there are
 environment_vehicles = total_lines
@@ -69,10 +73,10 @@ text_file.write("------------------------------\n")
 np.set_printoptions(suppress=True)
 
 # Create the controllers
-hw_config = HighwayEnvironmentConfig(environment_vehicles=0, controlled_vehicle_count=environment_vehicles + 1)
+hw_config = HighwayEnvironmentConfig(environment_vehicles=0, controlled_vehicle_count=environment_vehicles + 1, duration=100)
 car_controller = EgoController(debug=True)
 tracker = Tracker(distance_threshold=5, time_threshold=2, debug=True)
-reach = ReachableSet()
+reach = ReachableSet(obstacle_size=obstacle_size)
 
 # Create the environment
 env = gym.make("highway-v0")
@@ -83,11 +87,11 @@ env.reset()
 action = car_controller.default_action()
 
 # Create the traffic controller
-traffic = TrafficController(env.controlled_vehicles[1:], test_path)
+traffic = TrafficController(env.controlled_vehicles[1:], test_path, index_path)
 
-# Get the roadway - used when calculating the edge of the road
-lanes = env.road.network.graph['0']['1']
-lane_width = np.array([0, lanes[0].width/2.0])
+# # Get the roadway - used when calculating the edge of the road
+# lanes = env.road.network.graph['0']['1']
+# lane_width = np.array([0, lanes[0].width/2.0])
 
 # Main loop
 done = False
@@ -99,7 +103,7 @@ while not done:
     obs = np.round(obs, 4)
 
     # Update the traffic vehicles
-    complete = traffic.compute_traffic_commands(env.controlled_vehicles[0].position)
+    complete = traffic.compute_traffic_commands(env.controlled_vehicles[0].position, obstacle_size)
 
     # End if we are complete
     if complete:
@@ -123,11 +127,12 @@ while not done:
     # Track the time for this opperation
     start_time = datetime.datetime.now()
 
-    # Convert the lane positions to be relative to the ego_vehicle
-    ego_position = env.controlled_vehicles[0].position
-    upperlane = [lanes[0].start-lane_width, lanes[0].end-lane_width] - ego_position
-    lowerlane = [lanes[-1].start+lane_width, lanes[-1].end+lane_width] - ego_position
-    lane_positions = [upperlane, lowerlane]
+    # # Convert the lane positions to be relative to the ego_vehicle
+    # ego_position = env.controlled_vehicles[0].position
+    # upperlane = [lanes[0].start-lane_width, lanes[0].end-lane_width] - ego_position
+    # lowerlane = [lanes[-1].start+lane_width, lanes[-1].end+lane_width] - ego_position
+    # lane_positions = [upperlane, lowerlane]
+    lane_positions = None
 
     # Get the reach set simulation
     polygons    = reach.compute_environment(tracked_objects, lane_positions)
@@ -143,6 +148,7 @@ while not done:
 
     print("")
     print("Vector: " + str(r_vector))
+    print("Goal: " + str(traffic.get_expected_index()))
     print("---------------------------------------")
 
     if not args.no_plot:

@@ -34,7 +34,7 @@ def compute_coverage(load_name, return_dict, return_key, base_path):
     scenario = scenario[:scenario.find("_")]
 
     # Compute total possible values using the above
-    unique_observations_per_cell = (new_max_distance / float(new_accuracy)) + 1.0
+    unique_observations_per_cell = (new_max_distance / float(new_accuracy))
     total_possible_observations = int(pow(unique_observations_per_cell, total_beams))
 
     print("Processing: " + load_name)

@@ -1,4 +1,3 @@
-
 import os
 import glob
 import copy
@@ -12,77 +11,10 @@ from tabulate import tabulate
 from environment_configurations import RSRConfig
 from environment_configurations import HighwayKinematics
 
-def string_to_vector(vector_string):
-    vector_str = vector_string[vector_string.find(": ")+3:-2]
-    vector = np.fromstring(vector_str, dtype=float, sep=', ')
-    return vector
-
-# This function was written as if the data had a steering angle of 60, total lines of 30, max_distance of 30
-def vector_conversion(vector, steering_angle, max_distance, total_lines):
-    original_steering_angle = 60
-    original_total_lines = 30
-    original_max_distance = 30
-
-    # Fix the vector to have to correct max_distance
-    vector = np.clip(vector, 0, max_distance)
-
-    # Get how many degrees between each line
-    line_space = (original_steering_angle * 2) / float(original_total_lines - 1)
-
-    # Get the starting lines angle
-    left_index = int(len(vector) / 2)
-    right_index = int(len(vector) / 2)
-    current_steering_angle = 0
-    if (original_total_lines % 2) == 0: 
-        current_steering_angle = line_space / 2
-        left_index -= 1
-
-    # This is an overapproximation
-    while current_steering_angle < steering_angle:
-        left_index -= 1
-        right_index += 1
-        current_steering_angle += line_space
-
-    # Get the corrected steering angle
-    steering_angle_corrected_vector = vector[left_index:right_index+1]
-
-    # Select the correct number of lines
-    if len(steering_angle_corrected_vector) < total_lines:
-        pass
-        # print("Requested moer lines than we have, extrapolating")
-    idx = np.round(np.linspace(0, len(steering_angle_corrected_vector) - 1, total_lines)).astype(int)
-    final_vector = steering_angle_corrected_vector[idx]
-
-    return final_vector
-
-def getStep(vector, accuracy):
-    return np.round(np.array(vector, dtype=float) / accuracy) * accuracy
-
-def processFile(f):
-    test_vectors    = []
-    crash           = False
-    vehicle_count   = -1
-    current_vector  = 0
-    for line in f: 
-        # Get the number of external vehicles
-        if "External Vehicles: " in line:
-            vehicle_count = int(line[line.find(": ")+2:])
-        # Get each of the vectors
-        if "Vector: " in line:
-            vector_str = line[line.find(": ")+3:-2]
-            vector = np.fromstring(vector_str, dtype=float, sep=', ')
-            vector = vector_conversion(vector, new_steering_angle, new_max_distance, new_total_lines)
-            vector = getStep(vector, new_accuracy)
-            test_vectors.append(np.array(vector))
-            current_vector += 1
-        # Look for crashes
-        if "Crash: True" in line:
-            crash = True
-
-    test_vectors = np.array(test_vectors)
-
-    return vehicle_count, crash, test_vectors
-
+from pre_process_functions import getStep
+from pre_process_functions import string_to_vector
+from pre_process_functions import vector_conversion
+from pre_process_functions import processFileFeasibility
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--scenario',               type=str, default="",    help="beamng/highway")
@@ -134,12 +66,9 @@ for file_name in file_names:
     beams = file_name[file_name.rfind('s')+1:file_name.rfind('.')]
     new_total_lines = int(beams)
 
-    # if new_total_lines == 10:
-    #     continue
-
     # Process the data
     f = open(file_name, "r")    
-    vehicle_count, crash, test_vectors = processFile(f)
+    vehicle_count, crash, test_vectors = processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, new_accuracy)
     f.close()
 
     print("Computing Feasible Vectors")
@@ -153,7 +82,7 @@ for file_name in file_names:
         tmp_vec = copy.deepcopy(vec)
 
         # Loop through all smaller vectors
-        while tmp_vec[-1] >= 0:
+        while tmp_vec[-1] >= new_accuracy:
 
             # Add the current vector
             feasible_vectors.add(tuple(tmp_vec))
@@ -163,7 +92,7 @@ for file_name in file_names:
 
             # make sure it doesn't go below 0
             for i in range(len(tmp_vec) - 1):
-                if tmp_vec[i] < 0:
+                if tmp_vec[i] < new_accuracy:
                     tmp_vec[i] = vec[i]
                     tmp_vec[i+1] -= new_accuracy
 
@@ -177,17 +106,16 @@ for file_name in file_names:
     # Compute all vectors
     all_vectors = set()
     tmp_vec = np.full(new_total_lines, new_max_distance)
-    while tmp_vec[-1] >= 0:
-
+    while tmp_vec[-1] >= new_accuracy:
         # Add the current vector
         all_vectors.add(tuple(tmp_vec))
 
         # Remove the value from the first position
         tmp_vec[0] -= new_accuracy
 
-        # make sure it doesn't go below 0
+        # make sure it doesn't go below new_accuracy
         for i in range(len(tmp_vec) - 1):
-            if tmp_vec[i] < 0:
+            if tmp_vec[i] < new_accuracy:
                 tmp_vec[i] = new_max_distance
                 tmp_vec[i+1] -= new_accuracy
 

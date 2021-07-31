@@ -8,7 +8,7 @@ from misc.pid import PID
 class TrafficController:
 
     
-    def __init__(self, traffic_vehicles, scenario_file=None):
+    def __init__(self, traffic_vehicles, scenario_file=None, index_file=None):
         self.traffic_vehicles = traffic_vehicles
         self.number_of_vehicles = len(self.traffic_vehicles)
         self.vel_controllers = []
@@ -17,8 +17,10 @@ class TrafficController:
         # Load goals to start
         if scenario_file is not None:
             self.goals = self.load_scenario(scenario_file)
+            self.expected_indices = self.load_scenario(index_file)
         else:
             self.goals = np.array([[10,4], [10,0], [10, -4]])
+            self.expected_indices = np.array([-1], [-1], [-1])
             self.goals = self.goals.reshape(1, self.goals.shape[0], self.goals.shape[1])
 
         self.goal_index = 0
@@ -59,7 +61,7 @@ class TrafficController:
         return np.array(current_goal)
 
 
-    def compute_traffic_commands(self, ego_position):
+    def compute_traffic_commands(self, ego_position, obstacle_size=1):
 
         # Used to return if the test is complete or not
         complete = False
@@ -73,7 +75,9 @@ class TrafficController:
             # Get the vehicle
             vehicle = self.traffic_vehicles[i]
             # Get the vehicle goal
-            goal = self.current_goal[i]
+            goal = np.copy(self.current_goal[i])
+            # Account for the size of the car
+            goal[0] = goal[0] + (obstacle_size * 2.5)
             # Get the vehicle controllers
             vel_controller = self.vel_controllers[i]
             ang_controller = self.ang_controllers[i]
@@ -140,7 +144,7 @@ class TrafficController:
         print("|--Total distance to goal: {}".format(distance_to_goal_sum))
         
         # If the distance to goal is lower than 2.5 move to the next goal:
-        if distance_to_goal_sum <= 2.5:
+        if distance_to_goal_sum <= 1:
             self.goal_index += 1
             # Check we are not out of goal positions
             if self.goal_index >= self.goals.shape[0]:
@@ -151,6 +155,9 @@ class TrafficController:
                 print("|--Traffic vehicles in position, switching to next goal")
 
         return complete
+
+    def get_expected_index(self):
+        return self.expected_indices[self.goal_index]
 
 
     def display_goals(self, plt_in):

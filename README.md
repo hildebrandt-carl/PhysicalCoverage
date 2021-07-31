@@ -111,6 +111,9 @@ $ python3 -m pip install llvmlite==0.31.0
 $ python3 -m pip install stable-baselines
 $ python3 -m pip install networkx
 $ python3 -m pip install shapely
+$ python3 -m pip install coverage
+$ python3 -m pip install stable_baselines
+$ python3 -m pip install tensorflow==1.15
 ```
 
 Running
@@ -186,7 +189,6 @@ $ cd ..
 $ mkdir -p PhysicalCoverageData/highway/unseen
 $ mv PhysicalCoverage/coverage_analysis/output/* PhysicalCoverageData/highway/unseen
 $ rm -r PhysicalCoverage/coverage_analysis/output
-$ rm -r PhysicalCoverage/coverage_analysis/tmp
 ```
 
 Next we need to run those scenarios in highway to get the data from them. To do that we need to run. At this point we should know the number of samples we are using. In this case we are using 1000 samples.
@@ -220,4 +222,6 @@ $ rm -r PhysicalCoverage/coverage_analysis/output
 Now we can compute what the new tests did to the coverage. To do that you need to run:
 ```bash
 $ python3 unseen_accumulate_coverage_computation.py --total_samples 1000 --scenario highway --cores 100
+$ rm -r PhysicalCoverage/coverage_analysis/tmp
+$ rm -r PhysicalCoverage/coverage_analysis/combined_data 
 ```
