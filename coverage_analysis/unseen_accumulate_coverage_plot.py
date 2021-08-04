@@ -76,31 +76,71 @@ for key in results:
     print("Processing beams: {}".format(total_beams))
 
     # Expand the data
-    c_possible_coverage, c_feasible_coverage, c_veh_count, c_unique_vectors = combined_data
-    o_possible_coverage, o_feasible_coverage, o_veh_count, o_unique_vectors = original_data
-    u_possible_coverage, u_feasible_coverage, u_veh_count, u_unique_vectors = unseen_data
-    all_possible_vector_count, feasible_vectors                             = misc_data
-
-    if total_beams == 3:
-        print(np.array(u_unique_vectors))
+    c_possible_coverage, c_feasible_coverage, c_veh_count, c_unique_vectors, c_crash_array, c_unique_crash_array = combined_data
+    o_possible_coverage, o_feasible_coverage, o_veh_count, o_unique_vectors, o_crash_array, o_unique_crash_array = original_data
+    u_possible_coverage, u_feasible_coverage, u_veh_count, u_unique_vectors, u_crash_array, u_unique_crash_array = unseen_data
+    all_possible_vector_count, feasible_vectors                                            = misc_data
 
     # Create a Ven diagram showing the additional coverage added by the new tests
     print("Generating ven diagrams")
     plt = create_venn(o_unique_vectors, u_unique_vectors, feasible_vectors, all_possible_vector_count, total_beams)
 
+    # Compute the time taken for each
+    original_test_duration = 20
+    new_test_duration = 100
+    original_time_taken = np.arange(len(o_possible_coverage)) * original_test_duration
+    new_time_taken = (np.arange(len(u_possible_coverage)) * new_test_duration) + original_time_taken[-1]
+    time_taken = np.concatenate([original_time_taken, new_time_taken])
+
+    # Define where the newly generated tests start
+    newly_generated_tests = len(o_possible_coverage)
+
     # Create a line graph
-    fig = plt.figure("Coverage")          
-    plt.scatter(np.arange(len(c_possible_coverage)), c_possible_coverage, color='C'+str(color_index), marker='o', label=str(total_beams), s=1)
-    # plt.scatter(np.arange(len(o_possible_coverage)), o_possible_coverage, color='C'+str(color_index), marker='*', label=str(total_beams), s=1)
-    # plt.scatter(np.aransge(len(u_possible_coverage)), u_possible_coverage, color='C'+str(color_index), marker='x', label=str(total_beams), s=10)
+    fig = plt.figure("Possible_Coverage") 
+    plt.scatter(time_taken, c_possible_coverage, color='C'+str(color_index), marker='o', label=str(total_beams), s=1)
+    plt.axvline(x=newly_generated_tests, color='red', linestyle='--')
+
+    fig = plt.figure("Feasible_Coverage") 
+    plt.scatter(time_taken, c_feasible_coverage, color='C'+str(color_index), marker='o', label=str(total_beams), s=1)
+    plt.axvline(x=newly_generated_tests, color='red', linestyle='--')
+
+    fig = plt.figure("Crashes") 
+    plt.scatter(time_taken, c_crash_array, color='C'+str(color_index), marker='o', label=str(total_beams), s=1)
+    plt.axvline(x=newly_generated_tests, color='red', linestyle='--')
+
+    fig = plt.figure("Unique_Crashes") 
+    plt.scatter(time_taken, c_unique_crash_array, color='C'+str(color_index), marker='o', label=str(total_beams), s=1)
+    plt.axvline(x=newly_generated_tests, color='red', linestyle='--')
+
     color_index += 1
 
-
 # Update the plots data
-fig = plt.figure("Coverage") 
-plt.xlabel("Tests")
-plt.ylabel("Physical Coverage (%) - Considering all Vectors")
-plt.ylim([-5,100])
+fig = plt.figure("Possible_Coverage") 
+plt.xlabel("Time Taken")
+plt.ylabel("Physical Coverage (%) - Considering All Vectors")
+plt.ylim([-5,105])
+plt.legend(markerscale=7, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=7, handletextpad=0.1)
+plt.tight_layout()
+plt.grid(True, linestyle=':', linewidth=1)
+
+fig = plt.figure("Feasible_Coverage") 
+plt.xlabel("Time Taken")
+plt.ylabel("Physical Coverage (%) - Considering Feasible Vectors")
+plt.ylim([-5,105])
+plt.legend(markerscale=7, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=7, handletextpad=0.1)
+plt.tight_layout()
+plt.grid(True, linestyle=':', linewidth=1)
+
+fig = plt.figure("Crashes") 
+plt.xlabel("Time Taken")
+plt.ylabel("Number of crashes")
+plt.legend(markerscale=7, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=7, handletextpad=0.1)
+plt.tight_layout()
+plt.grid(True, linestyle=':', linewidth=1)
+
+fig = plt.figure("Unique_Crashes") 
+plt.xlabel("Time Taken")
+plt.ylabel("Number of unique crashes")
 plt.legend(markerscale=7, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=7, handletextpad=0.1)
 plt.tight_layout()
 plt.grid(True, linestyle=':', linewidth=1)

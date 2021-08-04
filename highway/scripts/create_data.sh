@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 12 different vehicle counts
-vehicle_count=(2 4 6 8 10 12 14 16 18 20)
+vehicle_count=(1 2 3 4 5 6 7 8 9 10)
 
 # Run it 
 for value in {1..1000}

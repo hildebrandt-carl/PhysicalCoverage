@@ -20,9 +20,6 @@ def crash_hasher(trace_number, hash_size):
     # Determine if there is a crash
     trace = traces[trace_number]
 
-    # Used to hold the last vectors before a crash
-    last_seen_vectors = np.zeros((hash_size, trace[0].shape[0]))
-
     # Create the hash
     hash_value = np.nan
 

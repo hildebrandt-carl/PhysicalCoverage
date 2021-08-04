@@ -13,6 +13,43 @@ from environment_configurations import RSRConfig
 from environment_configurations import HighwayKinematics
 
 
+def unique_vector_config(scenario, number_of_seconds):
+    if scenario == "highway":
+        hash_size = 4 * number_of_seconds
+    elif scenario == "beamng":
+        hash_size = 4 * number_of_seconds
+    else:
+        exit()
+    return hash_size
+
+def crash_hasher(trace, hash_size):
+    # Used to hold the last vectors before a crash
+    last_seen_vectors = np.zeros((hash_size, trace[0].shape[0]))
+
+    # Create the hash
+    hash_value = np.nan
+
+    if not np.isnan(trace).any():
+        return [np.nan]
+
+    # For each vector in the trace
+    for i in range(trace.shape[0]):
+        # Get the vector
+        v = trace[i]
+
+        # Check if there was a crash
+        if np.isnan(v).any():
+            hash_value = hash(tuple(last_seen_vectors.reshape(-1)))
+            break
+        # There wasn't a crash
+        else:
+            # Roll the data in the last_seen_vectors
+            last_seen_vectors = np.roll(last_seen_vectors, v.shape[0])
+            # Save the data to the last_seen_vectors
+            last_seen_vectors[0] = v
+
+    return [hash_value]
+
 def save_obj(obj, name):
     with open(name + '.pkl', 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
@@ -23,13 +60,16 @@ def load_obj(name):
 
 def compute_accumulative_coverage(traces, vehicles, print_position, scenario, total_beams, feasible_vectors):
 
+    assert(len(traces) == len(vehicles))
+
     # Time how long this operation takes
     start = datetime.now()
 
     # Count the number of unique vectors seen for the combined data
-    traces_count    = traces.shape[0]
-    crash_count     = 0
-    total_vectors   = 0
+    traces_count        = traces.shape[0]
+    crash_count         = 0
+    unique_crash_count  = 0
+    total_vectors       = 0
 
     # Turn the feasible vectors into a set
     feasible_vectors_set = set()
@@ -42,9 +82,14 @@ def compute_accumulative_coverage(traces, vehicles, print_position, scenario, to
         previous_size = len(feasible_vectors_set)
 
     # Count the number of unique vectors seen for each of the different combinations of data
-    unique_vectors_seen_set        = set()
-    coverage_accumulative_graph    = np.full(traces_count, np.nan)
-    coverage_vehicle_count         = np.full(traces_count, np.nan)
+    unique_vectors_seen_set                 = set()
+    unique_feasible_vector_seen_set         = set()
+    unique_crashes_seen_set                 = set()
+    coverage_accumulative_graph             = np.full(traces_count, np.nan)
+    feasible_coverage_accumulative_graph    = np.full(traces_count, np.nan) 
+    coverage_vehicle_count                  = np.full(traces_count, np.nan)
+    coverage_crash_count                    = np.full(traces_count, np.nan)
+    coverage_crash_count_unique             = np.full(traces_count, np.nan)
 
     # For each of the traces
     for i in tqdm(range(traces_count), position=int(print_position), mininterval=5):
@@ -55,6 +100,15 @@ def compute_accumulative_coverage(traces, vehicles, print_position, scenario, to
         # See if there was a crash
         if np.isnan(trace).any():
             crash_count += 1
+
+            # Check if the crash is unique
+            hash_size = unique_vector_config(scenario, number_of_seconds=1)
+            crash_hash = crash_hasher(trace, hash_size)
+            l = len(unique_crashes_seen_set)
+            assert(len(crash_hash) == 1)
+            unique_crashes_seen_set.add(crash_hash[0])
+            if l != len(unique_crashes_seen_set):
+                unique_crash_count += 1
 
         # For each vector in the trace
         for vector in trace:
@@ -77,29 +131,36 @@ def compute_accumulative_coverage(traces, vehicles, print_position, scenario, to
             unique_vectors_seen_set.add(tuple(vector))
 
             # Check if any of the vectors are infeasible
-            l = len(feasible_vectors_set)
-            feasible_vectors_set.add(tuple(vector))
-            # Added therefor it must be infeasible
-            if l != len(feasible_vectors_set):
-                pass
-                # print("Error - Infeasible vector found: {}".format(vector))
+            if tuple(vector) not in feasible_vectors_set:
+                continue
 
+            unique_feasible_vector_seen_set.add(tuple(vector))
+                
         # Used for the accumulative graph
-        unique_vector_count                 = len(unique_vectors_seen_set)
-        coverage_accumulative_graph[i]      = unique_vector_count
-        coverage_vehicle_count[i]           = vehicle_count
+        unique_vector_count                          = len(unique_vectors_seen_set)
+        unique_feasible_vector_count                 = len(unique_feasible_vector_seen_set)
+        coverage_accumulative_graph[i]               = unique_vector_count
+        feasible_coverage_accumulative_graph[i]      = unique_feasible_vector_count
+        coverage_vehicle_count[i]                    = vehicle_count
+        coverage_crash_count[i]                      = crash_count
+        coverage_crash_count_unique[i]               = unique_crash_count
+
 
     # Convert the set back to a list
     unique_vectors_seen = []
     for vec in unique_vectors_seen_set:
         unique_vectors_seen.append(np.array(vec))
 
+    unique_feasible_vector_seen = []
+    for vec in unique_feasible_vector_seen_set:
+        unique_feasible_vector_seen.append(np.array(vec))
+
     # End the timer
     end = datetime.now()
     time_taken = end - start
 
     # Return the data
-    return time_taken, traces_count, crash_count, total_vectors, unique_vectors_seen, unique_vector_count, coverage_accumulative_graph, coverage_vehicle_count
+    return time_taken, traces_count, crash_count, total_vectors, unique_vectors_seen, unique_vector_count, unique_feasible_vector_seen, unique_feasible_vector_count, coverage_accumulative_graph, feasible_coverage_accumulative_graph, coverage_vehicle_count, coverage_crash_count, coverage_crash_count_unique
 
 def compute_coverage(save_name, return_dict, return_key):
 
@@ -116,6 +177,10 @@ def compute_coverage(save_name, return_dict, return_key):
     total_beams         = int(data[6])
     load_name           = data[7]
     scenario            = data[8]
+
+    assert(len(combined_vehicles) == len(combined_traces))
+    assert(len(unseen_vehicles) == len(unseen_traces))
+    assert(len(original_vehicles) == len(original_traces))
 
     print("Processing beam count{}: ".format(total_beams))
 
@@ -142,21 +207,21 @@ def compute_coverage(save_name, return_dict, return_key):
     total_feasible_observations = np.shape(feasible_vectors)[0]
 
     # Compute on all the different combinations of data
-    c_time, c_trace_count, c_crash_count, c_total_vectors, c_unique_vectors, c_unique_vectors_count, c_coverage_accumulative_graph, c_coverage_vehicle_count = compute_accumulative_coverage(combined_traces, combined_vehicles, return_key[1:], scenario, total_beams, feasible_vectors)
-    o_time, o_trace_count, o_crash_count, o_total_vectors, o_unique_vectors, o_unique_vectors_count, o_coverage_accumulative_graph, o_coverage_vehicle_count = compute_accumulative_coverage(original_traces, original_vehicles, return_key[1:], scenario, total_beams, feasible_vectors)
-    u_time, u_trace_count, u_crash_count, u_total_vectors, u_unique_vectors, u_unique_vectors_count, u_coverage_accumulative_graph, u_coverage_vehicle_count = compute_accumulative_coverage(unseen_traces, unseen_vehicles, return_key[1:], scenario, total_beams, feasible_vectors)
+    c_time, c_trace_count, c_crash_count, c_total_vectors, c_unique_vectors, c_unique_vectors_count, c_unique_feasible_vectors_seen, c_unique_feasible_vector_count, c_coverage_accumulative_graph, c_feasible_coverage_accumulative_graph, c_coverage_vehicle_count, c_crash_array, c_unique_crash_array = compute_accumulative_coverage(combined_traces, combined_vehicles, return_key[1:], scenario, total_beams, feasible_vectors)
+    o_time, o_trace_count, o_crash_count, o_total_vectors, o_unique_vectors, o_unique_vectors_count, o_unique_feasible_vectors_seen, o_unique_feasible_vector_count, o_coverage_accumulative_graph, o_feasible_coverage_accumulative_graph, o_coverage_vehicle_count, o_crash_array, o_unique_crash_array = compute_accumulative_coverage(original_traces, original_vehicles, return_key[1:], scenario, total_beams, feasible_vectors)
+    u_time, u_trace_count, u_crash_count, u_total_vectors, u_unique_vectors, u_unique_vectors_count, u_unique_feasible_vectors_seen, u_unique_feasible_vector_count, u_coverage_accumulative_graph, u_feasible_coverage_accumulative_graph, u_coverage_vehicle_count, u_crash_array, u_unique_crash_array = compute_accumulative_coverage(unseen_traces, unseen_vehicles, return_key[1:], scenario, total_beams, feasible_vectors)
 
     # Compute crash percentages
     c_crash_percentage = round(c_crash_count / float(c_total_vectors) * 100, 4)
     o_crash_percentage = round(o_crash_count / float(o_total_vectors) * 100, 4)
     u_crash_percentage = round(u_crash_count / float(u_total_vectors) * 100, 4)
-
+    
     # Compute coverage
-    c_feasible_coverage = round((c_unique_vectors_count / float(total_feasible_observations)) * 100, 4)
+    c_feasible_coverage = round((c_unique_feasible_vector_count / float(total_feasible_observations)) * 100, 4)
     c_possible_coverage = round((c_unique_vectors_count / float(total_possible_observations)) * 100, 4)
-    o_feasible_coverage = round((o_unique_vectors_count / float(total_feasible_observations)) * 100, 4)
+    o_feasible_coverage = round((o_unique_feasible_vector_count / float(total_feasible_observations)) * 100, 4)
     o_possible_coverage = round((o_unique_vectors_count / float(total_possible_observations)) * 100, 4)
-    u_feasible_coverage = round((u_unique_vectors_count / float(total_feasible_observations)) * 100, 4)
+    u_feasible_coverage = round((u_unique_feasible_vector_count / float(total_feasible_observations)) * 100, 4)
     u_possible_coverage = round((u_unique_vectors_count / float(total_possible_observations)) * 100, 4)
 
     print("\n\n\n\n\n\n")
@@ -209,16 +274,16 @@ def compute_coverage(save_name, return_dict, return_key):
 
     # Convert the data to percentages
     c_accumulative_graph_possible_coverage = (c_coverage_accumulative_graph / total_possible_observations) * 100
-    c_accumulative_graph_feasible_coverage = (c_coverage_accumulative_graph / total_feasible_observations) * 100
+    c_accumulative_graph_feasible_coverage = (c_feasible_coverage_accumulative_graph / total_feasible_observations) * 100
     o_accumulative_graph_possible_coverage = (o_coverage_accumulative_graph / total_possible_observations) * 100
-    o_accumulative_graph_feasible_coverage = (o_coverage_accumulative_graph / total_feasible_observations) * 100
+    o_accumulative_graph_feasible_coverage = (o_feasible_coverage_accumulative_graph / total_feasible_observations) * 100
     u_accumulative_graph_possible_coverage = (u_coverage_accumulative_graph / total_possible_observations) * 100
-    u_accumulative_graph_feasible_coverage = (u_coverage_accumulative_graph / total_feasible_observations) * 100
+    u_accumulative_graph_feasible_coverage = (u_feasible_coverage_accumulative_graph / total_feasible_observations) * 100
 
     # Get the data ready for return
-    combined_data   = [c_accumulative_graph_possible_coverage, c_accumulative_graph_feasible_coverage, c_coverage_vehicle_count, c_unique_vectors]
-    original_data   = [o_accumulative_graph_possible_coverage, o_accumulative_graph_feasible_coverage, o_coverage_vehicle_count, o_unique_vectors]
-    unseen_data     = [u_accumulative_graph_possible_coverage, u_accumulative_graph_feasible_coverage, u_coverage_vehicle_count, u_unique_vectors]
+    combined_data   = [c_accumulative_graph_possible_coverage, c_accumulative_graph_feasible_coverage, c_coverage_vehicle_count, c_unique_vectors, c_crash_array, c_unique_crash_array]
+    original_data   = [o_accumulative_graph_possible_coverage, o_accumulative_graph_feasible_coverage, o_coverage_vehicle_count, o_unique_vectors, o_crash_array, o_unique_crash_array]
+    unseen_data     = [u_accumulative_graph_possible_coverage, u_accumulative_graph_feasible_coverage, u_coverage_vehicle_count, u_unique_vectors, u_crash_array, u_unique_crash_array]
     misc_data       = [total_possible_observations, feasible_vectors]
 
     # Return both arrays
@@ -309,7 +374,6 @@ for i in range(len(unseen_file_names)):
             break
 
     load_name = "Merging: {} and {}".format(file_name, original_file)
-    print(load_name)
 
     # Load the traces
     o_traces = np.load(original_data_path + "traces" + original_file)
@@ -359,7 +423,7 @@ for i in range(len(unseen_file_names)):
     print("Combined trace shape: {}".format(np.shape(combined_trace_data)))
     print("Combined veh shape: {}".format(np.shape(combined_vehicle_data)))
     print("")
-    
+
     # Save the new data
     new_data.append([combined_trace_data, o_traces, u_traces, combined_vehicle_data, o_veh, u_veh, beam_number, load_name, args.scenario])
 
@@ -370,12 +434,14 @@ print("----------------------------------")
 manager = multiprocessing.Manager()
 unseen_return_dict = manager.dict()
 
+print(len(new_data))
 # Create a pool with x processes
 total_processors = int(args.cores)
 pool =  multiprocessing.Pool(total_processors)
 
 # Call our function total_test_suites times
 unseen_result_object = []
+
 for index in range(len(new_data)):
 
     # Get the data

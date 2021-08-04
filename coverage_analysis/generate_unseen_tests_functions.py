@@ -204,6 +204,11 @@ def compute_unseen_vectors(return_dict, maximum_unseen_vectors, new_max_distance
                            "max_distance": new_max_distance,
                            "steering_angle": new_max_distance}
 
+        if total_beams == 2:
+            print("Unique vectors Seen: {}".format(unique_vectors_seen))
+            print("Seen vectors: {}".format(seen))
+            print("Unseen vectors: {}".format(unseen))
+
     return final_data
 
 def compute_reach_set_details(total_lines, max_distance, steering_angle, new_accuracy):

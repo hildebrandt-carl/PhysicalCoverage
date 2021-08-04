@@ -1,13 +1,15 @@
-import os
 import gym
 import argparse
 import highway_env
 
 import numpy as np
+from tqdm import tqdm
 from stable_baselines import DQN
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_name',             type=str,   default="output",       help="The save name of the run")
+parser.add_argument('--model_name', type=str, default="output", help="The save name of the run")
+parser.add_argument('--episodes', type=int, default=1, help="The number of episodes you want to run")
+parser.add_argument('--render', action='store_true')
 args = parser.parse_args()
 
 # Create the environment
@@ -30,9 +32,9 @@ model.load('output/dqn_models/models/' + str(args.model_name))
 
 # Init a crash counter
 crash_counter = []
-total_runs = 2
+total_runs = args.episodes
 
-for _ in range(total_runs):
+for e_count in tqdm(range(total_runs), desc="Episode"): 
 
     # Run the algorithm
     done = False
@@ -42,8 +44,9 @@ for _ in range(total_runs):
         action, _states = model.predict(obs)
         # Get reward
         obs, reward, done, info = env.step(action)
-        # Render
-        env.render()
+        if args.render:
+            # Render
+            env.render()
 
     if info["crashed"] == True:
         crash_counter.append(1)

@@ -128,9 +128,28 @@ for key in final_data:
     # Convert the unseen data to numpy data:
     unseen_data_np = unseen_data.to_numpy()
 
+    # Load the feasible trajectories
+    fname = '../../PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/FeasibleVectors_b' + str(total_lines) + ".npy"
+    feasible_vectors = np.load(fname)
+    feasible_vector_set = set()
+    for v in feasible_vectors:
+        feasible_vector_set.add(tuple(v))
+
+    # Remove all unseen data that is not part of the feasible data set, as we are not interested in things that are infeasible
+    unseen_feasible_data = []
+    for v in unseen_data_np:
+        if tuple(v) in feasible_vector_set:
+            unseen_feasible_data.append(v)
+
+    unseen_feasible_data_np = np.array(unseen_feasible_data)
+
+    if len(unseen_feasible_data) <= 0:
+        print("No tests required for {} beams".format(total_lines))
+        continue
+
     # Create an image representation
     print("\tCreating an image representation before sorting")
-    plt = create_image_representation("Unordered: Beams " + str(total_lines), unseen_data_np)
+    plt = create_image_representation("Unordered: Beams " + str(total_lines), unseen_feasible_data_np)
 
     # Compute the reach set details so that we can use that to reconstruct the test
     print("\tCompute the reach set details")

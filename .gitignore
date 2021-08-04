@@ -27,3 +27,5 @@ logs/
 *.pkl
 
 .DS_Store
+
+dqn_models/

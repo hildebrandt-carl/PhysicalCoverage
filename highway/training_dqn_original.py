@@ -7,7 +7,7 @@ import numpy as np
 from stable_baselines import DQN
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_name',             type=str,   default="output",       help="The save name of the run")
+parser.add_argument('--model_name', type=str, default="output", help="The save name of the run")
 args = parser.parse_args()
 
 # Make the output directory
@@ -30,7 +30,7 @@ model = DQN('MlpPolicy', env,
             tensorboard_log="output/dqn_models/logs/" + str(args.model_name))
 
 # Train the model
-model.learn(total_timesteps=int(5e4))
+model.learn(total_timesteps=int(2e5))
 model.save('output/dqn_models/models/' + str(args.model_name))
 model.load('output/dqn_models/models/' + str(args.model_name))
 
