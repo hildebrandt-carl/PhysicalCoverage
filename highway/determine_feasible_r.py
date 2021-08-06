@@ -1,22 +1,29 @@
 import os
 import gym
+import sys
 import time
-import math
 import argparse
 import datetime
 import highway_env_v2
 import numpy as np
-import networkx as nx
 import matplotlib.pyplot as plt
 
-from misc.tracker import Tracker
-from misc.reachset import ReachableSet
-from misc.highway_config import RSRConfig
-from misc.car_controller import EgoController
-from misc.traffic_controller import TrafficController
+from math import radians
 
-from misc.highway_config import HighwayKinematics
-from misc.highway_config import HighwayEnvironmentConfig
+# Hot fix to get general accepted
+from pathlib import Path
+current_file = Path(__file__)
+path = str(current_file.absolute())
+base_directory = str(path[:path.rfind("/highway")])
+sys.path.append(base_directory)
+
+from general.reachset import ReachableSet
+from general.highway_config import RSRConfig
+from general.highway_config import HighwayKinematics
+from general.highway_config import HighwayEnvironmentConfig
+
+from controllers.tracker import Tracker
+from controllers.car_controller import EgoController
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--total_lines', type=int, default="3", help="The number of beams")
@@ -33,8 +40,8 @@ steering_angle  = HK.steering_angle
 max_distance    = HK.max_velocity
 
 # Create the output directory if it doesn't exists
-if not os.path.exists('output/feasibility/raw'):
-    os.makedirs('output/feasibility/raw')
+if not os.path.exists('../output/feasibility/raw'):
+    os.makedirs('../output/feasibility/raw')
 
 # Declare how accurate you want it
 total_headings = 20
@@ -47,7 +54,7 @@ max_heading = HK.steering_angle # Degrees
 environment_vehicles = 0
 
 # Save the output file
-text_file = open("output/feasibility/raw/feasible_vectors{}.txt".format(total_lines), "w")
+text_file = open("../output/feasibility/raw/feasible_vectors{}.txt".format(total_lines), "w")
 text_file.write("Name: %s\n" % "Feasible vector generation")
 e = datetime.datetime.now()
 text_file.write("Date: %s/%s/%s\n" % (e.day, e.month, e.year))
@@ -81,7 +88,7 @@ for i in range(total_positions):
         np.set_printoptions(suppress=True)
 
         # Create the controllers
-        hw_config = HighwayEnvironmentConfig(environment_vehicles=0, controlled_vehicle_count=environment_vehicles + 1, ego_position=start_pos, ego_heading=math.radians(current_heading))
+        hw_config = HighwayEnvironmentConfig(environment_vehicles=0, controlled_vehicle_count=environment_vehicles + 1, ego_position=start_pos, ego_heading=radians(current_heading))
         tracker = Tracker(distance_threshold=5, time_threshold=2, debug=True)
         reach = ReachableSet()
 

@@ -93,7 +93,7 @@ for key in results:
     time_taken = np.concatenate([original_time_taken, new_time_taken])
 
     # Define where the newly generated tests start
-    newly_generated_tests = len(o_possible_coverage)
+    newly_generated_tests = original_time_taken[-1]
 
     # Create a line graph
     fig = plt.figure("Possible_Coverage") 

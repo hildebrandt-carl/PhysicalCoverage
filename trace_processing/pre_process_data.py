@@ -1,22 +1,27 @@
 
 import os
 import re
+import sys
 import glob
 import math
 import random 
 import argparse
 
+from pathlib import Path
+current_file = Path(__file__)
+path = str(current_file.absolute())
+base_directory = str(path[:path.rfind("/trace_processing")])
+sys.path.append(base_directory)
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
-from environment_configurations import RSRConfig
-from environment_configurations import HighwayKinematics
 
-from pre_process_functions import getStep
+from general.environment_configurations import RSRConfig
+from general.environment_configurations import HighwayKinematics
+
 from pre_process_functions import processFile
-from pre_process_functions import string_to_vector
-from pre_process_functions import vector_conversion
 from pre_process_functions import countVectorsInFile
 
 
@@ -56,9 +61,9 @@ print("----------------------------------")
 all_files = None
 if args.scenario == "beamng":
     all_files = glob.glob("../../PhysicalCoverageData/beamng/processed/*.txt")
-elif args.scenario == "highway":
-    all_files = glob.glob("../../PhysicalCoverageData/highway/raw/*/*.txt")
-elif args.scenario == "highway_unseen":
+elif args.scenario == "highway_random":
+    all_files = glob.glob("../../PhysicalCoverageData/highway/randomly_generated/raw/*/*.txt")
+elif args.scenario == "highway_generated":
     all_files = glob.glob("../../PhysicalCoverageData/highway/unseen/{}/results/{}_beams/*.txt".format(args.total_samples, new_total_lines))
 else:
     exit()
@@ -75,7 +80,7 @@ if len(file_names) <= 0:
     exit()
 
 # If you don't want all files, select a random portion of the files
-if args.scenario != "highway_unseen":
+if args.scenario != "highway_generated":
     if args.total_samples != -1:
 
         # Only sample this way if using highway
@@ -156,6 +161,7 @@ print("----------------------------------")
 reach_vectors = np.zeros((total_files, vec_per_file, new_total_lines), dtype='float64')
 vehicles_per_trace = np.zeros(total_files, dtype=int)
 time_per_trace = np.zeros(total_files, dtype='float64')
+crash_hashes = np.zeros(total_files, dtype='float64')
 
 # For each file
 file_count = 0
@@ -165,12 +171,13 @@ for i in tqdm(range(total_files)):
 
     # Process the file
     f = open(file_name, "r")    
-    vehicle_count, crash, test_vectors, simulation_time = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy)
+    vehicle_count, crash, test_vectors, simulation_time, incident_hash = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy)
     f.close()
 
     reach_vectors[i]        = test_vectors
     vehicles_per_trace[i]   = vehicle_count
     time_per_trace[i]       = simulation_time
+    crash_hashes[i]         = incident_hash
 
 save_name = args.scenario
 save_name += "_s" + str(new_steering_angle) 
@@ -184,10 +191,11 @@ if args.scenario == "highway_unseen":
     total_files = args.total_samples
     
 # Create the output directory if it doesn't exists
-if not os.path.exists('output/{}'.format(total_files)):
-    os.makedirs('output/{}'.format(total_files))
+if not os.path.exists('../output/processed/{}'.format(total_files)):
+    os.makedirs('../output/processed/{}'.format(total_files))
 
 print("Saving data")
-np.save("output/{}/traces_{}".format(total_files, save_name), reach_vectors)
-np.save("output/{}/vehicles_{}".format(total_files, save_name), vehicles_per_trace)
-np.save("output/{}/time_{}".format(total_files, save_name), simulation_time)
+np.save("../output/processed/{}/traces_{}".format(total_files, save_name), reach_vectors)
+np.save("../output/processed/{}/vehicles_{}".format(total_files, save_name), vehicles_per_trace)
+np.save("../output/processed/{}/time_{}".format(total_files, save_name), simulation_time)
+np.save("../output/processed/{}/crash_hash_{}".format(total_files, save_name), crash_hashes)

@@ -102,7 +102,7 @@ def compute_accumulative_coverage(traces, vehicles, print_position, scenario, to
             crash_count += 1
 
             # Check if the crash is unique
-            hash_size = unique_vector_config(scenario, number_of_seconds=1)
+            hash_size = unique_vector_config(scenario, number_of_seconds=0.5)
             crash_hash = crash_hasher(trace, hash_size)
             l = len(unique_crashes_seen_set)
             assert(len(crash_hash) == 1)
@@ -434,7 +434,6 @@ print("----------------------------------")
 manager = multiprocessing.Manager()
 unseen_return_dict = manager.dict()
 
-print(len(new_data))
 # Create a pool with x processes
 total_processors = int(args.cores)
 pool =  multiprocessing.Pool(total_processors)

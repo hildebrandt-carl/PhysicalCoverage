@@ -1,23 +1,27 @@
 
 import os
 import re
+import sys
 import glob
 import math
 import random 
 import argparse
 
+from pathlib import Path
+current_file = Path(__file__)
+path = str(current_file.absolute())
+base_directory = str(path[:path.rfind("/trace_processing")])
+sys.path.append(base_directory)
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
-from environment_configurations import RSRConfig
-from environment_configurations import HighwayKinematics
 
+from general.crash_oracle import hash_crash
 
-def string_to_vector(vector_string):
-    vector_str = vector_string[vector_string.find(": ")+3:-2]
-    vector = np.fromstring(vector_str, dtype=float, sep=', ')
-    return vector
+from general.environment_configurations import RSRConfig
+from general.environment_configurations import HighwayKinematics
 
 def vector_conversion(vector, steering_angle, max_distance, total_lines, original_total_lines):
 
@@ -64,15 +68,6 @@ def getStep(vector, accuracy):
     converted_vector[converted_vector <= 0] = accuracy
     return converted_vector
 
-def countVectorsInFile(f):
-    vector_count = 0
-    crash = False
-    for line in f: 
-        if "Vector: " in line:
-            vector_count += 1
-        if "Crash: True" in line:
-            crash = True
-    return vector_count, crash
 
 def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, new_accuracy):
     test_vectors    = np.full((total_vectors, vector_size), np.inf, dtype='float64')
@@ -80,6 +75,12 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
     simulation_time = ""
     vehicle_count   = -1
     current_vector  = 0
+    incident_hash = None
+
+    crash_incident_angle = None
+    crash_ego_magnitude = None
+    crash_veh_magnitude = None
+
     for line in f: 
         # Get the number of external vehicles
         if "External Vehicles: " in line:
@@ -100,12 +101,27 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
                 test_vectors[current_vector] = np.full(test_vectors.shape[1], np.nan, dtype='float64')
                 current_vector += 1
         if "Total Simulated Time:" in line:
-            simulation_time = line[line.find(": ")+3:]
+            simulation_time = line[line.find(": ")+2:]
+
+        # Get the crash details
+        if "Ego velocity magnitude: " in line:
+            crash_ego_magnitude =  float(line[line.find(": ")+2:])
+        if "Incident vehicle velocity magnitude: " in line:
+            crash_veh_magnitude = float(line[line.find(": ")+2:])
+        if "Angle of incident: " in line:
+            crash_incident_angle = float(line[line.find(": ")+2:])
+
+    # If there was a crash compute the incident hash
+    if crash:
+        assert(crash_ego_magnitude is not None)
+        assert(crash_veh_magnitude is not None)
+        assert(crash_incident_angle is not None)
+        incident_hash = hash_crash(crash_ego_magnitude, crash_veh_magnitude, crash_incident_angle)
 
     # Convert the simulated time to a float            
     simulation_time = float(simulation_time)
 
-    return vehicle_count, crash, test_vectors, simulation_time
+    return vehicle_count, crash, test_vectors, simulation_time, incident_hash
 
 def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, new_accuracy):
     test_vectors    = []

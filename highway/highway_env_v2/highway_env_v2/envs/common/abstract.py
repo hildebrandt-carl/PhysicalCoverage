@@ -194,10 +194,26 @@ class AbstractEnv(gym.Env):
         reward = self._reward(action)
         terminal = self._is_terminal()
 
+        # Check if the incident is none:
+        if self.vehicle.incident_vehicle_kinematic_history is not None:
+            positions = self.vehicle.incident_vehicle_kinematic_history["position"]
+            ego_positions = self.vehicle.kinematic_history["position"]
+            velocities = self.vehicle.incident_vehicle_kinematic_history["velocity"]
+            self.vehicle.incident_vehicle_kinematic_history["position"] = []
+            self.vehicle.incident_vehicle_kinematic_history["velocity"] = []
+            for p, e in reversed(list(zip(positions, ego_positions))):
+                print(e)
+                norm_position = list(np.array(p) - np.array(e))
+                self.vehicle.incident_vehicle_kinematic_history["position"].append(norm_position)
+            for v in reversed(velocities):
+                self.vehicle.incident_vehicle_kinematic_history["velocity"].append(v)
+
         info = {
             "speed": self.vehicle.speed,
             "crashed": self.vehicle.crashed,
             "action": action,
+            "kinematic_history": self.vehicle.kinematic_history,
+            "incident_vehicle_kinematic_history": self.vehicle.incident_vehicle_kinematic_history,
         }
         try:
             info["cost"] = self._cost(action)

@@ -28,4 +28,4 @@ logs/
 
 .DS_Store
 
-dqn_models/
+misc/

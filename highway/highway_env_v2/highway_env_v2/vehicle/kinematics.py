@@ -3,6 +3,7 @@ import numpy as np
 import random
 import pandas as pd
 from collections import deque
+from copy import copy
 
 from highway_env_v2 import utils
 from highway_env_v2.road.lane import AbstractLane
@@ -51,6 +52,9 @@ class Vehicle(object):
         self.log = []
         self.history = deque(maxlen=30)
         self.color_id = random.randint(0,9)
+
+        self.kinematic_history                  = {"velocity": [[0.0],[0,0],[0.0],[0,0]], "position": [[0,0],[0,0],[0.0],[0,0]]}
+        self.incident_vehicle_kinematic_history = None
 
     @classmethod
     def make_on_lane(cls, road: Road, lane_index: LaneIndex, longitudinal: float, speed: float = 0) -> "Vehicle":
@@ -137,6 +141,13 @@ class Vehicle(object):
         self.position += v * dt
         self.heading += self.speed * np.sin(beta) / (self.LENGTH / 2) * dt
         self.speed += self.action['acceleration'] * dt
+
+        if not self.crashed:
+            self.kinematic_history["position"].append(copy(self.position))
+            self.kinematic_history["velocity"].append(self.velocity)
+            self.kinematic_history["position"] = self.kinematic_history["position"][1:]
+            self.kinematic_history["velocity"] = self.kinematic_history["velocity"][1:]
+
         self.on_state_update()
 
     def clip_actions(self) -> None:
@@ -187,6 +198,7 @@ class Vehicle(object):
             if self._is_colliding(other):
                 self.speed = other.speed = min([self.speed, other.speed], key=abs)
                 self.crashed = other.crashed = True
+                self.incident_vehicle_kinematic_history = other.kinematic_history
         elif isinstance(other, Obstacle):
             if not self.COLLISIONS_ENABLED:
                 return

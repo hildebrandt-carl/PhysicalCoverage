@@ -230,3 +230,57 @@ $ python3 unseen_accumulate_coverage_computation.py --total_samples $total_tests
 $ rm -r PhysicalCoverage/coverage_analysis/tmp
 $ rm -r PhysicalCoverage/coverage_analysis/combined_data 
 ```
+
+
+
+
+
+# New
+
+
+
+
+
+
+Generated random tests
+```
+$ cd PhysicalCoverage/highway
+$ ./scripts/run_random_scenarios.sh
+$ cd PhysicalCoverage
+$ cd ..
+$ mkdir -p PhysicalCoverageData/highway/randomly_generated/raw
+$ mv PhysicalCoverage/output/run_random_scenarios/* PhysicalCoverageData/highway/randomly_generated/raw
+$ rm -r PhysicalCoverage/output/run_random_scenarios
+```
+
+Compute feasibility
+```
+$ cd PhysicalCoverage/highway
+$ ./scripts/compute_feasibility.sh
+$ cd PhysicalCoverage
+$ cd ..
+$ mkdir -p PhysicalCoverageData/highway/feasibility
+$ mv PhysicalCoverage/output/feasibility/* PhysicalCoverageData/highway/feasibility/
+$ rm -r PhysicalCoverage/output/feasibility/
+```
+
+Define the total number of tests you want
+```
+total_tests=1000
+```
+
+Next we need to preprocess both the feasibility and the randomly generated tests
+```bash
+$ cd PhysicalCoverage/trace_processing 
+$ ./scripts/preprocess_highway_random.sh $total_tests
+
+
+$ cd PhysicalCoverage
+$ cd ..
+$ mkdir -p PhysicalCoverageData/highway/randomly_generated/processed
+$ mv PhysicalCoverage/output/processed/$total_tests PhysicalCoverageData/highway/randomly_generated/processed/$total_tests
+
+
+$ rm -r PhysicalCoverage/output
+
+```

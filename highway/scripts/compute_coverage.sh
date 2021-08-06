@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 12 different vehicle counts
+# 10 different vehicle counts
 vehicle_count=(1 2 3 4 5 6 7 8 9 10)
 
 total_tests=5
