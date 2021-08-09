@@ -64,7 +64,7 @@ if args.scenario == "beamng":
 elif args.scenario == "highway_random":
     all_files = glob.glob("../../PhysicalCoverageData/highway/randomly_generated/raw/*/*.txt")
 elif args.scenario == "highway_generated":
-    all_files = glob.glob("../../PhysicalCoverageData/highway/unseen/{}/results/{}_beams/*.txt".format(args.total_samples, new_total_lines))
+    all_files = glob.glob("../../PhysicalCoverageData/highway/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
 else:
     exit()
 
@@ -190,12 +190,25 @@ save_name += ".npy"
 if args.scenario == "highway_unseen":
     total_files = args.total_samples
     
+save_path = ""
+if args.scenario == "beamng":
+    print("todo")
+    exit()
+elif args.scenario == "highway_random":
+    print("check if this is working")
+    save_path = "../output/processed/{}".format(args.total_samples)
+elif args.scenario == "highway_generated":
+    save_path = "../output/processed/tests_single/processed/{}".format(args.total_samples)
+else:
+    print("Error")
+    exit()
+
 # Create the output directory if it doesn't exists
-if not os.path.exists('../output/processed/{}'.format(total_files)):
-    os.makedirs('../output/processed/{}'.format(total_files))
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
 
 print("Saving data")
-np.save("../output/processed/{}/traces_{}".format(total_files, save_name), reach_vectors)
-np.save("../output/processed/{}/vehicles_{}".format(total_files, save_name), vehicles_per_trace)
-np.save("../output/processed/{}/time_{}".format(total_files, save_name), simulation_time)
-np.save("../output/processed/{}/crash_hash_{}".format(total_files, save_name), crash_hashes)
+np.save(save_path + '/traces_{}'.format(save_name), reach_vectors)
+np.save(save_path + '/vehicles_{}'.format(save_name), vehicles_per_trace)
+np.save(save_path + '/time_{}'.format(save_name), time_per_trace)
+np.save(save_path + '/crash_hash_{}'.format(save_name), crash_hashes)

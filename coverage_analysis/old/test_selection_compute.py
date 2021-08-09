@@ -6,10 +6,26 @@ import multiprocessing
 import numpy as np
 
 from tqdm import tqdm
-from test_selection_config import plot_config, unique_vector_config, compute_crash_hash
 
-from environment_configurations import RSRConfig
-from environment_configurations import HighwayKinematics
+from general.environment_configurations import RSRConfig
+from general.environment_configurations import HighwayKinematics
+
+# Use the tests_per_test_suite
+def plot_config(scenario):
+    if scenario == "beamng":
+        total_random_test_suites = 1000
+        test_suite_size = [20, 50, 100]
+        total_greedy_test_suites = 100
+        greedy_sample_sizes = [2, 3, 4, 5, 10]
+    elif scenario == "highway":
+        total_random_test_suites = 1000
+        test_suite_size_percentage = [0.01, 0.025, 0.05]
+        total_greedy_test_suites = 100
+        greedy_sample_sizes = [2, 3, 4, 5, 10]
+    else:
+        exit()
+
+    return total_random_test_suites, test_suite_size_percentage, total_greedy_test_suites, greedy_sample_sizes
 
 
 def random_selection(number_of_tests):
@@ -57,6 +73,7 @@ def random_selection(number_of_tests):
         
     # Return the data
     return ["random", number_of_tests, 0, coverage, number_of_crashes]
+
 
 def greedy_selection_best(number_of_tests, greedy_sample_size):
     global traces

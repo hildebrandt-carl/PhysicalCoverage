@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 import copy
 import argparse
@@ -6,10 +7,16 @@ import argparse
 import numpy as np
 import pandas as pd
 
+from pathlib import Path
+current_file = Path(__file__)
+path = str(current_file.absolute())
+base_directory = str(path[:path.rfind("/trace_processing")])
+sys.path.append(base_directory)
+
 from tqdm import tqdm
 from tabulate import tabulate
-from environment_configurations import RSRConfig
-from environment_configurations import HighwayKinematics
+from general.environment_configurations import RSRConfig
+from general.environment_configurations import HighwayKinematics
 
 from pre_process_functions import processFileFeasibility
 
@@ -129,10 +136,10 @@ for file_name in file_names:
     table_percentage.append(per)
     table_beam.append(new_total_lines)
 
-    if not os.path.exists('output/processed'):
-        os.makedirs('output/processed')
+    if not os.path.exists('../output/processed/feasibility'):
+        os.makedirs('../output/processed/feasibility')
 
-    save_location = "output/processed/FeasibleVectors_b{}.npy".format(new_total_lines)
+    save_location = "../output/processed/feasibility/FeasibleVectors_b{}.npy".format(new_total_lines)
     print("Saving to: {}".format(save_location))
     print("\n\n")
     np.save(save_location, feasible_vectors)

@@ -118,8 +118,11 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
         assert(crash_incident_angle is not None)
         incident_hash = hash_crash(crash_ego_magnitude, crash_veh_magnitude, crash_incident_angle)
 
-    # Convert the simulated time to a float            
-    simulation_time = float(simulation_time)
+    # Convert the simulated time to a float
+    try:      
+        simulation_time = float(simulation_time)
+    except:
+        print("\n\n\n\n" + str(f) + "\n\n\n\n\n" + "\n\n\n\n\n" + str(simulation_time) + "\n\n\n\n\n")
 
     return vehicle_count, crash, test_vectors, simulation_time, incident_hash
 

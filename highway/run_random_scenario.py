@@ -46,9 +46,6 @@ max_distance    = HK.max_velocity
 obstacle_size = 1
 
 # Create the output directory if it doesn't exists
-if not os.path.exists('../output'):
-    os.makedirs('../output')
-
 if not os.path.exists('../output/run_random_scenarios/{}_external_vehicles'.format(args.environment_vehicles)):
     os.makedirs('../output/run_random_scenarios/{}_external_vehicles'.format(args.environment_vehicles))
 

@@ -273,14 +273,35 @@ Next we need to preprocess both the feasibility and the randomly generated tests
 ```bash
 $ cd PhysicalCoverage/trace_processing 
 $ ./scripts/preprocess_highway_random.sh $total_tests
+$ ./scripts/preprocess_feasibility.sh
+$ mkdir -p PhysicalCoverageData/highway/randomly_generated/processed
+$ mkdir -p PhysicalCoverageData/highway/feasibility/processed
+$ mv PhysicalCoverage/output/processed/$total_tests PhysicalCoverageData/highway/randomly_generated/processed/$total_tests
+$ mv PhysicalCoverage/output/processed/feasibility/* PhysicalCoverageData/highway/feasibility/processed
+$ rm -r PhysicalCoverage/output
+```
 
+Then we need to determine if this metric is useful. To do that we can plot the crashes vs the coverage. To do that use:
+```
+python3 view_crash_data.py --scenario highway --number_of_tests 1000
+python3 coverage_vs_crashes.py --total_samples 1000 --scenario highway --cores 100
+```
 
+Then we need to determine if this metric is useful. To do that we can plot the crashes vs the coverage. To do that use:
+```
+python3 view_crash_data.py --scenario highway --number_of_tests 1000
+python3 coverage_vs_crashes.py --total_samples 1000 --scenario highway --cores 100
+```
+
+We can run the new tests using:
+```
 $ cd PhysicalCoverage
 $ cd ..
-$ mkdir -p PhysicalCoverageData/highway/randomly_generated/processed
-$ mv PhysicalCoverage/output/processed/$total_tests PhysicalCoverageData/highway/randomly_generated/processed/$total_tests
+$ mv  PhysicalCoverage/highway/output/$total_tests/* PhysicalCoverageData/highway/unseen/$total_tests/
+$ rm -r PhysicalCoverage/highway/output
+```
 
-
-$ rm -r PhysicalCoverage/output
-
+Finally we can do test selection using:
+```
+python3 test_selection.py --scenario highway --cores 126 --beam_count 5 --total_samples 1000
 ```

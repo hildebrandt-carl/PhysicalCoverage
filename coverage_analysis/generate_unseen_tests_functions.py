@@ -1,9 +1,16 @@
 import os
+import sys
 import glob
 import copy
 import math
 import time
 import pickle
+
+from pathlib import Path
+current_file = Path(__file__)
+path = str(current_file.absolute())
+base_directory = str(path[:path.rfind("/coverage_analysis")])
+sys.path.append(base_directory)
 
 import numpy as np
 import pandas as pd
@@ -14,7 +21,7 @@ import matplotlib.gridspec as grid_spec
 from tqdm import tqdm
 from celluloid import Camera
 from datetime import datetime
-from reachset import ReachableSet
+from general.reachset import ReachableSet
 from pandas.plotting import parallel_coordinates
 from shapely.geometry import Polygon, LineString, Point
 
@@ -108,9 +115,9 @@ def compute_coverage(load_name, return_dict, return_key, base_path, new_max_dist
     return_dict[return_key] = [accumulative_graph_coverage, acuumulative_graph_vehicle_count, total_beams, unique_vectors_seen]
     return True
 
-def get_trace_files(base_path, scenario, load_name):
+def get_trace_files(base_path):
    
-    trace_file_names = glob.glob(base_path + "traces_" + scenario + load_name)
+    trace_file_names = glob.glob(base_path + "traces_*")
 
     file_names = []
     for f in trace_file_names:
@@ -204,11 +211,6 @@ def compute_unseen_vectors(return_dict, maximum_unseen_vectors, new_max_distance
                            "max_distance": new_max_distance,
                            "steering_angle": new_max_distance}
 
-        if total_beams == 2:
-            print("Unique vectors Seen: {}".format(unique_vectors_seen))
-            print("Seen vectors: {}".format(seen))
-            print("Unseen vectors: {}".format(unseen))
-
     return final_data
 
 def compute_reach_set_details(total_lines, max_distance, steering_angle, new_accuracy):
@@ -300,15 +302,16 @@ def save_unseen_data_to_file(data, distance_tracker, segmented_lines, new_accura
     # Start the final points with the init data
     final_points.append(init_position)
 
-    if not os.path.exists('output/{}/tests/{}_beams'.format(total_samples, beams)):
-        os.makedirs('output/{}/tests/{}_beams'.format(total_samples, beams))
+    if not os.path.exists('../output/generated_tests/tests_merged/{}/{}_beams'.format(total_samples, beams)):
+        os.makedirs('../output/generated_tests/tests_merged/{}/{}_beams'.format(total_samples, beams))
 
     for i in range(len(data)):
         row = data[i]
 
         # Save the data
         if ((distance_tracker[i] > 5) and (vectors_per_test > min_vectors_per_test)) or (vectors_per_test >= max_vectors_per_test):
-            np.save("output/{}/tests/{}_beams/test{}.npy".format(total_samples, beams, counter), final_points)
+            np.save("../output/generated_tests/tests_merged/{}/{}_beams/test{}_points.npy".format(total_samples, beams, counter), final_points)
+            np.save("../output/generated_tests/tests_merged/{}/{}_beams/test{}_index.npy".format(total_samples, beams, counter), final_indices)
             final_points = []
             # Start the final points with the init data
             final_points.append(init_position)
@@ -334,8 +337,8 @@ def save_unseen_data_to_file(data, distance_tracker, segmented_lines, new_accura
         vectors_per_test += 1
 
     # Save the final test
-    np.save("output/{}/tests/{}_beams/test{}_points.npy".format(total_samples, beams, counter), final_points)
-    np.save("output/{}/tests/{}_beams/test{}_index.npy".format(total_samples, beams, counter), final_indices)
+    np.save("../output/generated_tests/tests_merged/{}/{}_beams/test{}_points.npy".format(total_samples, beams, counter), final_points)
+    np.save("../output/generated_tests/tests_merged/{}/{}_beams/test{}_index.npy".format(total_samples, beams, counter), final_indices)
 
     return counter + 1
 
@@ -361,8 +364,8 @@ def save_unseen_data_to_file_single(data, segmented_lines, new_accuracy, total_s
     final_points.append(init_position)
     final_indices.append(np.full(beams, index * new_accuracy))
 
-    if not os.path.exists('output/{}/tests_single/{}_beams'.format(total_samples, beams)):
-        os.makedirs('output/{}/tests_single/{}_beams'.format(total_samples, beams))
+    if not os.path.exists('../output/generated_tests/tests_single/{}/{}_beams'.format(total_samples, beams)):
+        os.makedirs('../output/generated_tests/tests_single/{}/{}_beams'.format(total_samples, beams))
 
     for i in range(len(data)):
         row = data[i]
@@ -381,8 +384,8 @@ def save_unseen_data_to_file_single(data, segmented_lines, new_accuracy, total_s
 
         final_indices.append(row)
         final_points.append(physical_row)
-        np.save("output/{}/tests_single/{}_beams/test{}_points.npy".format(total_samples, beams, counter), final_points)
-        np.save("output/{}/tests_single/{}_beams/test{}_index.npy".format(total_samples, beams, counter), final_indices)
+        np.save("../output/generated_tests/tests_single/{}/{}_beams/test{}_points.npy".format(total_samples, beams, counter), final_points)
+        np.save("../output/generated_tests/tests_single/{}/{}_beams/test{}_index.npy".format(total_samples, beams, counter), final_indices)
         final_points = []
         # Start the final points with the init data
         final_points.append(init_position)

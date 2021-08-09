@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # 12 different vehicle counts
-vehicle_count=(1 2 3 4 5 6 7 8 9 10)
+vehicle_count=(10)
 
 # Run it 
-for value in {1..1000}
+for value in {1..20}
 do
     for tot_vehicle in "${vehicle_count[@]}"
     do

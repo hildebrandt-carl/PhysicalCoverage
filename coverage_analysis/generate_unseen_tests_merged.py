@@ -1,7 +1,14 @@
+import sys
 import math
 import random
 import argparse
 import multiprocessing
+
+from pathlib import Path
+current_file = Path(__file__)
+path = str(current_file.absolute())
+base_directory = str(path[:path.rfind("/coverage_analysis")])
+sys.path.append(base_directory)
 
 import numpy as np
 import pandas as pd
@@ -14,8 +21,8 @@ from generate_unseen_tests_functions import save_unseen_data_to_file
 from generate_unseen_tests_functions import compute_reach_set_details
 from generate_unseen_tests_functions import create_image_representation
 
-from environment_configurations import RSRConfig
-from environment_configurations import HighwayKinematics
+from general.environment_configurations import RSRConfig
+from general.environment_configurations import HighwayKinematics
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--total_samples',          type=int, default=-1,       help="-1 all samples, otherwise randomly selected x samples")
@@ -47,16 +54,8 @@ print("----------------------------------")
 print("-----------Loading Data-----------")
 print("----------------------------------")
 
-load_name = ""
-load_name += "_s" + str(new_steering_angle) 
-load_name += "_b" + str(new_total_lines) 
-load_name += "_d" + str(new_max_distance) 
-load_name += "_a" + str(new_accuracy)
-load_name += "_t" + str("*")
-load_name += ".npy"
-
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/processed/' + str(args.total_samples) + "/"
-file_names = get_trace_files(base_path, args.scenario, load_name)
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/randomly_generated/processed/' + str(args.total_samples) + "/"
+file_names = get_trace_files(base_path)
 
 print()
 print("Files: " + str(file_names))

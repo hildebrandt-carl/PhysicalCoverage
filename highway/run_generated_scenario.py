@@ -1,9 +1,11 @@
 import os
+import sys
 import gym
 import time
 import argparse
 import datetime
 import highway_env_v2
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -13,6 +15,8 @@ current_file = Path(__file__)
 path = str(current_file.absolute())
 base_directory = str(path[:path.rfind("/highway")])
 sys.path.append(base_directory)
+
+from math import pi, atan2, degrees
 
 from general.reachset import ReachableSet
 from general.highway_config import RSRConfig
@@ -32,7 +36,7 @@ parser.add_argument('--no_plot',        action='store_true')
 args = parser.parse_args()
 
 # Get the full file path
-test_path = "../../PhysicalCoverageData/highway/unseen/{}/tests_single/{}_beams/{}.npy".format(args.total_samples, args.total_beams, args.test_name)
+test_path = "../../PhysicalCoverageData/highway/generated_tests/tests_single/{}/{}_beams/{}.npy".format(args.total_samples, args.total_beams, args.test_name)
 index_path = test_path[:test_path.rfind("_")] + "_index.npy"
 
 # Figure out how many beam this test was generated using
@@ -59,14 +63,15 @@ obstacle_size = 1
 # Decalare how many traffic vehicles there are
 environment_vehicles = total_lines
 
-if not os.path.exists('output/{}/results/{}_beams'.format(args.total_samples, beams)):
-    os.makedirs('output/{}/results/{}_beams'.format(args.total_samples, beams))
+# Create the output directory if it doesn't exists
+if not os.path.exists('../output/run_generated_scenarios/{}/{}_external_vehicles'.format(args.total_samples, environment_vehicles)):
+    os.makedirs('../output/run_generated_scenarios/{}/{}_external_vehicles'.format(args.total_samples, environment_vehicles))
 
 # Create the save name
 save_name = args.test_name + "_" + str(datetime.datetime.now().time())
 
 # Save the output file
-text_file = open('output/{}/results/{}_beams/{}.txt'.format(args.total_samples, beams, save_name), "w")
+text_file = open("../output/run_generated_scenarios/{}/{}_external_vehicles/{}.txt".format(args.total_samples, environment_vehicles, save_name), "w")
 text_file.write("Name: %s\n" % args.test_name)
 e = datetime.datetime.now()
 text_file.write("Date: %s/%s/%s\n" % (e.day, e.month, e.year))
@@ -97,16 +102,10 @@ action = car_controller.default_action()
 # Create the traffic controller
 traffic = TrafficController(env.controlled_vehicles[1:], test_path, index_path)
 
-# # Get the roadway - used when calculating the edge of the road
-# lanes = env.road.network.graph['0']['1']
-# lane_width = np.array([0, lanes[0].width/2.0])
-
 # Main loop
 done = False
-first = True
 
 # Keep track of the previous observation incase of a crash
-prev_obs = None
 obs = None
 
 # Init timing variables
@@ -118,10 +117,6 @@ while not done:
 
     # Increment time
     simulated_time_counter += 1
-
-    # Save the previous observation
-    if obs is not None:
-        prev_obs = copy(obs)
 
     # Step the environment
     obs, reward, done, info = env.step(action)
@@ -152,11 +147,6 @@ while not done:
     # Track the time for this operation
     op_start_time = datetime.datetime.now()
 
-    # # Convert the lane positions to be relative to the ego_vehicle
-    # ego_position = env.controlled_vehicles[0].position
-    # upperlane = [lanes[0].start-lane_width, lanes[0].end-lane_width] - ego_position
-    # lowerlane = [lanes[-1].start+lane_width, lanes[-1].end+lane_width] - ego_position
-    # lane_positions = [upperlane, lowerlane]
     lane_positions = None
 
     # Get the reach set simulation
@@ -235,17 +225,38 @@ while not done:
 
     simulated_time = np.round(simulated_time_period * simulated_time_counter, 4)
 
-    if info["crashed"]:
-        print("Crashed!!!!!!!!")
-        print(prev_obs)
-
     text_file.write("Vector: " + str(r_vector) + "\n")
     text_file.write("Crash: " + str(info["crashed"]) + "\n")
     text_file.write("Operation Time: " + str(operation_time) + "\n")
     text_file.write("Total Wall Time: " + str(elapsed_time) + "\n")
     text_file.write("Total Simulated Time: " + str(simulated_time) + "\n")
     text_file.write("\n")
+    
+    # If it crashed determine under which conditions it crashed
+    if info["crashed"]:
 
+        try:
+            # Get the velocity of the two vehicles (we want the velocities just before we crashed)
+            ego_vx, ego_vy = info["kinematic_history"]["velocity"][1]
+            veh_vx, veh_vy = info["incident_vehicle_kinematic_history"]["velocity"][1]
 
+            # Get magnitude of both velocity vectors
+            ego_mag = np.linalg.norm([ego_vx, ego_vy])
+            veh_mag = np.linalg.norm([veh_vx, veh_vy])
 
+            # Get the angle of incidence
+            angle_of_incidence = degrees(atan2(veh_vy, veh_vx) - atan2(ego_vy, ego_vx))
+        except ValueError:
+            ego_mag = 0
+            veh_mag = 0 
+            angle_of_incidence = 0
+
+        print("Ego velocity magnitude: {}".format(ego_mag))
+        print("Incident vehicle velocity magnitude: {}".format(veh_mag))
+        print("Angle of incident: {}".format(angle_of_incidence))
+        text_file.write("Ego velocity magnitude: {}\n".format(ego_mag))
+        text_file.write("Incident vehicle velocity magnitude: {}\n".format(veh_mag))
+        text_file.write("Angle of incident: {}\n".format(angle_of_incidence))
+
+env.close()
 text_file.close()

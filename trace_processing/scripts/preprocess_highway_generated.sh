@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 # Each of the beam counts
 beamcount=(1 2 3 4 5 10)
 

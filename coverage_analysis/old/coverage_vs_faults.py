@@ -107,7 +107,8 @@ def compute_coverage_per_file(file_names, base_path, test_suite_sizes, test_suit
         for suite_size in test_suite_sizes:
 
             # Randomly pick tests of the correct sample size
-            indices = np.random.choice(len(traces), suite_size, replace=False) 
+            local_state = np.random.RandomState()
+            indices = local_state.choice(len(traces), suite_size, replace=False) 
 
             # Compute the coverage for that test suit
             results = compute_coverage(indices, scenario, feasible_vectors_set)
