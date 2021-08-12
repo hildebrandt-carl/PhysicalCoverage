@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# 12 different vehicle counts
-vehicle_count=(10)
+# 10 different vehicle counts
+vehicle_count=(1 2 3 4 5 6 7 8 9 10)
 
 # Run it 
-for value in {1..20}
+for value in {1..100}
 do
     for tot_vehicle in "${vehicle_count[@]}"
     do
@@ -23,5 +23,6 @@ do
 
         # Run the script
         python3 run_random_scenario.py --no_plot --environment_vehicles $tot_vehicle --save_name $save_name 
+        sleep 0.01
     done
 done

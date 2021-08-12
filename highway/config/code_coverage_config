@@ -1,0 +1,4 @@
+[run]
+omit = '/usr/lib/*,*/.local/*'
+parallel = True
+data_file = .coverage_tests

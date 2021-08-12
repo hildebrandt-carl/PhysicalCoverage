@@ -248,8 +248,8 @@ $ cd PhysicalCoverage/highway
 $ ./scripts/run_random_scenarios.sh
 $ cd PhysicalCoverage
 $ cd ..
-$ mkdir -p PhysicalCoverageData/highway/randomly_generated/raw
-$ mv PhysicalCoverage/output/run_random_scenarios/* PhysicalCoverageData/highway/randomly_generated/raw
+$ mkdir -p PhysicalCoverageData/highway/random_tests/raw
+$ mv PhysicalCoverage/output/run_random_scenarios/* PhysicalCoverageData/highway/random_tests/raw
 $ rm -r PhysicalCoverage/output/run_random_scenarios
 ```
 
@@ -274,11 +274,17 @@ Next we need to preprocess both the feasibility and the randomly generated tests
 $ cd PhysicalCoverage/trace_processing 
 $ ./scripts/preprocess_highway_random.sh $total_tests
 $ ./scripts/preprocess_feasibility.sh
-$ mkdir -p PhysicalCoverageData/highway/randomly_generated/processed
+$ mkdir -p PhysicalCoverageData/highway/random_tests/processed
 $ mkdir -p PhysicalCoverageData/highway/feasibility/processed
-$ mv PhysicalCoverage/output/processed/$total_tests PhysicalCoverageData/highway/randomly_generated/processed/$total_tests
+$ mv PhysicalCoverage/output/processed/$total_tests PhysicalCoverageData/highway/random_tests/processed/$total_tests
 $ mv PhysicalCoverage/output/processed/feasibility/* PhysicalCoverageData/highway/feasibility/processed
 $ rm -r PhysicalCoverage/output
+```
+
+Looking at the crash data:
+```
+python3 view_crash_data.py --scenario highway --number_of_tests 250000
+python3 view_crash_data.py --scenario highway --number_of_tests 250000 --ordered
 ```
 
 Then we need to determine if this metric is useful. To do that we can plot the crashes vs the coverage. To do that use:
@@ -305,3 +311,16 @@ Finally we can do test selection using:
 ```
 python3 test_selection.py --scenario highway --cores 126 --beam_count 5 --total_samples 1000
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+

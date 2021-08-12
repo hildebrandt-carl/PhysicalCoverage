@@ -10,7 +10,7 @@ from copy import copy
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/coverage_analysis")])
+base_directory = str(path[:path.rfind("/test_selection")])
 sys.path.append(base_directory)
 
 import numpy as np
@@ -21,13 +21,9 @@ from tqdm import tqdm
 from general.environment_configurations import RSRConfig
 from general.environment_configurations import HighwayKinematics
 
-from scipy.optimize import curve_fit
-
-def line_objective(x, a, b, c):
-    return (a * x) + (b * x**2) + c
 
 # Used to generated a random selection of tests
-def random_select(number_of_tests):
+def random_selection(number_of_tests):
     global traces
     global crashes
     global feasible_RSR_set
@@ -65,25 +61,8 @@ def random_select(number_of_tests):
     return [coverage_percentage, crash_percentage]
 
 
-def coverage_computation(index, seen_RSR_set):
-    global traces
-
-    current_RSR = set()
-    # Get the coverage for that trace
-    for v in traces[index]:
-
-        # Make sure that this is a scene (not a nan or inf or -1)
-        if (np.isnan(v).any() == False) and (np.isinf(v).any() == False) and (np.less(v, 0).any() == False):
-            current_RSR.add(tuple(v))
-
-    # Get the new coverage
-    coverage_set = (seen_RSR_set | current_RSR)
-    coverage_percentage = float(len(coverage_set)) / len(feasible_RSR_set)
-
-    return [coverage_set, coverage_percentage, index]
-
 # Used to generated a random selection of tests
-def greedy_select(test_suit_size, selection_type, greedy_sample_size):
+def greedy_selection(number_of_tests, greedy_sample_size, selection_type="Min"):
     global traces
     global crashes
     global feasible_RSR_set
@@ -96,86 +75,68 @@ def greedy_select(test_suit_size, selection_type, greedy_sample_size):
     seen_RSR_set = set()
     seen_crash_set = set()
 
-    # For each of the tests in the test suit
-    for _ in range(test_suit_size):
+    # For each test
+    for _ in range(number_of_tests):
 
         # Randomly select greedy_sample_size traces
         local_state = np.random.RandomState()
-        randomly_selected_indices = local_state.choice(list(available_indices), size=min(greedy_sample_size, len(available_indices)), replace=False)
+        randomly_selected_indices = local_state.choice(list(available_indices), size=greedy_sample_size, replace=False)
 
-        results = []
+        # Holds the final coverage set for each selected index
+        coverage_array = []
+        coverage_RSR_array = []
+
+        # Greedily select the best or worst one
         for index in randomly_selected_indices:
-            r = coverage_computation(index, seen_RSR_set)
-            results.append(r)
 
-        # Turn the results into coverage and index
-        results = np.array(results)
-        results = np.transpose(results)
-        coverage_sets = results[0, :]
-        coverage_percentages = results[1, :]
-        indices = results[2, :]
+            # Holds the current RSR
+            current_RSR = set()
 
-        # Pick the best or the worst coverage
+            # Get the coverage for that trace
+            for v in traces[index]:
+
+                # Make sure that this is a scene (not a nan or inf or -1)
+                if (np.isnan(v).any() == False) and (np.isinf(v).any() == False) and (np.less(v, 0).any() == False):
+                    current_RSR.add(tuple(v))
+
+            # Save the coverage
+            coverage_array.append(len(current_RSR | seen_RSR_set))
+            coverage_RSR_array.append(copy(current_RSR))
+
+        # Find the best or worst coverage
         if selection_type.upper() == "MIN":
-            selected_index = indices[np.argmin(coverage_percentages)]
-            selected_percentage = coverage_percentages[np.argmin(coverage_percentages)]
-            selected_coverage_set = coverage_sets[np.argmin(coverage_percentages)]
+            selected = np.argmin(coverage_array)
         elif selection_type.upper() == "MAX":
-            selected_index = indices[np.argmax(coverage_percentages)]
-            selected_percentage = coverage_percentages[np.argmax(coverage_percentages)]
-            selected_coverage_set = coverage_sets[np.argmax(coverage_percentages)]
+            selected = np.argmax(coverage_array)
 
-        # Remove the index from available indices
-        available_indices.remove(selected_index)
-        seen_RSR_set = selected_coverage_set
+        # Remove the selected index from available processing
+        available_indices.remove(randomly_selected_indices[selected])
 
-        # Check for crashes in this trace
-        crash = crashes[selected_index]
+
+        # Update the coverage
+        seen_RSR_set = seen_RSR_set | coverage_RSR_array[selected]
+
+        # Updated the crashes
+        crash = crashes[randomly_selected_indices[selected]]
         if np.isnan(crash) == False:
             seen_crash_set.add(crash)
-
 
     # Compute the coverage and the crash percentage
     coverage_percentage = float(len(seen_RSR_set)) / len(feasible_RSR_set)
     crash_percentage =  float(len(seen_crash_set)) / len(unique_crashes_set)
+    # print("")
 
     return [coverage_percentage, crash_percentage]
 
 
 # multiple core
-def greedy_selection(cores, test_suite_sizes, selection_type, greedy_sample_size):
+def random_selection_multiple_core(cores, total_test_suits, test_suit_size):
     # Create the pool for parallel processing
     pool =  multiprocessing.Pool(processes=cores)
     # Call our function total_test_suits times
     jobs = []
-    for s in test_suite_sizes:
-        test_suit_size = int(np.round(s, 0))
-        jobs.append(pool.apply_async(greedy_select, args=([test_suit_size, selection_type, greedy_sample_size])))
-    # Get the results
-    results = []
-    for job in tqdm(jobs):
-        results.append(job.get())
-    # Its 8pm the pool is closed
-    pool.close() 
-
-    # Get the results
-    results = np.array(results)
-    results = np.transpose(results)
-    greedy_coverage_percentages = results[0, :]
-    greedy_crash_percentages = results[1, :]
-
-    return greedy_coverage_percentages, greedy_crash_percentages
-
-
-# multiple core
-def random_selection(cores, test_suite_sizes):
-    # Create the pool for parallel processing
-    pool =  multiprocessing.Pool(processes=cores)
-    # Call our function total_test_suits times
-    jobs = []
-    for s in test_suite_sizes:
-        test_suit_size = int(np.round(s, 0))
-        jobs.append(pool.apply_async(random_select, args=([test_suit_size])))
+    for _ in range(total_test_suits):
+        jobs.append(pool.apply_async(random_selection, args=([test_suit_size])))
     # Get the results
     results = []
     for job in tqdm(jobs):
@@ -192,10 +153,33 @@ def random_selection(cores, test_suite_sizes):
     return random_coverage_percentages, random_crash_percentages
 
 
+def greedy_selection_multiple_core(cores, total_test_suits, test_suit_size, greedy_sample_sizes, greedy_type):
+    # Create the pool for parallel processing
+    pool =  multiprocessing.Pool(processes=cores)
+    # Call our function total_test_suits times
+    jobs = []
+    for _ in range(int(np.round(total_test_suits / len(greedy_sample_sizes), 0))):
+        for greedy_size in greedy_sample_sizes:
+            jobs.append(pool.apply_async(greedy_selection, args=([test_suit_size, greedy_size, greedy_type])))
+    # Get the results
+    results = []
+    for job in tqdm(jobs):
+        results.append(job.get())
+    # # Its 8pm the pool is closed
+    pool.close() 
+
+    # Get the results
+    results = np.array(results)
+    results = np.transpose(results)
+    best_coverage_percentages = results[0, :]
+    best_crash_percentages = results[1, :]
+
+    return best_coverage_percentages, best_crash_percentages
+
+
 # Use the tests_per_test_suite
 def determine_test_suit_sizes(total_samples):
-    increment = 0.01
-    test_suit_size_percentage = np.arange(increment, 1.000001, increment)
+    test_suit_size_percentage = np.array([0.01, 0.025, 0.05]) 
     test_suit_sizes = test_suit_size_percentage * total_samples
     return test_suit_sizes
 
@@ -237,7 +221,7 @@ load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/randomly_generated/processed/' + str(args.total_samples) + "/"
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/processed/' + str(args.total_samples) + "/"
 trace_file = glob.glob(base_path + "traces_*_b{}_*".format(args.beam_count))
 crash_file = glob.glob(base_path + "crash_*_b{}_*".format(args.beam_count))
 
@@ -255,7 +239,8 @@ feasible_file = feasible_file[0]
 
 # Get the test suit sizes
 test_suit_sizes = determine_test_suit_sizes(args.total_samples)
-greedy_sample_size = 5
+total_test_suits = 100
+greedy_sample_sizes = [2, 3, 4, 5, 10]
 
 # Load the traces
 global traces
@@ -281,34 +266,54 @@ for crash in crashes:
 plt.figure(1)
 
 # For each of the different beams
-print("Generating random tests")
-random_coverage_percentages, random_crash_percentages = random_selection(args.cores, test_suit_sizes)
-plt.scatter(random_coverage_percentages, random_crash_percentages, c="C0", label="random", s=2)
-popt, _ = curve_fit(line_objective, random_coverage_percentages, random_crash_percentages)
-a, b, c = popt
-x_line = np.arange(min(random_coverage_percentages), max(random_coverage_percentages), 0.01)
-y_line = line_objective(x_line, a, b, c)
-plt.plot(x_line, y_line, '--', color='C0')
+for s in range(len(test_suit_sizes)):
+    # Get the test suit size
+    test_suit_size = int(np.round(test_suit_sizes[s], 0))
 
-print("Generating best case greedy tests")
-best_coverage_percentages, best_crash_percentages = greedy_selection(args.cores, test_suit_sizes, "max", greedy_sample_size)
-plt.scatter(best_coverage_percentages, best_crash_percentages, c="C1", s=2, label="Greedy Best")
-popt, _ = curve_fit(line_objective, best_coverage_percentages, best_crash_percentages)
-a, b, c = popt
-x_line = np.arange(min(best_coverage_percentages), max(best_coverage_percentages), 0.01)
-y_line = line_objective(x_line, a, b, c)
-plt.plot(x_line, y_line, '--', color='C1')
+    # Computing the test suit size
+    print("Computing test suits of size: {}".format(test_suit_size))
 
-print("Generating worst case greedy tests")
-worst_coverage_percentages, worst_crash_percentages = greedy_selection(args.cores, test_suit_sizes, "min", greedy_sample_size)
-plt.scatter(worst_coverage_percentages, worst_crash_percentages, c="C2", s=2, label="Greedy Worst")
-popt, _ = curve_fit(line_objective, worst_coverage_percentages, worst_crash_percentages)
-a, b, c = popt
-x_line = np.arange(min(worst_coverage_percentages), max(worst_coverage_percentages), 0.01)
-y_line = line_objective(x_line, a, b, c)
-plt.plot(x_line, y_line, '--', color='C2')
+    print("Generating random tests")
+    random_coverage_percentages, random_crash_percentages = random_selection_multiple_core(args.cores, total_test_suits, test_suit_size)
+    plt.scatter(random_coverage_percentages, random_crash_percentages, c="C" + str(s), label=str(test_suit_size), s=2)
 
-plt.legend()
+    print("Generating best case greedy tests")
+    best_coverage_percentages, best_crash_percentages = greedy_selection_multiple_core(args.cores, total_test_suits, test_suit_size, greedy_sample_sizes, "max")
+    plt.scatter(best_coverage_percentages, best_crash_percentages, c="C" + str(s), s=2)
+
+    print("Generating worst case greedy tests")
+    worst_coverage_percentages, worst_crash_percentages = greedy_selection_multiple_core(args.cores, total_test_suits, test_suit_size, greedy_sample_sizes, "max")
+    plt.scatter(worst_coverage_percentages, worst_crash_percentages, c="C" + str(s), s=2)
+
+    print("Computing the line of best fit")
+    # Get all the data
+    x = np.concatenate([random_coverage_percentages, best_coverage_percentages, worst_coverage_percentages])
+    y = np.concatenate([random_crash_percentages, best_crash_percentages, worst_crash_percentages])
+
+    # Compute the line of best fit
+    slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
+    x_range = np.arange(np.min(x), np.max(x), 0.01)
+
+    # Generate the label for the regression line
+    lb = str(np.round(slope,2)) +"x+" + str(int(np.round(intercept,0)))
+    if intercept < 0:
+        lb = str(np.round(slope,2)) +"x" + str(int(np.round(intercept,0)))
+
+    # Plot the line of best fit
+    plt.plot(x_range, slope*x_range + intercept, c='C' + str(s), label=lb)
+
+
+
+# reorder the legend
+ax = plt.gca()
+handles, labels = ax.get_legend_handles_labels()
+indices = [3,0,4,1,5,2]
+new_handles = list(np.array(handles)[indices])
+new_labels = list(np.array(labels)[indices])
+
+plt.legend(new_handles, new_labels, markerscale=2, loc="lower center", bbox_to_anchor=(0.5, 1.025), ncol=len(test_suit_sizes), handletextpad=0.1)
+plt.xlim([0, 1])
+plt.ylim([0, 1])
 plt.ylabel("Crashes (%)")
 plt.xlabel("Coverage (%)")
 plt.show()

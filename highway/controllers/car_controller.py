@@ -28,9 +28,10 @@ class EgoController:
     def drive(self, current_obs):
 
         # Init the observations windows 
-        self.car_infront_window = np.zeros(np.shape(current_obs)[0])
-        self.car_left_window = np.zeros(np.shape(current_obs)[0])
-        self.car_right_window = np.zeros(np.shape(current_obs)[0])
+        self.car_car_infront_window = np.zeros(np.shape(current_obs)[0])
+        self.car_infront_window     = np.zeros(np.shape(current_obs)[0])
+        self.car_left_window        = np.zeros(np.shape(current_obs)[0])
+        self.car_right_window       = np.zeros(np.shape(current_obs)[0])
 
         # Get the current lane
         self.current_lane = int(round(current_obs[0][-1]))
@@ -51,9 +52,10 @@ class EgoController:
             self.desired_lane = self.current_lane
 
         # Init variables we want to compute
-        car_infront = False
-        car_left = False
-        car_right = False
+        car_far_infront = False
+        car_infront     = False
+        car_left        = False
+        car_right       = False
     
         # Look through observations
         for i in np.arange(1, np.shape(current_obs)[0]):
@@ -64,29 +66,30 @@ class EgoController:
                 continue
 
             # Compute required information: (24 units is 2 car lengths away)
-            car_infront_check = ((-8 <= current_observation[1] <= 16) and (-1.5 <= current_observation[2] <= 1.5)) or car_infront
-            car_left_check    = ((-8 <= current_observation[1] <= 16) and (-5 <= current_observation[2] <= -1.6)) or car_left
-            car_right_check   = ((-8 <= current_observation[1] <= 16) and (1.6 <= current_observation[2] <= 5)) or car_right
+            car_far_infront_check   = (16 <= current_observation[1] <= 24) and (-1.5 <= current_observation[2] <= 1.5)
+            car_infront_check       = (-8 <= current_observation[1] <= 16) and (-1.5 <= current_observation[2] <= 1.5)
+            car_left_check          = (-8 <= current_observation[1] <= 16) and (-5 <= current_observation[2] <= -1.6)
+            car_right_check         = (-8 <= current_observation[1] <= 16) and (1.6 <= current_observation[2] <= 5)
 
             # Move up the window and save the data
-            self.car_infront_window = np.roll(self.car_infront_window, 1) 
-            self.car_left_window = np.roll(self.car_left_window, 1) 
-            self.car_right_window = np.roll(self.car_right_window, 1) 
+            self.car_car_infront_window = np.roll(self.car_car_infront_window, 1)
+            self.car_infront_window     = np.roll(self.car_infront_window, 1) 
+            self.car_left_window        = np.roll(self.car_left_window, 1) 
+            self.car_right_window       = np.roll(self.car_right_window, 1) 
+
+            self.car_car_infront_window[0] = int(car_far_infront_check)
             self.car_infront_window[0] = int(car_infront_check)
             self.car_left_window[0] = int(car_left_check)
             self.car_right_window[0] = int(car_right_check)
 
-        
-        print(self.car_infront_window)
-        print(self.car_left_window)
-        print(self.car_right_window)
-        # print(self.car_left_window)
-        # print(self.car_right_window)
-
         # Get the latest info
+        car_far_infront = np.any(self.car_car_infront_window)
         car_infront = np.any(self.car_infront_window)
         car_right = np.any(self.car_right_window)
         car_left = np.any(self.car_left_window)
+
+        if car_far_infront:
+            action = action_enum.IDLE.value
 
         if car_infront:
             if self.current_lane == 0:
@@ -142,6 +145,7 @@ class EgoController:
             print("|--Current Heading:\t" + str(ego_heading))
             print("|--Current Lane:\t" + str(self.current_lane))
             print("|--Desired Lane:\t" + str(self.desired_lane))
+            print("|--Car far infront:\t" + str(car_far_infront))
             print("|--Car infront:\t\t" + str(car_infront))
             print("|--Car left:\t\t" + str(car_left))
             print("|--Car right:\t\t" + str(car_right))

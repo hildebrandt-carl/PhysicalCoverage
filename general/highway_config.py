@@ -1,5 +1,5 @@
 class HighwayEnvironmentConfig:
-    def __init__(self, environment_vehicles=20, controlled_vehicle_count=1, ego_position=None, ego_heading=None, duration=20):
+    def __init__(self, environment_vehicles=20, controlled_vehicle_count=1, ego_position=None, ego_heading=None, duration=25):
         self.policy_freq = 4 #[hz]
         self.duration = duration #[s]
         self.env_configuration = {
@@ -18,7 +18,6 @@ class HighwayEnvironmentConfig:
             "lanes_count": 4,
             "vehicles_count": environment_vehicles,
             "duration": self.duration * self.policy_freq,  # [s]
-            "initial_spacing": 1,
             "collision_reward": -1,  # The reward received when colliding with a vehicle.
             "reward_speed_range": [20, 30],  # [m/s] The reward for high speed is mapped linearly from this range to [0, HighwayEnv.HIGH_SPEED_REWARD].
             "simulation_frequency": 15,  # [Hz]
@@ -27,9 +26,9 @@ class HighwayEnvironmentConfig:
             "screen_width": 1200,  # [px]
             "screen_height": 520,  # [px]
             "centering_position": [0.3, 0.5],
-            "scaling": 7,
+            "scaling": 4,
             "controlled_vehicles": controlled_vehicle_count,
-            "ego_spacing": 1,
+            "ego_spacing": 4,
             "initial_lane_id": None,
             "show_trajectories": False,
             "offroad_terminal": False,

@@ -87,11 +87,58 @@ def coverage_on_random_test_suit(suit_size):
 
     return coverage
 
+# Get the coverage on a random test suit 
+def coverage_on_random_test_suit_no_crashes(suit_size):
+    global traces
+    global feasible_RSR_set
+
+    # Randomly generate the indices for this test suit
+    local_state = np.random.RandomState()
+    indices = local_state.choice(len(traces), (suit_size*2)-1, replace=False) 
+
+    # Used to compute the coverage for this trace
+    Unique_RSR = set()
+
+    # Go through each of the indices
+    processed = 0
+    counter = 0
+    while processed < suit_size:
+        index = indices[counter]
+        counter += 1
+        # Get the trace
+        trace = traces[index]
+
+        # If the trace is crashing ignore it
+        if np.isnan(trace).any():
+            continue
+        else:
+            processed += 1
+
+        # Add it to the RSR set
+        for scene in trace:
+            # Get the current scene
+            s = tuple(scene)
+
+
+            # Make sure that this is a scene (not a nan or inf or -1)
+            if (np.isnan(scene).any() == False) and (np.isinf(scene).any() == False) and (np.less(scene, 0).any() == False):
+                Unique_RSR.add(tuple(s))
+
+                # Give a warning if a vector is found that is not feasible
+                if s not in feasible_RSR_set:
+                    print("Infeasible vector found: {}".format(scene))
+
+    # Compute coverage
+    coverage = float(len(Unique_RSR)) / len(feasible_RSR_set)
+
+    return coverage
+
 
 # Determine the test sizes for this plot
 def determine_test_suit_sizes(total_tests):
     # We now need to sample tests of different sizes to create the plot
-    percentage_of_all_tests = np.arange(1,50.0001, 10)
+    percentage_of_all_tests = np.arange(0,50.0001, 5)
+    percentage_of_all_tests[0] += 1
     test_sizes = []
 
     for p in percentage_of_all_tests:
@@ -139,7 +186,7 @@ load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/processed/' + str(args.total_samples) + "/"
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
 trace_file_names = glob.glob(base_path + "traces_*")
 crash_file_names = glob.glob(base_path + "crash_*")
 
@@ -167,7 +214,7 @@ test_suit_sizes = determine_test_suit_sizes(args.total_samples)
 # Create the output figure
 plt.figure(1)
 ax1 = plt.gca()
-ax2 = ax1.twinx()
+# ax2 = ax1.twinx()
 
 # Used to save each of the different coverage metrics so that we can compute the correlation between that and the crash data
 all_coverage_data = []
@@ -185,6 +232,9 @@ for i in range(len(beam_numbers)):
     crash_file = crash_file_names[i]
     feasibility_file = feasible_file_names[i]
     color = plotting_colors[i]
+
+    if beam_number == 10:
+        continue
 
     # Skip if any of the files are blank
     if trace_file == "" or crash_file == "" or feasibility_file == "":
@@ -215,6 +265,7 @@ for i in range(len(beam_numbers)):
 
     # Create the average line
     average_coverage = []
+    average_coverage_no_crashes = []
 
     # Compute the total coverage for tests of different sizes
     total_test_suits = 50
@@ -251,71 +302,99 @@ for i in range(len(beam_numbers)):
         # Plot the data
         ax1.scatter(np.full(len(results), suit_size), results, marker='o', c=color, s=0.5)
 
+            
+
+
+        # Create the pool for parallel processing
+        pool =  multiprocessing.Pool(processes=args.cores)
+
+        # Call our function total_test_suites times
+        jobs = []
+        for _ in range(total_test_suits):
+            jobs.append(pool.apply_async(coverage_on_random_test_suit_no_crashes, args=([suit_size])))
+
+        # Get the results
+        results = []
+        for job in tqdm(jobs):
+            results.append(job.get())
+
+        # Its 8pm the pool is closed
+        pool.close() 
+
+        # Get the average coverage for this test suit size
+        average_coverage_no_crashes.append(np.average(results))
+
+        # Plot the data
+        ax1.scatter(np.full(len(results), suit_size), results, marker='*', c=color, s=0.5)
+
+
     # Save the results for correlation computation later
     all_coverage_data.append(all_results)
 
     # Plot the average test suit coverage
     ax1.plot(test_suit_sizes, average_coverage, c=color, label="RSR{}".format(beam_number))
+    # Plot the average test suit coverage
+    ax1.plot(test_suit_sizes, average_coverage_no_crashes, c=color, linestyle="--")
+
+# print("Computing crash rate")
+# average_crashes = []
+# all_crashes = []
+# # Go through each of the different test suit sizes
+# for suit_size in test_suit_sizes:
+#     print("Processing test suit size: {}".format(suit_size))
+
+#     # Create the pool for parallel processing
+#     pool =  multiprocessing.Pool(processes=args.cores)
+
+#     # Call our function total_test_suites times
+#     jobs = []
+#     for _ in range(total_test_suits):
+#         jobs.append(pool.apply_async(crashes_on_random_test_suit, args=([suit_size])))
+
+#     # Get the results
+#     results = []
+#     for job in tqdm(jobs):
+#         results.append(job.get())
+
+#     # Its 8pm the pool is closed
+#     pool.close() 
+
+#     # Get the average coverage for this test suit size
+#     average_crashes.append(np.average(results))
+
+#     # Save for correlation computation later
+#     all_crashes.append(np.average(results))
+
+#     # Plot the data
+#     ax2.scatter(np.full(len(results), suit_size), results, marker='*', c="tab:red", s=2)
 
 
 
-print("Computing crash rate")
-average_crashes = []
-all_crashes = []
-# Go through each of the different test suit sizes
-for suit_size in test_suit_sizes:
-    print("Processing test suit size: {}".format(suit_size))
+# # Computing the correlation
+# print("Computing the correlation of RSR values to Crashes")
+# for i in range(len(all_coverage_data)):
+#     d = all_coverage_data[i]
+#     coverage_data = np.reshape(d, -1)
+#     crash_data = np.reshape(all_crashes, -1)
 
-    # Create the pool for parallel processing
-    pool =  multiprocessing.Pool(processes=args.cores)
+#     correlation = pearsonr(coverage_data, crash_data)
 
-    # Call our function total_test_suites times
-    jobs = []
-    for _ in range(total_test_suits):
-        jobs.append(pool.apply_async(crashes_on_random_test_suit, args=([suit_size])))
-
-    # Get the results
-    results = []
-    for job in tqdm(jobs):
-        results.append(job.get())
-
-    # Its 8pm the pool is closed
-    pool.close() 
-
-    # Get the average coverage for this test suit size
-    average_crashes.append(np.average(results))
-
-    # Save for correlation computation later
-    all_crashes.append(np.average(results))
-
-    # Plot the data
-    ax2.scatter(np.full(len(results), suit_size), results, marker='*', c="tab:red", s=2)
-
-
-
-# Computing the correlation
-print("Computing the correlation of RSR values to Crashes")
-for i in range(len(all_coverage_data)):
-    d = all_coverage_data[i]
-    coverage_data = np.reshape(d, -1)
-    crash_data = np.reshape(all_crashes, -1)
-
-    print("RSR{} correlation: {}".format(beam_numbers[i], correlation))
+#     print("RSR{} correlation: {}".format(beam_numbers[i], correlation))
 
 
 # Plot the average test suit coverage
-ax2.plot(test_suit_sizes, average_crashes, c="tab:red", label="Crashes", linestyle="--")
+# ax2.plot(test_suit_sizes, average_crashes, c="tab:red", label="Crashes", linestyle="--")
 
 ax1.legend(loc=0)
-ax2.legend(loc=8)
+# ax2.legend(loc=8)
 ax1.set_xlabel("Test suit size")
 ax1.set_ylabel("Feasible Coverage (%)")
-ax2.set_ylabel("Unique Crashes (%)")
+# ax2.set_ylabel("Unique Crashes (%)")
 # Make the axis the same color as the crashes
-ax2.tick_params(axis='y', colors="tab:red")
-ax2.spines["right"].set_edgecolor("tab:red")
+# ax2.tick_params(axis='y', colors="tab:red")
+# ax2.spines["right"].set_edgecolor("tab:red")
 # ax1.grid(True, linestyle='-')
 # ax2.grid(True, linestyle='--')
 ax1.set_ylim([-0.05, 1.05])
-ax2.set_ylim([-0.05, 1.05])
+# ax2.set_ylim([-0.05, 1.05])
 plt.show()

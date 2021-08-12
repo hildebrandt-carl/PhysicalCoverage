@@ -62,7 +62,7 @@ all_files = None
 if args.scenario == "beamng":
     all_files = glob.glob("../../PhysicalCoverageData/beamng/processed/*.txt")
 elif args.scenario == "highway_random":
-    all_files = glob.glob("../../PhysicalCoverageData/highway/randomly_generated/raw/*/*.txt")
+    all_files = glob.glob("../../PhysicalCoverageData/highway/random_tests/raw/*/*.txt")
 elif args.scenario == "highway_generated":
     all_files = glob.glob("../../PhysicalCoverageData/highway/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
 else:
@@ -80,27 +80,23 @@ if len(file_names) <= 0:
     exit()
 
 # If you don't want all files, select a random portion of the files
-if args.scenario != "highway_generated":
-    if args.total_samples != -1:
+if args.scenario == "highway_random": 
+    folders = glob.glob("../../PhysicalCoverageData/highway/random_tests/raw/*")
+    files_per_folder = int(math.ceil(args.total_samples / len(folders)))
 
-        # Only sample this way if using highway
-        if args.scenario == "highway":
-            folders = glob.glob("../../PhysicalCoverageData/highway/raw/*")
-            files_per_folder = int(math.ceil(args.total_samples / len(folders)))
-            print("There are {} categories, thus we need to select {} from each".format(len(folders), files_per_folder))
-            print("")
-            file_names = []
-            for f in folders:
-                print("Selecting {} random files from - {}".format(files_per_folder, f))
-                all_files = glob.glob(f + "/*.txt")
-                names = random.sample(all_files, files_per_folder)
-                file_names.append(names)
-
-        # Do this for the other scenarios
-        else:
-            print("Selecting {} random files".format(args.total_samples))
-            file_names = random.sample(all_files, args.total_samples)
-
+    # Need to set the seed or else you will be picking different tests for each different beam number  
+    random.seed(10)
+    print("There are {} categories, thus we need to select {} from each".format(len(folders), files_per_folder))
+    print("")
+    file_names = []
+    for f in folders:
+        print("Selecting {} random files from - {}".format(files_per_folder, f))
+        all_files = glob.glob(f + "/*.txt")
+        names = random.sample(all_files, files_per_folder)
+        file_names.append(names)
+if args.scenario == "highway_generated": 
+    # You want to select all files here so do nothing
+    pass
 
 # Flatten the list
 if len(np.shape(file_names)) > 1:
@@ -196,9 +192,9 @@ if args.scenario == "beamng":
     exit()
 elif args.scenario == "highway_random":
     print("check if this is working")
-    save_path = "../output/processed/{}".format(args.total_samples)
+    save_path = "../output/random_tests/physical_coverage/processed/{}".format(args.total_samples)
 elif args.scenario == "highway_generated":
-    save_path = "../output/processed/tests_single/processed/{}".format(args.total_samples)
+    save_path = "../output/generated_tests/physical_coverage/processed/{}".format(args.total_samples)
 else:
     print("Error")
     exit()

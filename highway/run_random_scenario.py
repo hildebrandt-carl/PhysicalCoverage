@@ -46,11 +46,11 @@ max_distance    = HK.max_velocity
 obstacle_size = 1
 
 # Create the output directory if it doesn't exists
-if not os.path.exists('../output/run_random_scenarios/{}_external_vehicles'.format(args.environment_vehicles)):
-    os.makedirs('../output/run_random_scenarios/{}_external_vehicles'.format(args.environment_vehicles))
+if not os.path.exists('../output/random_tests/physical_coverage/raw/{}_external_vehicles'.format(args.environment_vehicles)):
+    os.makedirs('../output/random_tests/physical_coverage/raw/{}_external_vehicles'.format(args.environment_vehicles))
 
 # Save the output file
-text_file = open("../output/run_random_scenarios/{}_external_vehicles/{}".format(args.environment_vehicles,args.save_name), "w")
+text_file = open("../output/random_tests/physical_coverage/raw/{}_external_vehicles/{}".format(args.environment_vehicles,args.save_name), "w")
 text_file.write("Name: %s\n" % args.save_name)
 e = datetime.datetime.now()
 text_file.write("Date: %s/%s/%s\n" % (e.day, e.month, e.year))
@@ -65,7 +65,7 @@ text_file.write("------------------------------\n")
 np.set_printoptions(suppress=True)
 
 # Create the controllers
-hw_config = HighwayEnvironmentConfig(environment_vehicles=args.environment_vehicles, duration=20)
+hw_config = HighwayEnvironmentConfig(environment_vehicles=args.environment_vehicles, duration=25)
 car_controller = EgoController(debug=True)
 tracker = Tracker(distance_threshold=5, time_threshold=2, debug=True)
 reach = ReachableSet(obstacle_size=obstacle_size)
@@ -89,7 +89,7 @@ done = False
 start_time = datetime.datetime.now()
 simulated_time_counter = 0
 simulated_time_period = 1.0 / hw_config.policy_freq
-
+first = True
 while not done:
 
     # Increment time

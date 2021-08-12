@@ -17,9 +17,9 @@ import matplotlib.pyplot as plt
 from generate_unseen_tests_functions import get_trace_files
 from generate_unseen_tests_functions import compute_coverage
 from generate_unseen_tests_functions import compute_unseen_vectors
+from generate_unseen_tests_functions import save_unseen_data_to_file
 from generate_unseen_tests_functions import compute_reach_set_details
 from generate_unseen_tests_functions import create_image_representation
-from generate_unseen_tests_functions import save_unseen_data_to_file_single
 
 from general.environment_configurations import RSRConfig
 from general.environment_configurations import HighwayKinematics
@@ -54,8 +54,7 @@ print("----------------------------------")
 print("-----------Loading Data-----------")
 print("----------------------------------")
 
-
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/randomly_generated/processed/' + str(args.total_samples) + "/"
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/processed/' + str(args.total_samples) + "/"
 file_names = get_trace_files(base_path)
 
 print()
@@ -77,13 +76,9 @@ pool =  multiprocessing.Pool(total_processors)
 result_object = []
 for file_index in range(len(file_names)):
 
-
     # Get the file name and the return key
     file_name = file_names[file_index]
     return_key = 'p' + str(file_index)
-
-    if "_b10_" in file_name:
-        continue
 
     result_object.append(pool.apply_async(compute_coverage, args=(file_name, return_dict, return_key, base_path, new_max_distance, new_accuracy)))
 
@@ -104,8 +99,9 @@ unique_observations_per_cell = (new_max_distance / float(new_accuracy))
 unique_values_per_beam = [new_accuracy]
 for i in range(math.ceil(unique_observations_per_cell) - 1):
     unique_values_per_beam.append(unique_values_per_beam[-1] + new_accuracy)
-
+    
 print("\n\n\n--------------------------------------------------------")
+print("The unique values each beam can hold are: {}".format(unique_values_per_beam))
 
 # Compute the unseen vectors
 final_data = compute_unseen_vectors(return_dict, args.maximum_unseen_vectors, new_max_distance, unique_values_per_beam, new_accuracy)
@@ -131,28 +127,29 @@ for key in final_data:
     # Convert the unseen data to numpy data:
     unseen_data_np = unseen_data.to_numpy()
 
-    # Load the feasible trajectories
-    fname = '../../PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/FeasibleVectors_b' + str(total_lines) + ".npy"
-    feasible_vectors = np.load(fname)
-    feasible_vector_set = set()
-    for v in feasible_vectors:
-        feasible_vector_set.add(tuple(v))
-
-    # Remove all unseen data that is not part of the feasible data set, as we are not interested in things that are infeasible
-    unseen_feasible_data = []
-    for v in unseen_data_np:
-        if tuple(v) in feasible_vector_set:
-            unseen_feasible_data.append(v)
-
-    unseen_feasible_data_np = np.array(unseen_feasible_data)
-
-    if len(unseen_feasible_data) <= 0:
-        print("No tests required for {} beams".format(total_lines))
-        continue
-
     # Create an image representation
     print("\tCreating an image representation before sorting")
-    plt = create_image_representation("Unordered: Beams " + str(total_lines), unseen_feasible_data_np)
+    plt = create_image_representation("Unordered: Beams " + str(total_lines), unseen_data_np)
+
+    # Used to keep track of the distance between points
+    distance_metric = np.full(unseen_data_np.shape[0], np.inf)
+    distance_metric[0] = 0
+
+    # Order the data based on manhattan distance apart
+    for i in range(unseen_data_np.shape[0] - 1):
+        # Get the current index point
+        reference_point = unseen_data_np[i]
+        # Compute the manhattan distance
+        dist = np.sum(np.abs(unseen_data_np[i:] - reference_point), axis=1)
+        # Sort all values based on the index point
+        new_indices = np.argsort(dist)
+        unseen_data_np[i:] = unseen_data_np[i:][new_indices]
+        # Save the selected distance
+        distance_metric[i + 1] = dist[new_indices[1]]
+
+    # Create an image representation
+    print("\tCreating an image representation after sorting")
+    plt = create_image_representation("Sorted: Beams " + str(total_lines), unseen_data_np, distance_metric)
 
     # Compute the reach set details so that we can use that to reconstruct the test
     print("\tCompute the reach set details")
@@ -160,8 +157,7 @@ for key in final_data:
 
     # Save the data to a file
     print("\tSaving to data file")
-    tests_generated = save_unseen_data_to_file_single(unseen_data_np, segmented_lines, new_accuracy, args.total_samples, total_lines)
+    tests_generated = save_unseen_data_to_file(unseen_data_np, distance_metric, segmented_lines, new_accuracy, args.total_samples, total_lines)
     print("\tTotal tests generated: {}".format(tests_generated))
 
 plt.show()
-
