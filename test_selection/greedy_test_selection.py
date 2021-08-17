@@ -62,8 +62,9 @@ def random_select(number_of_tests):
                 seen_RSR_set.add(tuple(v))
 
         # Check if there was a crash and if there was count it
-        if np.isnan(crash) == False:
-            seen_crash_set.add(crash)
+        for c in crash:
+            if ~np.isinf(c):
+                seen_crash_set.add(c)
 
     # Compute the coverage and the crash percentage
     coverage_percentage = float(len(seen_RSR_set)) / len(feasible_RSR_set)
@@ -138,8 +139,10 @@ def greedy_select(test_suit_size, selection_type, greedy_sample_size):
 
         # Check for crashes in this trace
         crash = crashes[selected_index]
-        if np.isnan(crash) == False:
-            seen_crash_set.add(crash)
+
+        for c in crash:
+            if ~np.isinf(c):
+                seen_crash_set.add(c)
 
 
     # Compute the coverage and the crash percentage
@@ -246,7 +249,9 @@ load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/processed/' + str(args.total_samples) + "/"
+
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
+print(base_path)
 trace_file = glob.glob(base_path + "traces_*_b{}_*".format(args.beam_count))
 crash_file = glob.glob(base_path + "crash_*_b{}_*".format(args.beam_count))
 
@@ -283,8 +288,9 @@ for scene in feasible_traces:
 global unique_crashes_set
 unique_crashes_set = set()
 for crash in crashes:
-    if np.isnan(crash) == False:
-        unique_crashes_set.add(crash)
+    for c in crash:
+        if ~np.isinf(c):
+            unique_crashes_set.add(c)
 
 # Create the figure
 plt.figure(1)
@@ -309,9 +315,9 @@ x_line, y_line = line_of_best_fit(worst_test_suit_size, worst_crash_percentages)
 plt.plot(x_line, y_line, '--', color="C2")
 
 plt.legend()
+plt.xticks(np.arange(0, args.total_samples+0.01,  args.total_samples/10))
+plt.yticks(np.arange(0, 1.01, 0.1))
 plt.ylabel("Crashes (%)")
 plt.xlabel("Test Suit Size")
+plt.grid()
 plt.show()
-
-
-

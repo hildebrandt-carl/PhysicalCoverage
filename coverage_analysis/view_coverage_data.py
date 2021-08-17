@@ -23,36 +23,6 @@ from general.environment_configurations import RSRConfig
 from general.environment_configurations import HighwayKinematics
 
 # Get the coverage on a random test suit 
-def crashes_on_random_test_suit(suit_size):
-    global crashes
-    global unique_crashes_set
-
-    # Randomly generate the indices for this test suit
-    local_state = np.random.RandomState()
-    indices = local_state.choice(len(traces), suit_size, replace=False) 
-
-
-    # Used to compute the whether a crash was unique or not
-    Unique_Crashes = set()
-
-    # Go through each of the indices
-    for index in indices:
-        # Get the trace
-        crash = crashes[index]
-
-        # Check if there was a crash and if there was count it
-        if np.isnan(crash) == False:
-            Unique_Crashes.add(crash)
-
-            if crash not in unique_crashes_set:
-                print("Infeasible crash found: {}".format(crash))
-
-    # Compute crash percentage
-    crash_percentage = float(len(Unique_Crashes)) / len(unique_crashes_set)
-
-    return crash_percentage 
-
-# Get the coverage on a random test suit 
 def coverage_on_random_test_suit(suit_size):
     global traces
     global feasible_RSR_set
@@ -90,6 +60,7 @@ def coverage_on_random_test_suit(suit_size):
 # Get the coverage on a random test suit 
 def coverage_on_random_test_suit_no_crashes(suit_size):
     global traces
+    global crashes
     global feasible_RSR_set
 
     # Randomly generate the indices for this test suit
@@ -107,9 +78,10 @@ def coverage_on_random_test_suit_no_crashes(suit_size):
         counter += 1
         # Get the trace
         trace = traces[index]
+        crash = crashes[index]
 
         # If the trace is crashing ignore it
-        if np.isnan(trace).any():
+        if ~np.isinf(crash[0]):
             continue
         else:
             processed += 1
@@ -213,14 +185,9 @@ test_suit_sizes = determine_test_suit_sizes(args.total_samples)
 
 # Create the output figure
 plt.figure(1)
-ax1 = plt.gca()
-# ax2 = ax1.twinx()
 
 # Used to save each of the different coverage metrics so that we can compute the correlation between that and the crash data
 all_coverage_data = []
-
-# Define colors for the matplotlib
-plotting_colors = ["tab:blue", "tab:green", "tab:brown", "tab:pink", "tab:olive", "tab:purple", "tab:cyan", "tab:orange"]
 
 # For each of the different beams
 for i in range(len(beam_numbers)):
@@ -231,7 +198,6 @@ for i in range(len(beam_numbers)):
     trace_file = trace_file_names[i]
     crash_file = crash_file_names[i]
     feasibility_file = feasible_file_names[i]
-    color = plotting_colors[i]
 
     if beam_number == 10:
         continue
@@ -259,9 +225,11 @@ for i in range(len(beam_numbers)):
     # Create the crash unique set
     global unique_crashes_set
     unique_crashes_set = set()
-    for crash in crashes:
-        if np.isnan(crash) == False:
-            unique_crashes_set.add(crash)
+    for k in range(crashes.shape[0]):
+        for l in range(crashes.shape[1]):
+            crash = crashes[k][l]
+            if ~np.isinf(crash):
+                unique_crashes_set.add(crash)
 
     # Create the average line
     average_coverage = []
@@ -300,10 +268,7 @@ for i in range(len(beam_numbers)):
         all_results.append(np.average(results))
 
         # Plot the data
-        ax1.scatter(np.full(len(results), suit_size), results, marker='o', c=color, s=0.5)
-
-            
-
+        plt.scatter(np.full(len(results), suit_size), results, marker='o', c="C{}".format(i), s=0.5)
 
         # Create the pool for parallel processing
         pool =  multiprocessing.Pool(processes=args.cores)
@@ -325,76 +290,37 @@ for i in range(len(beam_numbers)):
         average_coverage_no_crashes.append(np.average(results))
 
         # Plot the data
-        ax1.scatter(np.full(len(results), suit_size), results, marker='*', c=color, s=0.5)
+        plt.scatter(np.full(len(results), suit_size), results, marker='*', c="C{}".format(i), s=0.5)
 
 
     # Save the results for correlation computation later
     all_coverage_data.append(all_results)
 
     # Plot the average test suit coverage
-    ax1.plot(test_suit_sizes, average_coverage, c=color, label="RSR{}".format(beam_number))
+    plt.plot(test_suit_sizes, average_coverage, c="C{}".format(i), label="RSR{}".format(beam_number))
+
     # Plot the average test suit coverage
-    ax1.plot(test_suit_sizes, average_coverage_no_crashes, c=color, linestyle="--")
-
-# print("Computing crash rate")
-# average_crashes = []
-# all_crashes = []
-# # Go through each of the different test suit sizes
-# for suit_size in test_suit_sizes:
-#     print("Processing test suit size: {}".format(suit_size))
-
-#     # Create the pool for parallel processing
-#     pool =  multiprocessing.Pool(processes=args.cores)
-
-#     # Call our function total_test_suites times
-#     jobs = []
-#     for _ in range(total_test_suits):
-#         jobs.append(pool.apply_async(crashes_on_random_test_suit, args=([suit_size])))
-
-#     # Get the results
-#     results = []
-#     for job in tqdm(jobs):
-#         results.append(job.get())
-
-#     # Its 8pm the pool is closed
-#     pool.close() 
-
-#     # Get the average coverage for this test suit size
-#     average_crashes.append(np.average(results))
-
-#     # Save for correlation computation later
-#     all_crashes.append(np.average(results))
-
-#     # Plot the data
-#     ax2.scatter(np.full(len(results), suit_size), results, marker='*', c="tab:red", s=2)
+    plt.plot(test_suit_sizes, average_coverage_no_crashes, c="C{}".format(i), linestyle="--")
 
 
+# legend1 = pyplot.legend(plot_lines[0], ["algo1", "algo2", "algo3"], loc=1)
+ax = plt.gca()
 
-# # Computing the correlation
-# print("Computing the correlation of RSR values to Crashes")
-# for i in range(len(all_coverage_data)):
-#     d = all_coverage_data[i]
-#     coverage_data = np.reshape(d, -1)
-#     crash_data = np.reshape(all_crashes, -1)
+# Shrink current axis's height by 5% on the top
+box = ax.get_position()
+ax.set_position([box.x0, box.y0, box.width, box.height * 0.95])
 
-#     correlation = pearsonr(coverage_data, crash_data)
+# Place the first legend
+legend1 = ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.20), ncol=5)
 
-#     print("RSR{} correlation: {}".format(beam_numbers[i], correlation))
+# Place the second legend
+legend2 = ax.legend(["With Crashes", "Without Crashes"] , loc=0)
 
+# Set the labels and limits
+ax.set_xlabel("Test suit size")
+ax.set_ylabel("Feasible Coverage (%)")
+ax.set_ylim([-0.05, 1.05])
 
-# Plot the average test suit coverage
-# ax2.plot(test_suit_sizes, average_crashes, c="tab:red", label="Crashes", linestyle="--")
-
-ax1.legend(loc=0)
-# ax2.legend(loc=8)
-ax1.set_xlabel("Test suit size")
-ax1.set_ylabel("Feasible Coverage (%)")
-# ax2.set_ylabel("Unique Crashes (%)")
-# Make the axis the same color as the crashes
-# ax2.tick_params(axis='y', colors="tab:red")
-# ax2.spines["right"].set_edgecolor("tab:red")
-# ax1.grid(True, linestyle='-')
-# ax2.grid(True, linestyle='--')
-ax1.set_ylim([-0.05, 1.05])
-# ax2.set_ylim([-0.05, 1.05])
+# Readd legend 1 before showing
+plt.gca().add_artist(legend1)
 plt.show()

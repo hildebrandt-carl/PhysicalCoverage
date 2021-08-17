@@ -30,12 +30,12 @@ class Tracker:
                 for obj in self.tracked_objects:
                     # Check if the vehicle colors match
                     if obj.color_id == color:
-                        # Compute the distance between the two obects
+                        # Compute the distance between the two objects
                         d = obj.distance_to(pos)
                         distances.append(d)
                         distances_objects.append(obj)
 
-                update_occured = True
+                update_occurred = True
                 # If we found possible matches
                 if len(distances) > 0:
                     # Find the object closest to the current position
@@ -47,17 +47,17 @@ class Tracker:
                         min_obj.update_state(pos, vel)
                     # We did not update the vehicle
                     else:
-                        update_occured = False
+                        update_occurred = False
                 else:
                     # We did not update the vehicle
-                    update_occured = False
+                    update_occurred = False
 
                 # We need to create a new object
-                if not update_occured:
+                if not update_occurred:
                     self.current_id += 1
                     self.tracked_objects.append(TrackedObject(pos, vel, self.current_id, color))
 
-            # Remove all objects which havent been updated in a while
+            # Remove all objects which haven't been updated in a while
             renewed_objects = []
             for obj in self.tracked_objects:
                 if time.time() - obj.last_update < self.time_thresh:

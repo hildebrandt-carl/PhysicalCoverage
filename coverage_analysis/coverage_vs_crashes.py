@@ -41,14 +41,15 @@ def crashes_on_random_test_suit(suit_size):
         crash = crashes[index]
 
         # Check if there was a crash and if there was count it
-        if np.isnan(crash) == False:
-            Unique_Crashes.add(crash)
+        for c in crash:
+            if ~np.isinf(c):
+                Unique_Crashes.add(c)
 
-            if crash not in unique_crashes_set:
-                print("Infeasible crash found: {}".format(crash))
+                if c not in unique_crashes_set:
+                    print("Infeasible crash found: {}".format(c))
 
     # Compute crash percentage
-    crash_percentage = float(len(Unique_Crashes)) / len(unique_crashes_set)
+    crash_percentage = float(len(Unique_Crashes))
 
     return crash_percentage 
 
@@ -139,7 +140,7 @@ load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/processed/' + str(args.total_samples) + "/"
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
 trace_file_names = glob.glob(base_path + "traces_*")
 crash_file_names = glob.glob(base_path + "crash_*")
 
@@ -173,7 +174,6 @@ ax2 = ax1.twinx()
 all_coverage_data = []
 
 # Define colors for the matplotlib
-plotting_colors = ["tab:blue", "tab:green", "tab:brown", "tab:pink", "tab:olive", "tab:purple", "tab:cyan", "tab:orange"]
 
 # For each of the different beams
 for i in range(len(beam_numbers)):
@@ -184,7 +184,6 @@ for i in range(len(beam_numbers)):
     trace_file = trace_file_names[i]
     crash_file = crash_file_names[i]
     feasibility_file = feasible_file_names[i]
-    color = plotting_colors[i]
 
     # Skip if any of the files are blank
     if trace_file == "" or crash_file == "" or feasibility_file == "":
@@ -210,8 +209,9 @@ for i in range(len(beam_numbers)):
     global unique_crashes_set
     unique_crashes_set = set()
     for crash in crashes:
-        if np.isnan(crash) == False:
-            unique_crashes_set.add(crash)
+        for c in crash:
+            if ~np.isinf(c):
+                unique_crashes_set.add(c)
 
     # Create the average line
     average_coverage = []
@@ -249,13 +249,13 @@ for i in range(len(beam_numbers)):
         all_results.append(np.average(results))
 
         # Plot the data
-        ax1.scatter(np.full(len(results), suit_size), results, marker='o', c=color, s=0.5)
+        ax1.scatter(np.full(len(results), suit_size), results, marker='o', c="C{}".format(i), s=0.5)
 
     # Save the results for correlation computation later
     all_coverage_data.append(all_results)
 
     # Plot the average test suit coverage
-    ax1.plot(test_suit_sizes, average_coverage, c=color, label="RSR{}".format(beam_number))
+    ax1.plot(test_suit_sizes, average_coverage, c="C{}".format(i), label="RSR{}".format(beam_number))
 
 
 
@@ -294,13 +294,13 @@ for suit_size in test_suit_sizes:
 
 
 # Computing the correlation
-print("Computing the correlation of RSR values to Crashes")
-for i in range(len(all_coverage_data)):
-    d = all_coverage_data[i]
-    coverage_data = np.reshape(d, -1)
-    crash_data = np.reshape(all_crashes, -1)
+# print("Computing the correlation of RSR values to Crashes")
+# for i in range(len(all_coverage_data)):
+#     d = all_coverage_data[i]
+#     coverage_data = np.reshape(d, -1)
+#     crash_data = np.reshape(all_crashes, -1)
 
-    print("RSR{} correlation: {}".format(beam_numbers[i], correlation))
+#     print("RSR{} correlation: {}".format(beam_numbers[i], correlation))
 
 
 # Plot the average test suit coverage
@@ -311,11 +311,9 @@ ax2.legend(loc=8)
 ax1.set_xlabel("Test suit size")
 ax1.set_ylabel("Feasible Coverage (%)")
 ax2.set_ylabel("Unique Crashes (%)")
-# Make the axis the same color as the crashes
+
 ax2.tick_params(axis='y', colors="tab:red")
 ax2.spines["right"].set_edgecolor("tab:red")
-# ax1.grid(True, linestyle='-')
-# ax2.grid(True, linestyle='--')
+
 ax1.set_ylim([-0.05, 1.05])
-ax2.set_ylim([-0.05, 1.05])
 plt.show()

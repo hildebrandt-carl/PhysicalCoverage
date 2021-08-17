@@ -48,7 +48,8 @@ class HighwayEnv(AbstractEnv):
             "reward_speed_range": [20, 30],
             "offroad_terminal": False,
             "ego_position": None,
-            "ego_heading": None
+            "ego_heading": None,
+            "crash_ends_test": True
         })
         return config
 
@@ -70,21 +71,24 @@ class HighwayEnv(AbstractEnv):
         for j in range(self.config["controlled_vehicles"]):
             if j == 0:
                 if self.config["ego_position"] is not None and self.config["ego_heading"] is not None:
+                    # Spawn the ego vehicle at a specifc location
                     vehicle = self.action_type.vehicle_class(self.road,
                                                              position=self.config["ego_position"],
                                                              heading=self.config["ego_heading"],
                                                              speed=25)
                 else:
+                    # Spawn the ego vehicle at a random location
                     vehicle = self.action_type.vehicle_class.create_random(self.road,
                                                                         speed=25,
                                                                         lane_id=self.config["initial_lane_id"],
                                                                         spacing=self.config["ego_spacing"])
                 vehicle.color_id = -1
-            else:
-                vehicle = ManualVehicle.create_random(self.road,
-                                                      speed=25,
-                                                      lane_id=self.config["initial_lane_id"],
-                                                      spacing=self.config["ego_spacing"])
+                vehicle.crash_ends_test = self.config["crash_ends_test"]
+            # else:
+            #     vehicle = ManualVehicle.create_random(self.road,
+            #                                           speed=25,
+            #                                           lane_id=self.config["initial_lane_id"],
+            #                                           spacing=self.config["ego_spacing"])
             self.controlled_vehicles.append(vehicle)
             self.road.vehicles.append(vehicle)
 
@@ -119,10 +123,20 @@ class HighwayEnv(AbstractEnv):
         return reward
 
     def _is_terminal(self) -> bool:
-        """The episode is over if the ego vehicle crashed or the time is out."""
-        return self.vehicle.crashed or \
-            self.steps >= self.config["duration"] or \
-            (self.config["offroad_terminal"] and not self.vehicle.on_road)
+
+        non_crashed_vehicles = []
+
+        # Remove all crashed vehicles
+        for v in self.road.vehicles:
+            if not v.crashed:
+                non_crashed_vehicles.append(v)
+        self.road.vehicles = non_crashed_vehicles
+
+        if self.config["crash_ends_test"]:
+            """The episode is over if the ego vehicle crashed or the time is out."""
+            return self.vehicle.crashed or self.steps >= self.config["duration"] or (self.config["offroad_terminal"] and not self.vehicle.on_road)        
+        else:
+            return self.steps >= self.config["duration"] or (self.config["offroad_terminal"] and not self.vehicle.on_road)
 
     def _cost(self, action: int) -> float:
         """The cost signal is the occurrence of collision."""

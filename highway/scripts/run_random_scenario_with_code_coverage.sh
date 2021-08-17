@@ -5,15 +5,15 @@ vehicle_count=(1 2 3 4 5 6 7 8 9 10)
 
 # Duplicate the code coverage file
 cp ./config/code_coverage_config ./config/code_coverage_config$1 
-sed -i "s/.coverage_tests/.coverage_tests$1/" ./config/code_coverage_config$1 
+sed -i "s/.coverage.tests/.coverage.tests$1/" ./config/code_coverage_config$1 
 
 for tot_vehicle in "${vehicle_count[@]}"
 do
     # Make the output directory
-    mkdir -p ../output/random_tests/code_coverage/raw/external_vehicles_${tot_vehicle}/raw
+    mkdir -p ../output/random_tests/code_coverage/raw/external_vehicles_${tot_vehicle}
 
     # Run it 
-    for value in {1..1000}
+    for value in {1..200}
     do
     # For each vehicle count
 
@@ -35,7 +35,7 @@ do
         sleep 0.01
 
         # Get the ID from the last run so you can match it to the process
-        mv .coverage_tests$1.*  ../output/random_tests/code_coverage/raw/external_vehicles_${tot_vehicle}/raw
+        mv .coverage.tests$1.*  ../output/random_tests/code_coverage/raw/external_vehicles_${tot_vehicle}
         sleep 0.01
     done
 done

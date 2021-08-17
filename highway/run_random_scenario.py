@@ -65,9 +65,9 @@ text_file.write("------------------------------\n")
 np.set_printoptions(suppress=True)
 
 # Create the controllers
-hw_config = HighwayEnvironmentConfig(environment_vehicles=args.environment_vehicles, duration=25)
-car_controller = EgoController(debug=True)
-tracker = Tracker(distance_threshold=5, time_threshold=2, debug=True)
+hw_config = HighwayEnvironmentConfig(environment_vehicles=args.environment_vehicles, duration=25, crash_ends_test=True)
+car_controller = EgoController(debug=False)
+tracker = Tracker(distance_threshold=5, time_threshold=0.5, debug=False)
 reach = ReachableSet(obstacle_size=obstacle_size)
 
 # Create the environment
@@ -102,6 +102,7 @@ while not done:
     # Print the observation and crash data
     print("Environment:")
     print("|--Crash: \t\t" + str(info["crashed"]))
+    print("|--Collided: \t\t" + str(info["collided"]))
     print("|--Speed: \t\t" + str(np.round(info["speed"], 4)))
     print("|--Observation: \n" + str(obs))
     print("")
@@ -196,13 +197,14 @@ while not done:
 
     text_file.write("Vector: " + str(r_vector) + "\n")
     text_file.write("Crash: " + str(info["crashed"]) + "\n")
+    text_file.write("Collided: " + str(info["collided"]) + "\n")
     text_file.write("Operation Time: " + str(operation_time) + "\n")
     text_file.write("Total Wall Time: " + str(elapsed_time) + "\n")
     text_file.write("Total Simulated Time: " + str(simulated_time) + "\n")
     text_file.write("\n")
 
     # If it crashed determine under which conditions it crashed
-    if info["crashed"]:
+    if info["collided"]:
 
         try:
             # Get the velocity of the two vehicles (we want the velocities just before we crashed)
@@ -215,6 +217,11 @@ while not done:
 
             # Get the angle of incidence
             angle_of_incidence = degrees(atan2(veh_vy, veh_vx) - atan2(ego_vy, ego_vx))
+
+            # Round all values to 4 decimal places
+            ego_mag = np.round(ego_mag, 4)
+            veh_mag = np.round(veh_mag, 4)
+            angle_of_incidence = np.round(angle_of_incidence, 4)
         except ValueError:
             ego_mag = 0
             veh_mag = 0 
@@ -223,9 +230,11 @@ while not done:
         print("Ego velocity magnitude: {}".format(ego_mag))
         print("Incident vehicle velocity magnitude: {}".format(veh_mag))
         print("Angle of incident: {}".format(angle_of_incidence))
+        print("")
+        print("---------------------------------------")
         text_file.write("Ego velocity magnitude: {}\n".format(ego_mag))
         text_file.write("Incident vehicle velocity magnitude: {}\n".format(veh_mag))
-        text_file.write("Angle of incident: {}\n".format(angle_of_incidence))
+        text_file.write("Angle of incident: {}\n\n".format(angle_of_incidence))
 
 env.close()
 text_file.close()

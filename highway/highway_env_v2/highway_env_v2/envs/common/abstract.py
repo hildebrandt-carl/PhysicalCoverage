@@ -202,7 +202,6 @@ class AbstractEnv(gym.Env):
             self.vehicle.incident_vehicle_kinematic_history["position"] = []
             self.vehicle.incident_vehicle_kinematic_history["velocity"] = []
             for p, e in reversed(list(zip(positions, ego_positions))):
-                print(e)
                 norm_position = list(np.array(p) - np.array(e))
                 self.vehicle.incident_vehicle_kinematic_history["position"].append(norm_position)
             for v in reversed(velocities):
@@ -211,10 +210,17 @@ class AbstractEnv(gym.Env):
         info = {
             "speed": self.vehicle.speed,
             "crashed": self.vehicle.crashed,
+            "collided": self.vehicle.collided,
             "action": action,
             "kinematic_history": self.vehicle.kinematic_history,
             "incident_vehicle_kinematic_history": self.vehicle.incident_vehicle_kinematic_history,
         }
+
+        # Reset the collision tag
+        if self.vehicle.collided:
+            self.vehicle.collided = False
+            self.vehicle.incident_vehicle_kinematic_history = None
+
         try:
             info["cost"] = self._cost(action)
         except NotImplementedError:

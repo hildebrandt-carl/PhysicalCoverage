@@ -1,5 +1,5 @@
 class HighwayEnvironmentConfig:
-    def __init__(self, environment_vehicles=20, controlled_vehicle_count=1, ego_position=None, ego_heading=None, duration=25):
+    def __init__(self, environment_vehicles=20, controlled_vehicle_count=1, ego_position=None, ego_heading=None, duration=25, crash_ends_test=True):
         self.policy_freq = 4 #[hz]
         self.duration = duration #[s]
         self.env_configuration = {
@@ -38,7 +38,8 @@ class HighwayEnvironmentConfig:
             "manual_control": False,
             "real_time_rendering": True,
             "ego_position": ego_position,
-            "ego_heading": ego_heading
+            "ego_heading": ego_heading,
+            "crash_ends_test": crash_ends_test,
         }
 
 class HighwayKinematics:

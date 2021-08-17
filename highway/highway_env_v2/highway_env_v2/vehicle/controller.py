@@ -196,7 +196,7 @@ class ControlledVehicle(Vehicle):
         return tuple(zip(*[self.road.network.position_heading_along_route(route, coordinates[0] + self.speed * t, 0)
                      for t in times]))
 
-
+# This is the vehicle that is running in the random tests
 class MDPVehicle(ControlledVehicle):
 
     """A controlled vehicle with a specified discrete range of allowed target speeds."""
@@ -216,6 +216,8 @@ class MDPVehicle(ControlledVehicle):
         super().__init__(road, position, heading, speed, target_lane_index, target_speed, route)
         self.speed_index = self.speed_to_index(self.target_speed)
         self.target_speed = self.index_to_speed(self.speed_index)
+        self.crash_ends_test = True
+        self.collided = False
 
     def act(self, action: Union[dict, str] = None) -> None:
         """
@@ -298,10 +300,45 @@ class MDPVehicle(ControlledVehicle):
                     states.append(copy.deepcopy(v))
         return states
 
+    def check_collision(self, other: Union['Vehicle', 'RoadObject']) -> None:
+        """
+        Check for collision with another vehicle.
 
+        :param other: the other vehicle or object
+        """
+        if not self.crash_ends_test:
+            self.crashed = False
+
+        if self.crashed or other is self:
+            return
+
+        if isinstance(other, Vehicle):
+            if not self.COLLISIONS_ENABLED or not other.COLLISIONS_ENABLED:
+                return
+
+            if self._is_colliding(other):
+                self.speed = other.speed = min([self.speed, other.speed], key=abs)
+                self.collided = True
+                if self.crash_ends_test:
+                    self.crashed = True
+                self.incident_vehicle_kinematic_history = other.kinematic_history
+        elif isinstance(other, Obstacle):
+            if not self.COLLISIONS_ENABLED:
+                return
+
+            if self._is_colliding(other):
+                self.speed = min([self.speed, 0], key=abs)
+                self.collided = True
+                if self.crash_ends_test:
+                    self.crashed = other.hit = True
+        elif isinstance(other, Landmark):
+            if self._is_colliding(other):
+                other.hit = True
+
+# There are vehicles used when I want to manually control them with a PID
 class ManualVehicle(Vehicle):
 
-    SPEED_MIN: float = 20  # [m/s]
+    SPEED_MIN: float = 10  # [m/s]
     SPEED_MAX: float = 30  # [m/s]
     MAX_STEERING_ANGLE = np.pi / 3  # [rad]
 

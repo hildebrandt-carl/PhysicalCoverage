@@ -69,22 +69,26 @@ def getStep(vector, accuracy):
     return converted_vector
 
 
-def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, new_accuracy):
-    test_vectors    = np.full((total_vectors, vector_size), np.inf, dtype='float64')
-    crash           = False
-    simulation_time = ""
-    vehicle_count   = -1
-    current_vector  = 0
-    incident_hash = None
+def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_possible_crashes):
+    test_vectors        = np.full((total_vectors, vector_size), np.inf, dtype='float64')
+    collision_counter   = 0
+    simulation_time     = ""
+    vehicle_count       = -1
+    current_vector      = 0
+    incident_hashes     = np.full((1, max_possible_crashes), np.inf, dtype='float64')
 
-    crash_incident_angle = None
-    crash_ego_magnitude = None
-    crash_veh_magnitude = None
+    crash_incident_angles = []
+    crash_ego_magnitudes = []
+    crash_veh_magnitudes = []
 
     for line in f: 
+        # Make sure we arent writing too many lines
+        assert(current_vector <= total_vectors)
+
         # Get the number of external vehicles
         if "External Vehicles: " in line:
             vehicle_count = int(line[line.find(": ")+2:])
+
         # Get each of the vectors
         if "Vector: " in line:
             vector_str = line[line.find(": ")+3:-2]
@@ -93,35 +97,46 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
             vector = getStep(vector, new_accuracy)
             test_vectors[current_vector] = vector
             current_vector += 1
-        # Look for crashes
+
         if "Crash: True" in line:
-            crash = True
             # File the rest of the test vector up with np.nan
             while current_vector < test_vectors.shape[0]:
                 test_vectors[current_vector] = np.full(test_vectors.shape[1], np.nan, dtype='float64')
                 current_vector += 1
+
+        # Look for collisions
+        if "Collided: True" in line:
+            collision_counter += 1
+
         if "Total Simulated Time:" in line:
             simulation_time = line[line.find(": ")+2:]
 
         # Get the crash details
         if "Ego velocity magnitude: " in line:
-            crash_ego_magnitude =  float(line[line.find(": ")+2:])
+            ego_vel_data = float(line[line.find(": ")+2:])
+            crash_ego_magnitudes.append(ego_vel_data)
+
         if "Incident vehicle velocity magnitude: " in line:
-            crash_veh_magnitude = float(line[line.find(": ")+2:])
+            ind_vel_data = float(line[line.find(": ")+2:])
+            crash_veh_magnitudes.append(ind_vel_data)
+
         if "Angle of incident: " in line:
-            crash_incident_angle = float(line[line.find(": ")+2:])
+            ang_data = float(line[line.find(": ")+2:])
+            crash_incident_angles.append(ang_data)
 
     # If there was a crash compute the incident hash
-    if crash:
-        assert(crash_ego_magnitude is not None)
-        assert(crash_veh_magnitude is not None)
-        assert(crash_incident_angle is not None)
-        incident_hash = hash_crash(crash_ego_magnitude, crash_veh_magnitude, crash_incident_angle)
+    for i in range(collision_counter):
+        # Get the incident data
+        ego_magnitude = crash_incident_angles[i]
+        veh_magnitude = crash_ego_magnitudes[i]
+        incident_angle = crash_veh_magnitudes[i]
+        current_hash = hash_crash(ego_magnitude, veh_magnitude, incident_angle)
+        incident_hashes[0, i] = current_hash
 
     # Convert the simulated time to a float
     simulation_time = float(simulation_time)
 
-    return vehicle_count, crash, test_vectors, simulation_time, incident_hash
+    return vehicle_count, collision_counter, test_vectors, simulation_time, incident_hashes
 
 def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, new_accuracy):
     test_vectors    = []

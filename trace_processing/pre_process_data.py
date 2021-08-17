@@ -21,6 +21,8 @@ from tqdm import tqdm
 from general.environment_configurations import RSRConfig
 from general.environment_configurations import HighwayKinematics
 
+from general.crash_oracle import CrashOracle
+
 from pre_process_functions import processFile
 from pre_process_functions import countVectorsInFile
 
@@ -34,12 +36,16 @@ args = parser.parse_args()
 # Create the configuration classes
 HK = HighwayKinematics()
 RSR = RSRConfig(beam_count = args.beam_count)
+CO = CrashOracle()
 
 # Save the kinematics and RSR parameters
 new_steering_angle  = HK.steering_angle
 new_max_distance    = HK.max_velocity
 new_total_lines     = RSR.beam_count
 new_accuracy        = RSR.accuracy
+
+# Get the total number of possible crashes per test
+max_crashes_per_test = CO.max_possible_crashes
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
@@ -62,7 +68,7 @@ all_files = None
 if args.scenario == "beamng":
     all_files = glob.glob("../../PhysicalCoverageData/beamng/processed/*.txt")
 elif args.scenario == "highway_random":
-    all_files = glob.glob("../../PhysicalCoverageData/highway/random_tests/raw/*/*.txt")
+    all_files = glob.glob("../../PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*/*.txt")
 elif args.scenario == "highway_generated":
     all_files = glob.glob("../../PhysicalCoverageData/highway/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
 else:
@@ -81,7 +87,7 @@ if len(file_names) <= 0:
 
 # If you don't want all files, select a random portion of the files
 if args.scenario == "highway_random": 
-    folders = glob.glob("../../PhysicalCoverageData/highway/random_tests/raw/*")
+    folders = glob.glob("../../PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*")
     files_per_folder = int(math.ceil(args.total_samples / len(folders)))
 
     # Need to set the seed or else you will be picking different tests for each different beam number  
@@ -157,7 +163,7 @@ print("----------------------------------")
 reach_vectors = np.zeros((total_files, vec_per_file, new_total_lines), dtype='float64')
 vehicles_per_trace = np.zeros(total_files, dtype=int)
 time_per_trace = np.zeros(total_files, dtype='float64')
-crash_hashes = np.zeros(total_files, dtype='float64')
+crash_hashes = np.zeros((total_files, max_crashes_per_test), dtype='float64')
 
 # For each file
 file_count = 0
@@ -167,13 +173,13 @@ for i in tqdm(range(total_files)):
 
     # Process the file
     f = open(file_name, "r")    
-    vehicle_count, crash, test_vectors, simulation_time, incident_hash = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy)
+    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_crashes_per_test)
     f.close()
 
     reach_vectors[i]        = test_vectors
     vehicles_per_trace[i]   = vehicle_count
     time_per_trace[i]       = simulation_time
-    crash_hashes[i]         = incident_hash
+    crash_hashes[i]         = incident_hashes
 
 save_name = args.scenario
 save_name += "_s" + str(new_steering_angle) 

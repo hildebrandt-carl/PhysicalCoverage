@@ -14,11 +14,10 @@ parser.add_argument('--ordered',            action='store_true')
 args = parser.parse_args()
 
 # Get the base path
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/processed/' + str(args.number_of_tests) + "/"
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.number_of_tests) + "/"
 
 # Find all the crash files
 all_files = glob.glob(base_path + "crash*.npy")
-print(base_path)
 assert(len(all_files) > 1)
 
 # Get all the beam numbers
@@ -59,39 +58,50 @@ unique_crash_count = 0
 # Used to find the unique values
 unique_crash_data = set()
 
-# Process the data
-for d in crash_data:
-    # If it is a crash
-    if not np.isnan(d):
+# Keep track of what test we are doing
+test_number = []
 
-        # Add to the total crashes
-        total_crash_count += 1
+print(crash_data.shape)
+# Go through each of the tests
+for i in range(crash_data.shape[0]):
+    
+    # Go through each of the possible crashes in the test
+    for j in range(crash_data.shape[1]):
+        # Get the crash data
+        d = crash_data[i][j]
 
-        # Check if it is unique
-        if d not in unique_crash_data:
-            unique_crash_data.add(d)
-            unique_crash_count += 1
+        # If it is a crash
+        if ~np.isinf(d):
 
-    # Add the counts to the accumulative graph
-    accumulative_total_crashes.append(total_crash_count)
-    accumulative_unique_crashes.append(unique_crash_count)
+            # Add to the total crashes
+            total_crash_count += 1
+
+            # Check if it is unique
+            if d not in unique_crash_data:
+                unique_crash_data.add(d)
+                unique_crash_count += 1
+
+        # Add the counts to the accumulative graph
+        accumulative_total_crashes.append(total_crash_count)
+        accumulative_unique_crashes.append(unique_crash_count)
+        test_number.append(i)
 
 # Print the final information
-assert(total_crash_count == crash_data.shape[0] - np.count_nonzero(np.isnan(crash_data)))
+# assert(total_crash_count == crash_data.shape[0] - np.count_nonzero(np.isnan(crash_data)))
 assert(unique_crash_count == len(unique_crash_data))
 print("Total crashes: {}".format(total_crash_count))
 print("Unique crashes: {}".format(unique_crash_count))
 
 # If its not ordered show where the number of external vehicles changed
-if args.ordered:
-    interval = int(np.round(crash_data.shape[0] / 10.0, 0))
-    line_positions = np.arange(0, crash_data.shape[0] +0.1, interval)
-    for l in line_positions:
-        plt.axvline(x=l, color='red', linestyle='--')
+# if args.ordered:
+#     interval = int(np.round(crash_data.shape[0] / 10.0, 0))
+#     line_positions = np.arange(0, crash_data.shape[0] +0.1, interval)
+#     for l in line_positions:
+#         plt.axvline(x=l, color='red', linestyle='--')
 
 # Plot the data
-plt.plot(accumulative_total_crashes, linestyle="--", color='C' + str(i), label="All crashes")
-plt.plot(accumulative_unique_crashes, linestyle="-", color='C' + str(i), label="Unique crashes")
+plt.plot(test_number, accumulative_total_crashes, linestyle="--", color='C0', label="All crashes")
+plt.plot(test_number, accumulative_unique_crashes, linestyle="-", color='C0', label="Unique crashes")
 
 plt.legend()
 plt.title("Total crashes compared to unique crashes")

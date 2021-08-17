@@ -12,3 +12,7 @@ def hash_crash(crash_ego_magnitude=None, crash_veh_magnitude=None, crash_inciden
     crash_incident_angle = int(np.round(crash_incident_angle, 0))
 
     return hash(tuple([crash_ego_magnitude, crash_veh_magnitude, crash_incident_angle]))
+
+class CrashOracle:
+    def __init__(self):
+        self.max_possible_crashes = 30 
