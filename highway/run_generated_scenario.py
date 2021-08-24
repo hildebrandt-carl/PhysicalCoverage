@@ -86,7 +86,7 @@ text_file.write("------------------------------\n")
 np.set_printoptions(suppress=True)
 
 # Create the controllers
-hw_config = HighwayEnvironmentConfig(environment_vehicles=0, controlled_vehicle_count=environment_vehicles + 1, duration=100)
+hw_config = HighwayEnvironmentConfig(environment_vehicles=0, controlled_vehicle_count=environment_vehicles + 1, duration=100, crash_ends_test=False)
 car_controller = EgoController(debug=True)
 tracker = Tracker(distance_threshold=5, time_threshold=2, debug=True)
 reach = ReachableSet(obstacle_size=obstacle_size)

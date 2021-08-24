@@ -1,32 +1,24 @@
+import os
+import re
 import glob
 import math
-import scipy
 import time
+import scipy
 import multiprocessing
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
-from scipy.spatial import distance
 from datetime import datetime
+from scipy.spatial import distance
 from shapely.geometry import LineString
 from shapely.geometry import Polygon, LineString, Point
 
-steering_angle  = 45
-total_lines     = 30
-max_distance    = 60
-
-# # Variables - Used to generate overapproximate for other rqs
-# steering_angle  = 45
-# total_lines     = 30
-# max_distance    = 60
-
 # Variables - Used for timing
-total_lines     = 5
+total_lines     = 30
 steering_angle  = 33
 max_distance    = 45
-
 
 def create_frame_plot(data, origin, orientation, title, fig_num):
     fig = plt.figure(fig_num)
@@ -228,9 +220,8 @@ def process_file(file_name, save_name, external_vehicle_count, file_number):
 
             # Convert to numpy
             for key in current_data:
-                current_data[key] = current_data[key].split(", ")
+                current_data[key] = [float(x.strip(",")) for x in current_data[key].split(" ") if x]
                 current_data[key] = np.array(current_data[key], dtype=float)
-
 
             # if current_data["veh_count"] != int(external_vehicle_count):
             #     print("Vehicle count does not match: " + str(current_data["veh_count"]) + " - " + external_vehicle_count)
@@ -353,9 +344,17 @@ def process_file(file_name, save_name, external_vehicle_count, file_number):
             output_string += "Time: " + str(elapsed_time) +"\n"
             output_string += "\n"
 
-            # If we crashed end the trace
-            if bool(current_data["crash"]):
-                break
+# Vector: [3.998, 4.268, 4.583, 4.955, 5.401, 2.865, 2.83, 2.8, 2.774, 2.752, 2.734, 2.72, 2.709, 2.702, 2.699, 2.699, 2.702, 2.709, 2.72, 2.734, 2.752, 2.774, 2.8, 2.83, 2.865, 30.0, 30.0, 30.0, 29.886, 14.0]
+# Crash: True
+# Collided: True
+# Operation Time: 0.03602
+# Total Wall Time: 1.258344
+# Total Simulated Time: 5.5
+
+
+            # # If we crashed end the trace
+            # if bool(current_data["crash"]):
+            #     break
 
         # Close the input files
         input_file.close()
@@ -373,12 +372,12 @@ def process_file(file_name, save_name, external_vehicle_count, file_number):
     print("-----------------------")
     return output_success
 
-raw_file_location       = "../../PhysicalCoverageData/beamng/raw/"
-output_file_location    = "../../PhysicalCoverageData/beamng/processed/"
+raw_file_location       = "../../PhysicalCoverageData/beamng/random_tests/physical_coverage/original/"
+output_file_location    = "../output/beamng/random_tests/physical_coverage/lidar/"
 file_names = glob.glob(raw_file_location + "/*/*.csv")
 
 # Create a pool with x processes
-total_processors = 6
+total_processors = 100
 pool =  multiprocessing.Pool(total_processors)
 result_object = []
 file_number = 0
@@ -389,13 +388,15 @@ for file_name in file_names:
     name_only = file_name[file_name.rfind('/')+1:]
     folder = file_name[0:file_name.rfind('/')]
     folder = folder[folder.rfind('/')+1:]
-    external_vehicle_count = folder[0: folder.find('_')]
-    name_only = name_only[name_only.rfind('_')+1:]
-    e = datetime.now()
+
+    external_vehicle_count = folder[folder.rfind("_")+1:]
+
+    if not os.path.exists(output_file_location + folder):
+        os.makedirs(output_file_location + folder)
+
     save_name = ""
     save_name += str(output_file_location)
-    save_name += external_vehicle_count + "-"
-    save_name += str(int(e.timestamp())) +"-"
+    save_name += folder + "/"
     save_name += name_only[0:-4] + ".txt"
 
     # Run each of the files in a seperate process

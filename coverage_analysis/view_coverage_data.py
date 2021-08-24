@@ -1,5 +1,8 @@
+import os
 import sys
 import glob
+import json
+import shutil
 import argparse
 import multiprocessing
 
@@ -105,7 +108,6 @@ def coverage_on_random_test_suit_no_crashes(suit_size):
 
     return coverage
 
-
 # Determine the test sizes for this plot
 def determine_test_suit_sizes(total_tests):
     # We now need to sample tests of different sizes to create the plot
@@ -121,6 +123,63 @@ def determine_test_suit_sizes(total_tests):
 
     return test_sizes
 
+# Get the coverage on a random test suit 
+def code_coverage_on_random_test_suit(suit_size, job_number):
+    global code_coverage_file_names
+
+    # Create a temporary directory
+    output_dir = './tmp2/tmp{}'.format(job_number)
+    if os.path.exists(output_dir):
+        print("Error: the temporary directory already exists")
+        exit()
+    else:
+        os.makedirs(output_dir)
+
+    # Randomly select suit_size files:
+    local_state = np.random.RandomState()
+    indices = local_state.choice(len(code_coverage_file_names), suit_size, replace=False) 
+
+    # Copy the files into the directory
+    for index in indices:
+        src = code_coverage_file_names[index]
+        dst = output_dir + "/.coverage.{}".format(index)
+        shutil.copyfile(src, dst)
+
+    # Process the coverage in that file
+    os.system("cd {} ; coverage combine".format(output_dir))
+    os.system("cd {} ; coverage json".format(output_dir))
+    
+    # Find the coverage and lines missing:\
+    f = open("{}/coverage.json".format(output_dir))
+    data = json.load(f)
+
+    ignored_lines_car = set([144, 145, 146, 147, 148, 149, 150, 151, 152])
+    ignored_lines_con = set([54, 57, 65, 66, 67, 68, 69, 70, 72, 73, 108, 156, 157, 158, 159, 160, 161, 162, 163, 164, 166, 167, 168, 170, 181, 182, 183, 184, 185, 194, 195, 196, 272, 273, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 325, 326, 327, 329, 330, 331, 332, 333, 334, 335, 336, 353, 366, 369, 372, 373, 375, 376, 385, 386, 389, 390, 392, 393, 394, 396, 397, 398, 399, 400, 401, 403, 404, 405, 406, 407, 408]) 
+
+    for (k, v) in data["files"].items():
+        missing_lines = v["missing_lines"]
+        executed_lines = v["executed_lines"]
+
+        if "/controller.py" in k:
+            car_controller_coverage_lines = set(executed_lines) | ignored_lines_con
+            car_controller_all_lines = set(missing_lines) | car_controller_coverage_lines
+            con_our_percentage = (len(car_controller_coverage_lines) / len(car_controller_all_lines))
+
+        if "/car_controller.py" in k:
+            controller_coverage_lines = set(executed_lines) | ignored_lines_car
+            controller_all_lines = set(missing_lines) | controller_coverage_lines
+            car_our_percentage = (len(controller_coverage_lines) / len(controller_all_lines))
+
+    # Close the file
+    f.close()
+
+    # Compute the coverage
+    coverage = (con_our_percentage + car_our_percentage) / 2.0  
+
+    # Please do not delete more than you should!!!<3
+    shutil.rmtree(output_dir)
+
+    return coverage
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
@@ -166,6 +225,11 @@ crash_file_names = glob.glob(base_path + "crash_*")
 base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/'
 feasible_file_names = glob.glob(base_path + "*.npy")
 
+# Get the code coverage
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/code_coverage/raw/'
+global code_coverage_file_names
+code_coverage_file_names = glob.glob(base_path + "*/.coverage*")
+
 # Get the beam numbers
 trace_beam_numbers = get_beam_numbers(trace_file_names)
 crash_beam_numbers = get_beam_numbers(crash_file_names)
@@ -186,12 +250,14 @@ test_suit_sizes = determine_test_suit_sizes(args.total_samples)
 # Create the output figure
 plt.figure(1)
 
+# Compute the total coverage for tests of different sizes
+total_test_suits = 10
+
 # Used to save each of the different coverage metrics so that we can compute the correlation between that and the crash data
 all_coverage_data = []
 
 # For each of the different beams
 for i in range(len(beam_numbers)):
-    print("Processing beams: {}".format(beam_numbers[i]))
 
     # Get the beam number and files we are currently considering
     beam_number = beam_numbers[i]
@@ -199,8 +265,10 @@ for i in range(len(beam_numbers)):
     crash_file = crash_file_names[i]
     feasibility_file = feasible_file_names[i]
 
-    if beam_number == 10:
+    if beam_number > 6:
         continue
+
+    print("Processing beams: {}".format(beam_numbers[i]))
 
     # Skip if any of the files are blank
     if trace_file == "" or crash_file == "" or feasibility_file == "":
@@ -234,9 +302,6 @@ for i in range(len(beam_numbers)):
     # Create the average line
     average_coverage = []
     average_coverage_no_crashes = []
-
-    # Compute the total coverage for tests of different sizes
-    total_test_suits = 50
 
     # Keep a list of all results
     all_results = []
@@ -302,6 +367,36 @@ for i in range(len(beam_numbers)):
     # Plot the average test suit coverage
     plt.plot(test_suit_sizes, average_coverage_no_crashes, c="C{}".format(i), linestyle="--")
 
+# -----------------------------
+# Compute the code coverage
+# -----------------------------
+print("Processing code coverage")
+average_code_coverage = []
+for suit_size in test_suit_sizes:
+    print("Processing test suit size: {}".format(suit_size))
+    # Create the pool for parallel processing
+    pool =  multiprocessing.Pool(processes=args.cores)
+
+    # Call our function total_test_suites times
+    jobs = []
+    for i in range(total_test_suits):
+        jobs.append(pool.apply_async(code_coverage_on_random_test_suit, args=([suit_size, i])))
+
+    # Get the results
+    results = []
+    for job in tqdm(jobs):
+        results.append(job.get())
+
+    # Get the average code coverage for this test suit size
+    average_code_coverage.append(np.average(results))
+
+    plt.scatter(np.full(len(results), suit_size), results, marker='*', c="black", s=0.5)
+
+    # Its 8pm the pool is closed
+    pool.close() 
+
+plt.plot(test_suit_sizes, average_code_coverage, c="black", linestyle="solid", label="CC")
+
 
 # legend1 = pyplot.legend(plot_lines[0], ["algo1", "algo2", "algo3"], loc=1)
 ax = plt.gca()
@@ -318,7 +413,7 @@ legend2 = ax.legend(["With Crashes", "Without Crashes"] , loc=0)
 
 # Set the labels and limits
 ax.set_xlabel("Test suit size")
-ax.set_ylabel("Feasible Coverage (%)")
+ax.set_ylabel("Coverage (%)")
 ax.set_ylim([-0.05, 1.05])
 
 # Readd legend 1 before showing

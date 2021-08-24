@@ -65,8 +65,8 @@ print("----------Locating Files----------")
 print("----------------------------------")
 
 all_files = None
-if args.scenario == "beamng":
-    all_files = glob.glob("../../PhysicalCoverageData/beamng/processed/*.txt")
+if args.scenario == "beamng_random":
+    all_files = glob.glob("../../PhysicalCoverageData/beamng/random_tests/physical_coverage/raw/*/*.txt")
 elif args.scenario == "highway_random":
     all_files = glob.glob("../../PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*/*.txt")
 elif args.scenario == "highway_generated":
@@ -86,8 +86,12 @@ if len(file_names) <= 0:
     exit()
 
 # If you don't want all files, select a random portion of the files
-if args.scenario == "highway_random": 
-    folders = glob.glob("../../PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*")
+if (args.scenario == "highway_random") or (args.scenario == "beamng_random"): 
+    if args.scenario == "highway_random":
+        folders = glob.glob("../../PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*")
+    elif args.scenario == "beamng_random":
+        folders = glob.glob("../../PhysicalCoverageData/beamng/random_tests/physical_coverage/raw/*")
+
     files_per_folder = int(math.ceil(args.total_samples / len(folders)))
 
     # Need to set the seed or else you will be picking different tests for each different beam number  
@@ -111,14 +115,6 @@ if len(np.shape(file_names)) > 1:
         for item in subl:
             file_names_flat.append(item)
     file_names = file_names_flat
-
-# Make sure your list is the exact right size
-print("")
-if args.scenario != "highway_unseen":
-    if args.total_samples >= 1:
-        if len(file_names) > args.total_samples:
-            print("Currently there are {} files, cropping to {}".format(len(file_names), args.total_samples))
-            file_names = file_names[0:args.total_samples]
 
 # Get the file size
 total_files = len(file_names)
@@ -188,19 +184,14 @@ save_name += "_d" + str(new_max_distance)
 save_name += "_a" + str(new_accuracy)
 save_name += "_t" + str(total_files)
 save_name += ".npy"
-
-if args.scenario == "highway_unseen":
-    total_files = args.total_samples
-    
+   
 save_path = ""
-if args.scenario == "beamng":
-    print("todo")
-    exit()
+if args.scenario == "beamng_random":
+    save_path = "../output/beamng/random_tests/physical_coverage/processed/{}".format(args.total_samples)
 elif args.scenario == "highway_random":
-    print("check if this is working")
-    save_path = "../output/random_tests/physical_coverage/processed/{}".format(args.total_samples)
+    save_path = "../output/highway/random_tests/physical_coverage/processed/{}".format(args.total_samples)
 elif args.scenario == "highway_generated":
-    save_path = "../output/generated_tests/physical_coverage/processed/{}".format(args.total_samples)
+    save_path = "../output/highway/generated_tests/physical_coverage/processed/{}".format(args.total_samples)
 else:
     print("Error")
     exit()

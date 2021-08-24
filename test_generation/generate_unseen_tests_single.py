@@ -7,7 +7,7 @@ import multiprocessing
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/coverage_analysis")])
+base_directory = str(path[:path.rfind("/test_generation")])
 sys.path.append(base_directory)
 
 import numpy as np
@@ -54,8 +54,7 @@ print("----------------------------------")
 print("-----------Loading Data-----------")
 print("----------------------------------")
 
-
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/processed/' + str(args.total_samples) + "/"
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
 file_names = get_trace_files(base_path)
 
 print()
@@ -77,13 +76,9 @@ pool =  multiprocessing.Pool(total_processors)
 result_object = []
 for file_index in range(len(file_names)):
 
-
     # Get the file name and the return key
     file_name = file_names[file_index]
     return_key = 'p' + str(file_index)
-
-    if "_b10_" in file_name:
-        continue
 
     result_object.append(pool.apply_async(compute_coverage, args=(file_name, return_dict, return_key, base_path, new_max_distance, new_accuracy)))
 

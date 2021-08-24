@@ -269,7 +269,7 @@ feasible_file = feasible_file[0]
 
 # Get the test suit sizes
 test_suit_sizes = determine_test_suit_sizes(args.total_samples)
-greedy_sample_size = 25
+greedy_sample_size = 10
 
 # Load the traces
 global traces

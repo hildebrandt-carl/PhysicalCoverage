@@ -1,6 +1,10 @@
-from shapely.geometry import Polygon, LineString, Point
-from shapely import affinity
 import math
+import numpy as np
+from shapely import affinity
+from shapely.geometry import Point
+from shapely.geometry import Polygon
+from shapely.geometry import LineString
+
 
 def getStep(a, MinClip):
     return round(float(a) / MinClip) * MinClip
@@ -164,7 +168,7 @@ class ReachableSet:
         for l in lines:
             points = []
             current_dist = 0
-            while current_dist <= l.length:
+            while current_dist <= np.round(l.length,0):
                 new_point = l.interpolate(current_dist)
                 current_dist += accuracy
                 points.append(new_point)
