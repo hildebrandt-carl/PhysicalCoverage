@@ -84,11 +84,11 @@ class HighwayEnv(AbstractEnv):
                                                                         spacing=self.config["ego_spacing"])
                 vehicle.color_id = -1
                 vehicle.crash_ends_test = self.config["crash_ends_test"]
-            # else:
-            #     vehicle = ManualVehicle.create_random(self.road,
-            #                                           speed=25,
-            #                                           lane_id=self.config["initial_lane_id"],
-            #                                           spacing=self.config["ego_spacing"])
+            else:
+                vehicle = ManualVehicle.create_random(self.road,
+                                                      speed=25,
+                                                      lane_id=self.config["initial_lane_id"],
+                                                      spacing=1)
             self.controlled_vehicles.append(vehicle)
             self.road.vehicles.append(vehicle)
 

@@ -13,7 +13,7 @@ do
     mkdir -p ../output/random_tests/code_coverage/raw/external_vehicles_${tot_vehicle}
 
     # Run it 
-    for value in {1..1800}
+    for value in {1..200}
     do
     # For each vehicle count
 

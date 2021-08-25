@@ -402,14 +402,27 @@ for suit_size in test_suit_sizes:
 
 ax1.plot(test_suit_sizes, average_code_coverage, c="black", linestyle="solid", label="CC")
 
-ax1.legend(loc=0)
-ax2.legend(loc=8)
+# Shrink current axis's height by 5% on the top
+box = ax1.get_position()
+ax1.set_position([box.x0, box.y0, box.width, box.height * 0.95])
+box = ax2.get_position()
+ax2.set_position([box.x0, box.y0, box.width, box.height * 0.95])
+
+import itertools
+def flip(items, ncol):
+    return itertools.chain(*[items[i::ncol] for i in range(ncol)])
+
+num_cols = 4
+handles, labels = ax1.get_legend_handles_labels()
+legend1 = ax1.legend(flip(handles, num_cols), flip(labels, num_cols), loc='upper center', bbox_to_anchor=(0.5, 1.20), ncol=num_cols)
+
+ax2.legend(loc=4)
 ax1.set_xlabel("Test suit size")
 ax1.set_ylabel("Coverage (%)")
 ax2.set_ylabel("Crash Count")
 
-ax2.tick_params(axis='y', colors="tab:red")
-ax2.spines["right"].set_edgecolor("tab:red")
+ax2.tick_params(axis='y', colors="black")
+ax2.spines["right"].set_edgecolor("black")
 
 ax1.set_ylim([-0.05, 1.05])
 plt.show()

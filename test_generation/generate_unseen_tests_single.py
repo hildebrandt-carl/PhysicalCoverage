@@ -80,6 +80,18 @@ for file_index in range(len(file_names)):
     file_name = file_names[file_index]
     return_key = 'p' + str(file_index)
 
+    if "_b10_" in file_name:
+        continue
+
+    if "_b9_" in file_name:
+        continue
+
+    if "_b8_" in file_name:
+        continue
+
+    if "_b7_" in file_name:
+        continue
+
     result_object.append(pool.apply_async(compute_coverage, args=(file_name, return_dict, return_key, base_path, new_max_distance, new_accuracy)))
 
 # Get the results (results are actually stored in return_dict)

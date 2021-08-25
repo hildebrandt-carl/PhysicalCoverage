@@ -70,7 +70,7 @@ if args.scenario == "beamng_random":
 elif args.scenario == "highway_random":
     all_files = glob.glob("../../PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*/*.txt")
 elif args.scenario == "highway_generated":
-    all_files = glob.glob("../../PhysicalCoverageData/highway/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
+    all_files = glob.glob("../../PhysicalCoverageData/highway/generated_tests/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
 else:
     exit()
 
@@ -169,7 +169,7 @@ for i in tqdm(range(total_files)):
 
     # Process the file
     f = open(file_name, "r")    
-    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_crashes_per_test)
+    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_crashes_per_test, True)
     f.close()
 
     reach_vectors[i]        = test_vectors
@@ -191,7 +191,7 @@ if args.scenario == "beamng_random":
 elif args.scenario == "highway_random":
     save_path = "../output/highway/random_tests/physical_coverage/processed/{}".format(args.total_samples)
 elif args.scenario == "highway_generated":
-    save_path = "../output/highway/generated_tests/physical_coverage/processed/{}".format(args.total_samples)
+    save_path = "../output/highway/generated_tests/processed/{}/".format(args.total_samples)
 else:
     print("Error")
     exit()

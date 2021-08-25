@@ -298,19 +298,19 @@ plt.figure(1)
 # For each of the different beams
 print("Generating random tests")
 random_coverage_percentages, random_crash_percentages, random_test_suit_size = random_selection(args.cores, test_suit_sizes)
-plt.scatter(random_test_suit_size, random_crash_percentages, c="C0", label="random", s=2)
+plt.scatter(random_test_suit_size, random_crash_percentages, c="C0", label="Random", s=3)
 x_line, y_line = line_of_best_fit(random_test_suit_size, random_crash_percentages)
 plt.plot(x_line, y_line, '--', color="C0")
 
 print("Generating best case greedy tests")
 best_coverage_percentages, best_crash_percentages, best_test_suit_size = greedy_selection(args.cores, test_suit_sizes, "max", greedy_sample_size)
-plt.scatter(best_test_suit_size, best_crash_percentages, c="C1", s=2, label="Greedy Best")
+plt.scatter(best_test_suit_size, best_crash_percentages, c="C1", s=3, label="Greedy Best")
 x_line, y_line = line_of_best_fit(best_test_suit_size, best_crash_percentages)
 plt.plot(x_line, y_line, '--', color="C1")
 
 print("Generating worst case greedy tests")
 worst_coverage_percentages, worst_crash_percentages, worst_test_suit_size = greedy_selection(args.cores, test_suit_sizes, "min", greedy_sample_size)
-plt.scatter(worst_test_suit_size, worst_crash_percentages, c="C2", s=2, label="Greedy Worst")
+plt.scatter(worst_test_suit_size, worst_crash_percentages, c="C2", s=3, label="Greedy Worst")
 x_line, y_line = line_of_best_fit(worst_test_suit_size, worst_crash_percentages)
 plt.plot(x_line, y_line, '--', color="C2")
 

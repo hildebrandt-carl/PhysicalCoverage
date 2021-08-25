@@ -69,7 +69,7 @@ def getStep(vector, accuracy):
     return converted_vector
 
 
-def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_possible_crashes):
+def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_possible_crashes, ignore_crashes=False):
     test_vectors        = np.full((total_vectors, vector_size), np.inf, dtype='float64')
     collision_counter   = 0
     simulation_time     = ""
@@ -82,7 +82,7 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
     crash_veh_magnitudes = []
 
     for line in f: 
-        # Make sure we arent writing too many lines
+        # Make sure we aren't writing too many lines
         assert(current_vector <= total_vectors)
 
         # Get the number of external vehicles
@@ -99,10 +99,11 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
             current_vector += 1
 
         if "Crash: True" in line:
-            # File the rest of the test vector up with np.nan
-            while current_vector < test_vectors.shape[0]:
-                test_vectors[current_vector] = np.full(test_vectors.shape[1], np.nan, dtype='float64')
-                current_vector += 1
+            if not ignore_crashes:
+                # File the rest of the test vector up with np.nan
+                while current_vector < test_vectors.shape[0]:
+                    test_vectors[current_vector] = np.full(test_vectors.shape[1], np.nan, dtype='float64')
+                    current_vector += 1
 
         # Look for collisions
         if "Collided: True" in line:

@@ -405,8 +405,14 @@ ax = plt.gca()
 box = ax.get_position()
 ax.set_position([box.x0, box.y0, box.width, box.height * 0.95])
 
+import itertools
+def flip(items, ncol):
+    return itertools.chain(*[items[i::ncol] for i in range(ncol)])
+
 # Place the first legend
-legend1 = ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.20), ncol=5)
+num_cols = 4
+handles, labels = ax.get_legend_handles_labels()
+legend1 = ax.legend(flip(handles, num_cols), flip(labels, num_cols), loc='upper center', bbox_to_anchor=(0.5, 1.20), ncol=num_cols)
 
 # Place the second legend
 legend2 = ax.legend(["With Crashes", "Without Crashes"] , loc=0)
