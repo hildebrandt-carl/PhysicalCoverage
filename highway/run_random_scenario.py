@@ -46,11 +46,18 @@ max_distance    = HK.max_velocity
 obstacle_size = 1
 
 # Create the output directory if it doesn't exists
-if not os.path.exists('../output/random_tests/physical_coverage/raw/{}_external_vehicles'.format(args.environment_vehicles)):
-    os.makedirs('../output/random_tests/physical_coverage/raw/{}_external_vehicles'.format(args.environment_vehicles))
+physical_coverage_path = '../output/random_tests/physical_coverage/raw/{}_external_vehicles'.format(args.environment_vehicles)
+code_coverage_path = '../output/random_tests/code_coverage/raw/{}_external_vehicles'.format(args.environment_vehicles)
+if not os.path.exists(physical_coverage_path):
+    os.makedirs(physical_coverage_path)
+if not os.path.exists(code_coverage_path):
+    os.makedirs(code_coverage_path)
+
+physical_coverage_save_name = physical_coverage_path + "/{}".format(args.save_name)
+code_coverage_save_name = code_coverage_path + "/{}".format(args.save_name)
 
 # Save the output file
-text_file = open("../output/random_tests/physical_coverage/raw/{}_external_vehicles/{}".format(args.environment_vehicles,args.save_name), "w")
+text_file = open(physical_coverage_save_name, "w")
 text_file.write("Name: %s\n" % args.save_name)
 e = datetime.datetime.now()
 text_file.write("Date: %s/%s/%s\n" % (e.day, e.month, e.year))
@@ -90,6 +97,7 @@ start_time = datetime.datetime.now()
 simulated_time_counter = 0
 simulated_time_period = 1.0 / hw_config.policy_freq
 first = True
+total_physical_accidents = 0
 while not done:
 
     # Increment time
@@ -205,7 +213,7 @@ while not done:
 
     # If it crashed determine under which conditions it crashed
     if info["collided"]:
-
+        total_physical_accidents += 1
         try:
             # Get the velocity of the two vehicles (we want the velocities just before we crashed)
             ego_vx, ego_vy = info["kinematic_history"]["velocity"][1]
@@ -235,6 +243,47 @@ while not done:
         text_file.write("Ego velocity magnitude: {}\n".format(ego_mag))
         text_file.write("Incident vehicle velocity magnitude: {}\n".format(veh_mag))
         text_file.write("Angle of incident: {}\n\n".format(angle_of_incidence))
+
+
+# Output the code coverage for both the car and controller
+print("Getting the code coverage:")
+covered_lines_env, all_lines_env = env.get_lines_covered()
+covered_lines_con, all_lines_con = car_controller.get_lines_covered()
+
+covered_lines_env   = covered_lines_env + 1000
+all_lines_env       = all_lines_env + 1000
+covered_lines_con   = covered_lines_con + 2000
+all_lines_con       = all_lines_con + 2000
+
+covered_lines = np.concatenate([covered_lines_env, covered_lines_con])
+all_lines = np.concatenate([all_lines_env, all_lines_con])
+
+covered_lines_set = set(covered_lines)
+all_lines_set = set(all_lines)
+
+uncovered_lines_set = all_lines_set - covered_lines_set
+
+print("Total covered lines: {}".format(len(covered_lines_set)))
+print("Total uncovered lines: {}".format(len(uncovered_lines_set)))
+print("Total lines: {}".format(len(all_lines_set)))
+
+# Compute the coverage
+coverage = len(covered_lines_set) / len(all_lines_set)
+print("Coveraged: {}".format(coverage))
+print("-----------------------------")
+
+f = open(code_coverage_save_name, "w")
+f.write("Lines covered: {}\n".format(sorted(list(covered_lines_set))))
+f.write("Total lines covered: {}\n".format(len(list(covered_lines_set))))
+f.write("-----------------------------\n")
+f.write("All Lines: {}\n".format(sorted(list(all_lines_set))))
+f.write("Total Lines: {}\n".format(len(list(all_lines_set))))
+f.write("-----------------------------\n")
+f.write("Lines not covered: {}\n".format(sorted(list(uncovered_lines_set))))
+f.write("Total lines not covered: {}\n".format(len(list(uncovered_lines_set))))
+f.write("-----------------------------\n")
+f.write("Total physical crashes: {}\n".format(total_physical_accidents))
+f.close()
 
 env.close()
 text_file.close()

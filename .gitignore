@@ -25,6 +25,8 @@ output/
 logs/
 *.npy
 *.pkl
+tmp1/
+tmp2/
 
 .DS_Store
 

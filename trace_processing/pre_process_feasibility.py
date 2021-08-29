@@ -21,7 +21,56 @@ from general.environment_configurations import HighwayKinematics
 
 from pre_process_functions import processFileFeasibility
 
-def handler(file_name, new_steering_angle, new_max_distance, new_accuracy):
+def beamng_handler(beam, new_steering_angle, new_max_distance, new_accuracy):
+
+    # Compute the new_total_lines
+    new_total_lines = int(beam)
+
+    # Compute all vectors
+    feasible_vectors = set()
+    tmp_vec = np.full(new_total_lines, new_max_distance)
+    while tmp_vec[-1] >= new_accuracy:
+        # Add the current vector
+        feasible_vectors.add(tuple(tmp_vec))
+
+        # Remove the value from the first position
+        tmp_vec[0] -= new_accuracy
+
+        # make sure it doesn't go below new_accuracy
+        for i in range(len(tmp_vec) - 1):
+            if tmp_vec[i] < new_accuracy:
+                tmp_vec[i] = new_max_distance
+                tmp_vec[i+1] -= new_accuracy
+
+    # Get a list of all vectors
+    feasible_vectors = np.array(list(feasible_vectors))
+    total_feasible_vectors = np.shape(feasible_vectors)[0]
+
+    # All vectors are feasible
+    total_all_vectors = total_feasible_vectors
+
+    per = round((total_feasible_vectors/total_all_vectors) * 100, 4)
+
+    print("----------------------------------")
+    print("-----Beam Number {} Complete------".format(new_total_lines))
+    print("----------------------------------")
+    print("Determining Percentage Feasible")
+    print("Total feasible vectors: {}".format(total_feasible_vectors))
+    print("Total possible vectors: {}".format(total_feasible_vectors))
+    print("Percentage of feasible space {}% ".format(per))
+
+    save_path = '../output/beamng/feasibility/processed/'
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+
+    save_location = save_path + "FeasibleVectors_b{}.npy".format(new_total_lines)
+    print("Saving to: {}".format(save_location))
+    print("\n\n")
+    np.save(save_location, feasible_vectors)
+    
+    return True
+
+def highway_handler(file_name, new_steering_angle, new_max_distance, new_accuracy):
 
     # Compute the new_total_lines
     beams = file_name[file_name.rfind('s')+1:file_name.rfind('.')]
@@ -80,12 +129,6 @@ def handler(file_name, new_steering_angle, new_max_distance, new_accuracy):
 
     per = round((total_feasible_vectors/total_all_vectors) * 100, 4)
 
-    # Save this to the final table
-    table_tfv.append(total_feasible_vectors)
-    table_tpv.append(total_all_vectors)
-    table_percentage.append(per)
-    table_beam.append(new_total_lines)
-
     print("----------------------------------")
     print("-----Beam Number {} Complete------".format(new_total_lines))
     print("----------------------------------")
@@ -95,10 +138,11 @@ def handler(file_name, new_steering_angle, new_max_distance, new_accuracy):
     print("Total possible vectors: {}".format(total_all_vectors))
     print("Percentage of feasible space {}% ".format(per))
 
-    if not os.path.exists('../output/feasibility/processed/'):
-        os.makedirs('../output/feasibility/processed/')
+    save_path = '../output/highway/feasibility/processed/'
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
 
-    save_location = "../output/feasibility/processed/FeasibleVectors_b{}.npy".format(new_total_lines)
+    save_location = save_path + "FeasibleVectors_b{}.npy".format(new_total_lines)
     print("Saving to: {}".format(save_location))
     print("\n\n")
     np.save(save_location, feasible_vectors)
@@ -137,39 +181,36 @@ table_tpv = []
 table_percentage = []
 table_beam = []
 
-file_names = glob.glob("../../PhysicalCoverageData/highway/feasibility/raw/feasible_vectors*.txt")
-file_names.sort()
-
-print("Files found: {}".format(file_names))
-
+# Create the pool of processors
 total_processors = int(args.cores)
 pool =  multiprocessing.Pool(processes=total_processors)
 
-# Call our function total_test_suites times
-jobs = []
-for file_name in file_names:
-    jobs.append(pool.apply_async(handler, args=([file_name, new_steering_angle, new_max_distance, new_accuracy])))
+# Handle highway
+if args.scenario == "highway":
+    file_names = glob.glob("../../PhysicalCoverageData/highway/feasibility/raw/feasible_vectors*.txt")
+    file_names.sort()
+
+    print("Files found: {}".format(file_names))
+
+    # Call our function total_test_suites times
+    jobs = []
+    for file_name in file_names:
+        jobs.append(pool.apply_async(highway_handler, args=([file_name, new_steering_angle, new_max_distance, new_accuracy])))
+
+# Handle beamng
+if args.scenario == "beamng":
+    # Call our function for each beam
+    beams = [1,2,3,4,5,6]
+    jobs = []
+    for beam in beams:
+        jobs.append(pool.apply_async(beamng_handler, args=([beam, new_steering_angle, new_max_distance, new_accuracy])))
+
 
 # Get the results
 results = []
 for job in tqdm(jobs):
     results.append(job.get())
 
-print("----------------------------------")
-print("----------Final Results-----------")
-print("----------------------------------")
-print("\n\n")
+print("Complete")
 
-# Create the tabulated data
-headings = ['Beam Count', 'Total Possible Vectors', 'Total Feasible Vectors', 'Percentage of Feasible Vectors']
-rows = []
-for i in range(len(table_beam)):
-    beam = table_beam[i]
-    tfv = table_tfv[i]
-    tpv = table_tpv[i]
-    per = table_percentage[i]
-
-    r = [beam, tpv, tfv, per]
-    rows.append(r)
-    
-print(tabulate(rows, headers=headings))
+pool.close()

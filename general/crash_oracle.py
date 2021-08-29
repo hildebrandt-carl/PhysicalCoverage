@@ -15,4 +15,4 @@ def hash_crash(crash_ego_magnitude=None, crash_veh_magnitude=None, crash_inciden
 
 class CrashOracle:
     def __init__(self):
-        self.max_possible_crashes = 30 
+        self.max_possible_crashes = 250 

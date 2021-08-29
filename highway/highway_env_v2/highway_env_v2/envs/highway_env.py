@@ -142,6 +142,15 @@ class HighwayEnv(AbstractEnv):
         """The cost signal is the occurrence of collision."""
         return float(self.vehicle.crashed)
 
+    def get_lines_covered(self):
+        coverage = self.controlled_vehicles[0].code_coverage
+        all_lines = np.arange(len(coverage))
+        covered_lines = []
+        for i in range(len(coverage)):
+            if coverage[i] == 1:
+                covered_lines.append(i)
+        covered_lines = np.array(covered_lines)
+        return covered_lines, all_lines
 
 register(
     id='highway-v0',

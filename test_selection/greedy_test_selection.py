@@ -69,8 +69,9 @@ def random_select(number_of_tests):
     # Compute the coverage and the crash percentage
     coverage_percentage = float(len(seen_RSR_set)) / len(feasible_RSR_set)
     crash_percentage =  float(len(seen_crash_set)) / len(unique_crashes_set)
+    crashes_found = len(seen_crash_set)
 
-    return [coverage_percentage, crash_percentage, number_of_tests]
+    return [coverage_percentage, crashes_found, number_of_tests]
 
 
 def coverage_computation(index, seen_RSR_set):
@@ -86,9 +87,10 @@ def coverage_computation(index, seen_RSR_set):
 
     # Get the new coverage
     coverage_set = (seen_RSR_set | current_RSR)
-    coverage_percentage = float(len(coverage_set)) / len(feasible_RSR_set)
+    # coverage_percentage = float(len(coverage_set)) / len(feasible_RSR_set)
+    crash_count = len(coverage_set)
 
-    return [coverage_set, coverage_percentage, index]
+    return [coverage_set, crash_count, index]
 
 # Used to generated a random selection of tests
 def greedy_select(test_suit_size, selection_type, greedy_sample_size):
@@ -147,9 +149,10 @@ def greedy_select(test_suit_size, selection_type, greedy_sample_size):
 
     # Compute the coverage and the crash percentage
     coverage_percentage = float(len(seen_RSR_set)) / len(feasible_RSR_set)
-    crash_percentage =  float(len(seen_crash_set)) / len(unique_crashes_set)
+    # crash_percentage =  float(len(seen_crash_set)) / len(unique_crashes_set)
+    crash_count = len(seen_crash_set)
 
-    return [coverage_percentage, crash_percentage, test_suit_size]
+    return [coverage_percentage, crash_count, test_suit_size]
 
 
 # multiple core
@@ -172,10 +175,10 @@ def greedy_selection(cores, test_suite_sizes, selection_type, greedy_sample_size
     results = np.array(results)
     results = np.transpose(results)
     greedy_coverage_percentages = results[0, :]
-    greedy_crash_percentages    = results[1, :]
+    greedy_crash_count          = results[1, :]
     result_test_suit_size       = results[2, :]
 
-    return greedy_coverage_percentages, greedy_crash_percentages, result_test_suit_size
+    return greedy_coverage_percentages, greedy_crash_count, result_test_suit_size
 
 
 # multiple core
@@ -198,16 +201,16 @@ def random_selection(cores, test_suite_sizes):
     results = np.array(results)
     results = np.transpose(results)
     random_coverage_percentages = results[0, :]
-    random_crash_percentages    = results[1, :]
+    random_crash_count          = results[1, :]
     result_test_suit_size       = results[2, :]
 
-    return random_coverage_percentages, random_crash_percentages, result_test_suit_size
+    return random_coverage_percentages, random_crash_count, result_test_suit_size
 
 
 # Use the tests_per_test_suite
 def determine_test_suit_sizes(total_samples):
-    increment = 0.01
-    test_suit_size_percentage = np.arange(increment, 1.000001, increment)
+    increment = 0.001
+    test_suit_size_percentage = np.arange(increment, 0.100001, increment)
     test_suit_sizes = test_suit_size_percentage * total_samples
     return test_suit_sizes
 
@@ -297,27 +300,27 @@ plt.figure(1)
 
 # For each of the different beams
 print("Generating random tests")
-random_coverage_percentages, random_crash_percentages, random_test_suit_size = random_selection(args.cores, test_suit_sizes)
-plt.scatter(random_test_suit_size, random_crash_percentages, c="C0", label="Random", s=3)
-x_line, y_line = line_of_best_fit(random_test_suit_size, random_crash_percentages)
+random_coverage_percentages, random_crash_count, random_test_suit_size = random_selection(args.cores, test_suit_sizes)
+plt.scatter(random_test_suit_size, random_crash_count, c="C0", label="Random", s=5)
+x_line, y_line = line_of_best_fit(random_test_suit_size, random_crash_count)
 plt.plot(x_line, y_line, '--', color="C0")
 
 print("Generating best case greedy tests")
-best_coverage_percentages, best_crash_percentages, best_test_suit_size = greedy_selection(args.cores, test_suit_sizes, "max", greedy_sample_size)
-plt.scatter(best_test_suit_size, best_crash_percentages, c="C1", s=3, label="Greedy Best")
-x_line, y_line = line_of_best_fit(best_test_suit_size, best_crash_percentages)
+best_coverage_percentages, best_crash_count, best_test_suit_size = greedy_selection(args.cores, test_suit_sizes, "max", greedy_sample_size)
+plt.scatter(best_test_suit_size, best_crash_count, c="C1", s=5, label="Greedy Best")
+x_line, y_line = line_of_best_fit(best_test_suit_size, best_crash_count)
 plt.plot(x_line, y_line, '--', color="C1")
 
 print("Generating worst case greedy tests")
-worst_coverage_percentages, worst_crash_percentages, worst_test_suit_size = greedy_selection(args.cores, test_suit_sizes, "min", greedy_sample_size)
-plt.scatter(worst_test_suit_size, worst_crash_percentages, c="C2", s=3, label="Greedy Worst")
-x_line, y_line = line_of_best_fit(worst_test_suit_size, worst_crash_percentages)
+worst_coverage_percentages, worst_crash_count, worst_test_suit_size = greedy_selection(args.cores, test_suit_sizes, "min", greedy_sample_size)
+plt.scatter(worst_test_suit_size, worst_crash_count, c="C2", s=5, label="Greedy Worst")
+x_line, y_line = line_of_best_fit(worst_test_suit_size, worst_crash_count)
 plt.plot(x_line, y_line, '--', color="C2")
 
 plt.legend()
-plt.xticks(np.arange(0, args.total_samples+0.01,  args.total_samples/10))
-plt.yticks(np.arange(0, 1.01, 0.1))
-plt.ylabel("Crashes (%)")
-plt.xlabel("Test Suit Size")
-plt.grid()
+plt.xticks(np.arange(0, np.max(random_test_suit_size) + 0.01,  args.total_samples/100))
+plt.yticks(np.arange(0, np.max(best_crash_count) + 0.01, 50))
+plt.ylabel("Unique Crashes")
+plt.xlabel("Test Suite Size")
+plt.grid(alpha=0.5)
 plt.show()
