@@ -98,7 +98,7 @@ def coverage_on_random_test_suit(suit_size):
 # Determine the test sizes for this plot
 def determine_test_suit_sizes(total_tests):
     # We now need to sample tests of different sizes to create the plot
-    percentage_of_all_tests = np.arange(0,50.0001, 5)
+    percentage_of_all_tests = np.arange(0,100.0001, 10)
     percentage_of_all_tests[0] += 1
     test_sizes = []
 

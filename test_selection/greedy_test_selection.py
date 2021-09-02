@@ -272,7 +272,7 @@ feasible_file = feasible_file[0]
 
 # Get the test suit sizes
 test_suit_sizes = determine_test_suit_sizes(args.total_samples)
-greedy_sample_size = 10
+greedy_sample_size = 100
 
 # Load the traces
 global traces
@@ -317,9 +317,14 @@ plt.scatter(worst_test_suit_size, worst_crash_count, c="C2", s=5, label="Greedy 
 x_line, y_line = line_of_best_fit(worst_test_suit_size, worst_crash_count)
 plt.plot(x_line, y_line, '--', color="C2")
 
+if args.scenario == "highway":
+    increment = 50
+if args.scenario == "beamng":
+    increment = 5
+
 plt.legend()
 plt.xticks(np.arange(0, np.max(random_test_suit_size) + 0.01,  args.total_samples/100))
-plt.yticks(np.arange(0, np.max(best_crash_count) + 0.01, 50))
+plt.yticks(np.arange(0, np.max(best_crash_count) + 0.01, increment))
 plt.ylabel("Unique Crashes")
 plt.xlabel("Test Suite Size")
 plt.grid(alpha=0.5)

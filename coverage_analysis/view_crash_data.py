@@ -92,13 +92,6 @@ assert(unique_crash_count == len(unique_crash_data))
 print("Total crashes: {}".format(total_crash_count))
 print("Unique crashes: {}".format(unique_crash_count))
 
-# If its not ordered show where the number of external vehicles changed
-# if args.ordered:
-#     interval = int(np.round(crash_data.shape[0] / 10.0, 0))
-#     line_positions = np.arange(0, crash_data.shape[0] +0.1, interval)
-#     for l in line_positions:
-#         plt.axvline(x=l, color='red', linestyle='--')
-
 # Plot the data
 plt.plot(test_number, accumulative_total_crashes, linestyle="--", color='C0', label="All crashes")
 plt.plot(test_number, accumulative_unique_crashes, linestyle="-", color='C0', label="Unique crashes")

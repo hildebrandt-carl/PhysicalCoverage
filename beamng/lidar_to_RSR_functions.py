@@ -176,6 +176,7 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
         previous_time_stamp             = 0
         previous_ego_velocity           = np.array([0, 0, 0])
         previous_traffic_velocity       = np.array([0, 0, 0])
+        previous_total_crashes          = 0
 
         # Print the file
         for line in input_file:
@@ -205,8 +206,9 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
 
             # Check if there is a collision happening
             collision = False
-            if data["total_accidents"] > 1:
+            if data["total_accidents"] > previous_total_crashes:
                 data["collided"] = True
+                previous_total_crashes += 1
             else:
                 data["collided"] = False
 
@@ -230,14 +232,6 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
 
             # Change the lidar readings into the car frame
             data["lidar"] = data["lidar"] - data["position"]
-
-            # # Clean the lidar data and remove readings off the body of the car. This needs to be fixed int he simulator #TODO
-            # clean_lidar_data = []
-            # for d in data["lidar"]:
-            #     manhattan_dist = np.sum(np.abs(d))
-            #     if manhattan_dist > 2.5:
-            #         clean_lidar_data.append(d)
-            # data["lidar"] = np.array(clean_lidar_data)
 
             # Plot the data
             if plot:

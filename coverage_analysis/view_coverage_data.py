@@ -530,7 +530,7 @@ handles, labels = ax.get_legend_handles_labels()
 legend1 = ax.legend(flip(handles, num_cols), flip(labels, num_cols), loc='upper center', bbox_to_anchor=(0.5, 1.20), ncol=num_cols)
 
 # Place the second legend
-legend2 = ax.legend(["With Crashes", "Without Crashes"] , loc=0)
+legend2 = ax.legend(["With and Without Crashes", "Without Crashes"] , loc=0)
 
 # Set the labels and limits
 ax.set_xlabel("Test suit size")

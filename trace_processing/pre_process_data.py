@@ -70,7 +70,7 @@ if args.scenario == "beamng_random":
 elif args.scenario == "highway_random":
     all_files = glob.glob("../../PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*/*.txt")
 elif args.scenario == "highway_generated":
-    all_files = glob.glob("../../PhysicalCoverageData/highway/generated_tests/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
+    all_files = glob.glob("../../PhysicalCoverageData/highway/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
 else:
     exit()
 

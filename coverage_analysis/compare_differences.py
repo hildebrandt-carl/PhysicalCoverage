@@ -91,6 +91,11 @@ base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/c
 global code_coverage_file_names
 code_coverage_file_names = glob.glob(base_path + "*/*.txt")
 
+# Make sure we have enough samples
+assert(len(trace_file_names) > 1)
+assert(len(crash_file_names) > 1)
+assert(len(code_coverage_file_names) > 1)
+
 # Select args.total_samples total code coverage files
 code_coverage_file_names = sample(code_coverage_file_names, args.total_samples)
 
@@ -166,8 +171,6 @@ for i in range(len(beam_numbers)):
     # Its 8pm the pool is closed
     pool.close() 
 
-
-
 # Create the pool for parallel processing
 pool =  multiprocessing.Pool(processes=args.cores)
 jobs = []
@@ -207,90 +210,116 @@ final_results["CC"] = [coverage_hashes, crash_numbers, crashing_tests, non_crash
 pool.close() 
 
 # Create the output table
-x = PrettyTable()
-x.field_names = ["Coverage Type", "# Unique", "# Not Unique", "# Same Cov, Same Out", "# Same Cov, Diff Out", "# None Crashing Tests", "# Crashing Tests", "# Crashes", "# Tests"]
+t = PrettyTable()
+t.field_names = ["Coverage Type", "T" , "P T", "F T", "Unique T", "Not Unique T", "Unique P T", "Unique F T", "Not Unique P T", "Not Unique F T"]
+s = PrettyTable()
+s.field_names = ["Coverage Type", "S", "Unique S", "Not Unique S", "Unique S P", "Unique S F", "Not Unique S All P", "Not Unique S All F", "Not Unique S PF"]
 
 # Print the results out
-for key in final_results:
-    same_cov_diff_output_count = 0
-    same_cov_same_output_count = 0
+for key in sorted(final_results):
 
     print("Processing: {}".format(key))
 
     # Get the data
     data = final_results[key]
     coverage_hashes = np.array(data[0]).reshape(-1)
-    crash_numbers = np.array(data[1]).reshape(-1)
+    crash_results = np.array(data[1]).reshape(-1)
     crashing_tests = int(data[2])
     non_crashing_tests = int(data[3])
     crash_count = int(data[4])
 
-    # Used to keep track of which signatures I have already checked
-    not_unique = set()
-    not_unique_count = 0
-    
     debug_count = 0
 
-    # Find the percentage of unique coverage signatures
-    unique_signatures = set()
-    for i in range(len(coverage_hashes)):
-        # Get the coverage signature, and crash number
-        cov = coverage_hashes[i]
-        out = crash_numbers[i]
-        # See if the crash signature is unique
-        if cov not in unique_signatures:
-            unique_signatures.add(cov)
+    # Find the unique crashes
+    unique_values, unique_indexes, counts = np.unique(coverage_hashes, return_inverse=True, return_counts=True)
 
-        # For the ones that aren't unique, determine if the have the same of different output
+    # Count the number of unique and not unique values
+    total_unique_tests = len(unique_values[counts == 1])
+    total_non_unique_tests = np.sum(counts[counts > 1])
+    total_non_unique_signatures = len(unique_values[counts > 1])
+
+    total_signatures = len(unique_values)
+    total_unique_signatures = np.sum(counts[counts == 1])
+
+    # Count the number of passing and failing and mixed results
+    not_unique_sig_all_passing_count = 0
+    not_unique_sig_all_failing_count = 0
+    not_unique_sig_mixed_count = 0
+    unique_tests_failing = 0
+    unique_tests_passing = 0
+    not_unique_tests_failing = 0 
+    not_unique_tests_passing = 0
+    passing_test_count = 0
+    failing_test_count = 0
+
+    failing_test_count = np.sum(crash_results)
+    passing_test_count = len(crash_results) - np.sum(crash_results)
+
+    # For each of the values that aren't unique
+    for i in range(len(unique_values)):
+        test_outputs = crash_results[np.where(unique_indexes == i)]
+
+        # Number of failing tests
+        z_count = np.count_nonzero(test_outputs)
+
+        # If there is more than 1 output we know that it wasn't a unique coverage signature
+        if len(test_outputs) > 1:
+            
+            # Number of tests
+            t_count = len(test_outputs)
+
+            # Count all passing
+            if z_count == 0:
+                not_unique_sig_all_passing_count += 1
+                not_unique_tests_passing += len(test_outputs)
+
+            # Count all failing
+            elif z_count == t_count:
+                not_unique_sig_all_failing_count += 1
+                not_unique_tests_failing += len(test_outputs)
+
+            # Count mix
+            elif 0 < z_count < t_count:
+                not_unique_sig_mixed_count += 1
+                not_unique_tests_passing += len(test_outputs) - z_count
+                not_unique_tests_failing += z_count
+
+            # Else
+            else:
+                print("Error 1")
+                exit()
+
+        # We know this test is unique
         else:
-            not_unique_count += 1
-            if cov not in not_unique:
-                not_unique.add(cov)
-                # Find all the matches in the original data
-                index_matches = np.argwhere(coverage_hashes==cov).reshape(-1)
-                
-                # Get the output for these indices
-                matched_output = crash_numbers[index_matches]
 
-                # Find what the majority is (mostly 1's):
-                if np.sum(matched_output) >= (len(matched_output) / 2):
-                    # Find out how many are 1's
-                    same_cov_same_output_count += np.count_nonzero(matched_output)
-                    same_cov_diff_output_count += len(matched_output) - np.count_nonzero(matched_output)
-                # (mostly 0's)
-                else:
-                    # Find out how many are 0's
-                    same_cov_same_output_count += len(matched_output) - np.count_nonzero(matched_output)
-                    same_cov_diff_output_count += np.count_nonzero(matched_output)
+            z_count = np.count_nonzero(test_outputs)
 
-    # We need to add on the not unique values that were originally thought unique:
-    not_unique_count += len(not_unique)
-    # We need to remove the non_unique_signatures that were originally thought unique
-    unique_signatures = unique_signatures - not_unique
+            if z_count == 0:
+                unique_tests_passing += 1
+            elif z_count == 1:
+                unique_tests_failing += 1
+
+            # Else
+            else:
+                print("Error 2")
+                exit()
 
     # Check your math son
-    assert(not_unique_count + len(unique_signatures) == args.total_samples)
+    assert(total_unique_tests + total_non_unique_tests == args.total_samples)
+    assert(not_unique_sig_all_passing_count + not_unique_sig_all_failing_count + not_unique_sig_mixed_count == total_non_unique_signatures)
 
     # Print the output
-    print("Not unique: {}".format(not_unique_count))
-    print("Unique: {}".format(len(unique_signatures)))
-    print("same_cov_same_output_count: {}".format(same_cov_same_output_count))
-    print("same_cov_diff_output_count: {}".format(same_cov_diff_output_count))
+    print("Not unique: {}".format(total_unique_tests))
+    print("Unique: {}".format(total_non_unique_tests))
     
-    # Check the math holds out
-    total_tests = len(unique_signatures) + same_cov_same_output_count + same_cov_diff_output_count
-    print("Non Crashing Tests: {}".format(total_tests))
-    print("Crashing Tests: {}".format(total_tests))
-    print("total_tests: {}".format(total_tests))
-    print('--------')
+    t.add_row([key, args.total_samples, passing_test_count, failing_test_count, total_unique_tests, total_non_unique_tests, unique_tests_passing, unique_tests_failing, not_unique_tests_passing, not_unique_tests_failing])
+    s.add_row([key, total_signatures, total_unique_signatures, total_non_unique_signatures, unique_tests_passing, unique_tests_failing, not_unique_sig_all_passing_count, not_unique_sig_all_failing_count, not_unique_sig_mixed_count])
 
-    crashing_tests = int(data[2])
-    non_crashing_tests = int(data[3])
-    crash_count = int(data[4])
-
-    x.add_row([key, len(unique_signatures), not_unique_count, same_cov_same_output_count, same_cov_diff_output_count, non_crashing_tests, crashing_tests, crash_count, args.total_samples])
 
 # Display the table
 print("\n\n\n")
 print("Note: The code coverage will only match the RSR values if you are using the whole test set, as the random samples were selected at different times")
-print(x)
+print("Tests")
+print(t)
+print("Signatures")
+print(s)
