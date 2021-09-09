@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from general.environment_configurations import RSRConfig
+from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
 from general.crash_oracle import CrashOracle
@@ -35,17 +36,27 @@ args = parser.parse_args()
 
 # Create the configuration classes
 HK = HighwayKinematics()
+NG = BeamNGKinematics()
 RSR = RSRConfig(beam_count = args.beam_count)
-CO = CrashOracle()
+CO = CrashOracle(scenario=args.scenario)
 
 # Save the kinematics and RSR parameters
-new_steering_angle  = HK.steering_angle
-new_max_distance    = HK.max_velocity
-new_total_lines     = RSR.beam_count
-new_accuracy        = RSR.accuracy
+new_total_lines         = RSR.beam_count
+new_accuracy            = RSR.accuracy
+
+if args.scenario == "highway_random":
+    new_steering_angle  = HK.steering_angle
+    new_max_distance    = HK.max_velocity
+elif args.scenario == "beamng_random":
+    new_steering_angle  = NG.steering_angle
+    new_max_distance    = NG.max_velocity
+else:
+    print("ERROR: Unknown scenario")
+    exit()
 
 # Get the total number of possible crashes per test
 max_crashes_per_test = CO.max_possible_crashes
+crash_base           = CO.base
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
@@ -169,7 +180,7 @@ for i in tqdm(range(total_files)):
 
     # Process the file
     f = open(file_name, "r")    
-    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_crashes_per_test, True)
+    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_crashes_per_test, crash_base, True)
     f.close()
 
     reach_vectors[i]        = test_vectors

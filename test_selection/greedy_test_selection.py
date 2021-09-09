@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from general.environment_configurations import RSRConfig
+from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
 from scipy.optimize import curve_fit
@@ -73,7 +74,6 @@ def random_select(number_of_tests):
 
     return [coverage_percentage, crashes_found, number_of_tests]
 
-
 def coverage_computation(index, seen_RSR_set):
     global traces
 
@@ -93,7 +93,7 @@ def coverage_computation(index, seen_RSR_set):
     return [coverage_set, crash_count, index]
 
 # Used to generated a random selection of tests
-def greedy_select(test_suit_size, selection_type, greedy_sample_size):
+def greedy_select(test_suite_size, selection_type, greedy_sample_size):
     global traces
     global crashes
     global feasible_RSR_set
@@ -106,8 +106,8 @@ def greedy_select(test_suit_size, selection_type, greedy_sample_size):
     seen_RSR_set = set()
     seen_crash_set = set()
 
-    # For each of the tests in the test suit
-    for _ in range(test_suit_size):
+    # For each of the tests in the test suite
+    for _ in range(test_suite_size):
 
         # Randomly select greedy_sample_size traces
         local_state = np.random.RandomState()
@@ -152,8 +152,7 @@ def greedy_select(test_suit_size, selection_type, greedy_sample_size):
     # crash_percentage =  float(len(seen_crash_set)) / len(unique_crashes_set)
     crash_count = len(seen_crash_set)
 
-    return [coverage_percentage, crash_count, test_suit_size]
-
+    return [coverage_percentage, crash_count, test_suite_size]
 
 # multiple core
 def greedy_selection(cores, test_suite_sizes, selection_type, greedy_sample_size):
@@ -162,8 +161,8 @@ def greedy_selection(cores, test_suite_sizes, selection_type, greedy_sample_size
     # Call our function total_test_suits times
     jobs = []
     for s in test_suite_sizes:
-        test_suit_size = int(np.round(s, 0))
-        jobs.append(pool.apply_async(greedy_select, args=([test_suit_size, selection_type, greedy_sample_size])))
+        test_suite_size = int(np.round(s, 0))
+        jobs.append(pool.apply_async(greedy_select, args=([test_suite_size, selection_type, greedy_sample_size])))
     # Get the results
     results = []
     for job in tqdm(jobs):
@@ -176,10 +175,9 @@ def greedy_selection(cores, test_suite_sizes, selection_type, greedy_sample_size
     results = np.transpose(results)
     greedy_coverage_percentages = results[0, :]
     greedy_crash_count          = results[1, :]
-    result_test_suit_size       = results[2, :]
+    result_test_suite_size       = results[2, :]
 
-    return greedy_coverage_percentages, greedy_crash_count, result_test_suit_size
-
+    return greedy_coverage_percentages, greedy_crash_count, result_test_suite_size
 
 # multiple core
 def random_selection(cores, test_suite_sizes):
@@ -188,8 +186,8 @@ def random_selection(cores, test_suite_sizes):
     # Call our function total_test_suits times
     jobs = []
     for s in test_suite_sizes:
-        test_suit_size = int(np.round(s, 0))
-        jobs.append(pool.apply_async(random_select, args=([test_suit_size])))
+        test_suite_size = int(np.round(s, 0))
+        jobs.append(pool.apply_async(random_select, args=([test_suite_size])))
     # Get the results
     results = []
     for job in tqdm(jobs):
@@ -202,17 +200,16 @@ def random_selection(cores, test_suite_sizes):
     results = np.transpose(results)
     random_coverage_percentages = results[0, :]
     random_crash_count          = results[1, :]
-    result_test_suit_size       = results[2, :]
+    result_test_suite_size       = results[2, :]
 
-    return random_coverage_percentages, random_crash_count, result_test_suit_size
-
+    return random_coverage_percentages, random_crash_count, result_test_suite_size
 
 # Use the tests_per_test_suite
-def determine_test_suit_sizes(total_samples):
+def determine_test_suite_sizes(total_samples):
     increment = 0.001
-    test_suit_size_percentage = np.arange(increment, 0.100001, increment)
-    test_suit_sizes = test_suit_size_percentage * total_samples
-    return test_suit_sizes
+    test_suite_size_percentage = np.arange(increment, 0.100001, increment)
+    test_suite_sizes = test_suite_size_percentage * total_samples
+    return test_suite_sizes
 
 
 parser = argparse.ArgumentParser()
@@ -224,12 +221,20 @@ args = parser.parse_args()
 
 # Create the configuration classes
 HK = HighwayKinematics()
+NG = BeamNGKinematics()
 RSR = RSRConfig()
 
 # Save the kinematics and RSR parameters
-new_steering_angle  = HK.steering_angle
-new_max_distance    = HK.max_velocity
-new_accuracy        = RSR.accuracy
+new_accuracy = RSR.accuracy
+if args.scenario == "highway":
+    new_steering_angle  = HK.steering_angle
+    new_max_distance    = HK.max_velocity
+elif args.scenario == "beamng":
+    new_steering_angle  = NG.steering_angle
+    new_max_distance    = NG.max_velocity
+else:
+    print("ERROR: Unknown scenario")
+    exit()
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
@@ -270,8 +275,8 @@ trace_file = trace_file[0]
 crash_file = crash_file[0]
 feasible_file = feasible_file[0]
 
-# Get the test suit sizes
-test_suit_sizes = determine_test_suit_sizes(args.total_samples)
+# Get the test suite sizes
+test_suite_sizes = determine_test_suite_sizes(args.total_samples)
 greedy_sample_size = 100
 
 # Load the traces
@@ -300,21 +305,21 @@ plt.figure(1)
 
 # For each of the different beams
 print("Generating random tests")
-random_coverage_percentages, random_crash_count, random_test_suit_size = random_selection(args.cores, test_suit_sizes)
-plt.scatter(random_test_suit_size, random_crash_count, c="C0", label="Random", s=5)
-x_line, y_line = line_of_best_fit(random_test_suit_size, random_crash_count)
+random_coverage_percentages, random_crash_count, random_test_suite_size = random_selection(args.cores, test_suite_sizes)
+plt.scatter(random_test_suite_size, random_crash_count, c="C0", label="Random", s=5)
+x_line, y_line = line_of_best_fit(random_test_suite_size, random_crash_count)
 plt.plot(x_line, y_line, '--', color="C0")
 
 print("Generating best case greedy tests")
-best_coverage_percentages, best_crash_count, best_test_suit_size = greedy_selection(args.cores, test_suit_sizes, "max", greedy_sample_size)
-plt.scatter(best_test_suit_size, best_crash_count, c="C1", s=5, label="Greedy Best")
-x_line, y_line = line_of_best_fit(best_test_suit_size, best_crash_count)
+best_coverage_percentages, best_crash_count, best_test_suite_size = greedy_selection(args.cores, test_suite_sizes, "max", greedy_sample_size)
+plt.scatter(best_test_suite_size, best_crash_count, c="C1", s=5, label="Greedy Best")
+x_line, y_line = line_of_best_fit(best_test_suite_size, best_crash_count)
 plt.plot(x_line, y_line, '--', color="C1")
 
 print("Generating worst case greedy tests")
-worst_coverage_percentages, worst_crash_count, worst_test_suit_size = greedy_selection(args.cores, test_suit_sizes, "min", greedy_sample_size)
-plt.scatter(worst_test_suit_size, worst_crash_count, c="C2", s=5, label="Greedy Worst")
-x_line, y_line = line_of_best_fit(worst_test_suit_size, worst_crash_count)
+worst_coverage_percentages, worst_crash_count, worst_test_suite_size = greedy_selection(args.cores, test_suite_sizes, "min", greedy_sample_size)
+plt.scatter(worst_test_suite_size, worst_crash_count, c="C2", s=5, label="Greedy Worst")
+x_line, y_line = line_of_best_fit(worst_test_suite_size, worst_crash_count)
 plt.plot(x_line, y_line, '--', color="C2")
 
 if args.scenario == "highway":
@@ -323,7 +328,7 @@ if args.scenario == "beamng":
     increment = 5
 
 plt.legend()
-plt.xticks(np.arange(0, np.max(random_test_suit_size) + 0.01,  args.total_samples/100))
+plt.xticks(np.arange(0, np.max(random_test_suite_size) + 0.01,  args.total_samples/100))
 plt.yticks(np.arange(0, np.max(best_crash_count) + 0.01, increment))
 plt.ylabel("Unique Crashes")
 plt.xlabel("Test Suite Size")

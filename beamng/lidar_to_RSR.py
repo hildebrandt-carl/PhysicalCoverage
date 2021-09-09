@@ -1,23 +1,37 @@
 import os
 import re
+import sys
 import glob
 import argparse
 import multiprocessing
 
 import matplotlib.pyplot as plt
 
+from pathlib import Path
+current_file = Path(__file__)
+path = str(current_file.absolute())
+base_directory = str(path[:path.rfind("/beamng")])
+sys.path.append(base_directory)
+
 from tqdm import tqdm
 from lidar_to_RSR_functions import process_file
+
+from general.environment_configurations import RSRConfig
+from general.environment_configurations import BeamNGKinematics
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--cores',          type=int, default=120,    help="number of available cores")
 parser.add_argument('--plot',            action='store_true')
 args = parser.parse_args()
 
-# Variables - Used for timing
-total_lines     = 30
-steering_angle  = 33
-max_distance    = 45
+# Create the configuration classes
+NG = BeamNGKinematics()
+RSR = RSRConfig(beam_count = 30)
+
+# Save the kinematics and RSR parameters
+steering_angle  = NG.steering_angle
+max_distance    = NG.max_velocity
+total_lines     = RSR.beam_count
 
 raw_file_location       = "../../PhysicalCoverageData/beamng/random_tests/physical_coverage/lidar/"
 output_file_location    = "../output/beamng/random_tests/physical_coverage/raw/"

@@ -17,6 +17,7 @@ sys.path.append(base_directory)
 from tqdm import tqdm
 from tabulate import tabulate
 from general.environment_configurations import RSRConfig
+from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
 from pre_process_functions import processFileFeasibility
@@ -156,12 +157,20 @@ args = parser.parse_args()
 
 # Create the configuration classes
 HK = HighwayKinematics()
+NG = BeamNGKinematics()
 RSR = RSRConfig()
 
 # Save the kinematics and RSR parameters
-new_steering_angle  = HK.steering_angle
-new_max_distance    = HK.max_velocity
-new_accuracy        = RSR.accuracy
+new_accuracy            = RSR.accuracy
+if args.scenario == "highway":
+    new_steering_angle  = HK.steering_angle
+    new_max_distance    = HK.max_velocity
+elif args.scenario == "beamng":
+    new_steering_angle  = NG.steering_angle
+    new_max_distance    = NG.max_velocity
+else:
+    print("ERROR: Unknown scenario")
+    exit()
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
@@ -200,7 +209,7 @@ if args.scenario == "highway":
 # Handle beamng
 if args.scenario == "beamng":
     # Call our function for each beam
-    beams = [1,2,3,4,5,6]
+    beams = [1,2,3,4,5,6,7,8,9]
     jobs = []
     for beam in beams:
         jobs.append(pool.apply_async(beamng_handler, args=([beam, new_steering_angle, new_max_distance, new_accuracy])))

@@ -21,7 +21,7 @@ class ControlledVehicle(Vehicle):
 
     TAU_A = 0.6  # [s]
     TAU_DS = 0.2  # [s]
-    PURSUIT_TAU = 0.5*TAU_DS  # [s]
+    PURsuite_TAU = 0.5*TAU_DS  # [s]
     KP_A = 1 / TAU_A
     KP_HEADING = 1 / TAU_DS
     KP_LATERAL = 1/3 * KP_HEADING  # [1/s]
@@ -168,7 +168,7 @@ class ControlledVehicle(Vehicle):
         self.code_coverage[36] = 1
         lane_coords = target_lane.local_coordinates(self.position)
         self.code_coverage[37] = 1
-        lane_next_coords = lane_coords[0] + self.speed * self.PURSUIT_TAU
+        lane_next_coords = lane_coords[0] + self.speed * self.PURsuite_TAU
         self.code_coverage[38] = 1
         lane_future_heading = target_lane.heading_at(lane_next_coords)
 

@@ -19,14 +19,15 @@ sys.path.append(base_directory)
 from math import pi, atan2, degrees
 
 from general.reachset import ReachableSet
-from general.highway_config import RSRConfig
-from general.highway_config import HighwayKinematics
+
+from general.environment_configurations import RSRConfig
+from general.environment_configurations import HighwayKinematics
+
 from general.highway_config import HighwayEnvironmentConfig
 
 from controllers.tracker import Tracker
 from controllers.car_controller import EgoController
 from controllers.traffic_controller import TrafficController
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--test_name',      type=str, default="test",   help="The input and output name for the run")
@@ -36,7 +37,7 @@ parser.add_argument('--no_plot',        action='store_true')
 args = parser.parse_args()
 
 # Get the full file path
-test_path = "../../PhysicalCoverageData/highway/generated_tests/tests_single/{}/{}_beams/{}.npy".format(args.total_samples, args.total_beams, args.test_name)
+test_path = "../../PhysicalCoverageData/highway/generated_tests/tests_single/tests/{}/{}_beams/{}.npy".format(args.total_samples, args.total_beams, args.test_name)
 index_path = test_path[:test_path.rfind("_")] + "_index.npy"
 
 # Figure out how many beam this test was generated using
@@ -64,14 +65,16 @@ obstacle_size = 1
 environment_vehicles = total_lines
 
 # Create the output directory if it doesn't exists
-if not os.path.exists('../output/run_generated_scenarios/{}/{}_external_vehicles'.format(args.total_samples, environment_vehicles)):
-    os.makedirs('../output/run_generated_scenarios/{}/{}_external_vehicles'.format(args.total_samples, environment_vehicles))
+
+save_path = "../output/highway/generated_tests/tests_single/raw/{}/{}_external_vehicles".format(args.total_samples, environment_vehicles)
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
 
 # Create the save name
 save_name = args.test_name + "_" + str(datetime.datetime.now().time())
 
 # Save the output file
-text_file = open("../output/run_generated_scenarios/{}/{}_external_vehicles/{}.txt".format(args.total_samples, environment_vehicles, save_name), "w")
+text_file = open("{}/{}.txt".format(save_path, save_name), "w")
 text_file.write("Name: %s\n" % args.test_name)
 e = datetime.datetime.now()
 text_file.write("Date: %s/%s/%s\n" % (e.day, e.month, e.year))

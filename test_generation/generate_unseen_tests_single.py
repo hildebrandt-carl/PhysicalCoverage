@@ -22,6 +22,7 @@ from generate_unseen_tests_functions import create_image_representation
 from generate_unseen_tests_functions import save_unseen_data_to_file_single
 
 from general.environment_configurations import RSRConfig
+from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
 parser = argparse.ArgumentParser()
@@ -33,13 +34,22 @@ args = parser.parse_args()
 
 # Create the configuration classes
 HK = HighwayKinematics()
+NG = BeamNGKinematics()
 RSR = RSRConfig()
 
 # Save the kinematics and RSR parameters
-new_steering_angle  = HK.steering_angle
-new_max_distance    = HK.max_velocity
 new_accuracy        = RSR.accuracy
 new_total_lines     = "*"
+
+if args.scenario == "highway":
+    new_steering_angle  = HK.steering_angle
+    new_max_distance    = HK.max_velocity
+elif args.scenario == "beamng":
+    new_steering_angle  = NG.steering_angle
+    new_max_distance    = NG.max_velocity
+else:
+    print("ERROR: Unknown scenario")
+    exit()
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
@@ -117,9 +127,13 @@ print("\n\n\n--------------------------------------------------------")
 # Compute the unseen vectors
 final_data = compute_unseen_vectors(return_dict, args.maximum_unseen_vectors, new_max_distance, unique_values_per_beam, new_accuracy)
 
-# Plot the data
-for key in final_data:
+keys = final_data.keys()
+keys = list(keys)
+keys = sorted(keys)
 
+# Plot the data
+for key in keys:
+    print(key)
     # Get the seen and unseen data
     seen_data       = final_data[key]["seen"]
     unseen_data     = final_data[key]["unseen"]
@@ -136,7 +150,14 @@ for key in final_data:
     del unseen_data['Name']
 
     # Convert the unseen data to numpy data:
+    seen_data_np = seen_data.to_numpy()
     unseen_data_np = unseen_data.to_numpy()
+
+    print("seen_data Shape: {}".format(seen_data_np.shape))
+    print("unseen_data Shape: {}".format(unseen_data_np.shape))
+    print("total_lines: {}".format(total_lines))
+    print("max_distance: {}".format(max_distance))
+    print("steering_angle: {}".format(steering_angle))
 
     # Load the feasible trajectories
     fname = '../../PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/FeasibleVectors_b' + str(total_lines) + ".npy"
@@ -167,7 +188,7 @@ for key in final_data:
 
     # Save the data to a file
     print("\tSaving to data file")
-    tests_generated = save_unseen_data_to_file_single(unseen_data_np, segmented_lines, new_accuracy, args.total_samples, total_lines)
+    tests_generated = save_unseen_data_to_file_single(unseen_data_np, segmented_lines, new_accuracy, args.total_samples, total_lines, args.scenario)
     print("\tTotal tests generated: {}".format(tests_generated))
 
 plt.show()

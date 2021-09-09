@@ -25,16 +25,17 @@ from general_functions import get_beam_numbers
 from general_functions import get_ignored_code_coverage_lines
 
 from general.environment_configurations import RSRConfig
+from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
-# Get the coverage on a random test suit 
-def coverage_on_random_test_suit(suit_size):
+# Get the coverage on a random test suite 
+def coverage_on_random_test_suit(suite_size):
     global traces
     global feasible_RSR_set
 
-    # Randomly generate the indices for this test suit
+    # Randomly generate the indices for this test suite
     local_state = np.random.RandomState()
-    indices = local_state.choice(len(traces), suit_size, replace=False) 
+    indices = local_state.choice(len(traces), suite_size, replace=False) 
 
     # Used to compute the coverage for this trace
     Unique_RSR = set()
@@ -62,15 +63,15 @@ def coverage_on_random_test_suit(suit_size):
 
     return coverage
 
-# Get the coverage on a random test suit 
-def coverage_on_random_test_suit_no_crashes(suit_size):
+# Get the coverage on a random test suite 
+def coverage_on_random_test_suite_no_crashes(suite_size):
     global traces
     global crashes
     global feasible_RSR_set
 
-    # Randomly generate the indices for this test suit
+    # Randomly generate the indices for this test suite
     local_state = np.random.RandomState()
-    indices = local_state.choice(len(traces), (suit_size*2)-1, replace=False) 
+    indices = local_state.choice(len(traces), (suite_size*2)-1, replace=False) 
 
     # Used to compute the coverage for this trace
     Unique_RSR = set()
@@ -78,7 +79,7 @@ def coverage_on_random_test_suit_no_crashes(suit_size):
     # Go through each of the indices
     processed = 0
     counter = 0
-    while processed < suit_size:
+    while processed < suite_size:
         index = indices[counter]
         counter += 1
         # Get the trace
@@ -111,7 +112,7 @@ def coverage_on_random_test_suit_no_crashes(suit_size):
     return coverage
 
 # Determine the test sizes for this plot
-def determine_test_suit_sizes(total_tests):
+def determine_test_suite_sizes(total_tests):
     # We now need to sample tests of different sizes to create the plot
     percentage_of_all_tests = np.arange(0,50.0001, 5)
     percentage_of_all_tests[0] += 1
@@ -125,14 +126,14 @@ def determine_test_suit_sizes(total_tests):
 
     return test_sizes
 
-# Get the coverage on a random test suit 
-def code_coverage_on_random_test_suit(suit_size, job_number):
+# Get the coverage on a random test suite 
+def code_coverage_on_random_test_suit(suite_size, job_number):
     global code_coverage_file_names
     global ignored_lines
 
-    # Randomly select suit_size files:
+    # Randomly select suite_size files:
     local_state = np.random.RandomState()
-    indices = local_state.choice(len(code_coverage_file_names), suit_size, replace=False) 
+    indices = local_state.choice(len(code_coverage_file_names), suite_size, replace=False) 
 
     # Create the lines and random lines
     lines_coverage = set()
@@ -182,14 +183,14 @@ def code_coverage_on_random_test_suit(suit_size, job_number):
 
     return coverage
 
-# Get the coverage on a random test suit 
-def code_coverage_on_random_test_suit_no_crashes(suit_size, job_number):
+# Get the coverage on a random test suite 
+def code_coverage_on_random_test_suite_no_crashes(suite_size, job_number):
     global code_coverage_file_names
     global ignored_lines
 
-    # Randomly generate the indices for this test suit
+    # Randomly generate the indices for this test suite
     local_state = np.random.RandomState()
-    indices = local_state.choice(len(code_coverage_file_names), (suit_size*2)-1, replace=False) 
+    indices = local_state.choice(len(code_coverage_file_names), (suite_size*2)-1, replace=False) 
 
     # Create the lines and random lines
     lines_coverage = set()
@@ -198,7 +199,7 @@ def code_coverage_on_random_test_suit_no_crashes(suit_size, job_number):
     processed = 0
     counter = 0
     # For each file
-    while processed < suit_size:
+    while processed < suite_size:
 
         # Get the file
         index = indices[counter]
@@ -268,12 +269,20 @@ args = parser.parse_args()
 
 # Create the configuration classes
 HK = HighwayKinematics()
+NG = BeamNGKinematics()
 RSR = RSRConfig()
 
 # Save the kinematics and RSR parameters
-new_steering_angle  = HK.steering_angle
-new_max_distance    = HK.max_velocity
-new_accuracy        = RSR.accuracy
+new_accuracy = RSR.accuracy
+if args.scenario == "highway":
+    new_steering_angle  = HK.steering_angle
+    new_max_distance    = HK.max_velocity
+elif args.scenario == "beamng":
+    new_steering_angle  = NG.steering_angle
+    new_max_distance    = NG.max_velocity
+else:
+    print("ERROR: Unknown scenario")
+    exit()
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
@@ -332,8 +341,8 @@ trace_file_names = order_by_beam(trace_file_names, beam_numbers)
 crash_file_names = order_by_beam(crash_file_names, beam_numbers)
 feasible_file_names = order_by_beam(feasible_file_names, beam_numbers)
 
-# Get the test suit sizes
-test_suit_sizes = determine_test_suit_sizes(args.total_samples)
+# Get the test suite sizes
+test_suite_sizes = determine_test_suite_sizes(args.total_samples)
 
 # Create the output figure
 plt.figure(1)
@@ -397,9 +406,9 @@ for i in range(len(beam_numbers)):
     # Keep a list of all results
     all_results = []
     
-    # Go through each of the different test suit sizes
-    for suit_size in test_suit_sizes:
-        print("Processing test suit size: {}".format(suit_size))
+    # Go through each of the different test suite sizes
+    for suite_size in test_suite_sizes:
+        print("Processing test suite size: {}".format(suite_size))
 
         # Create the pool for parallel processing
         pool =  multiprocessing.Pool(processes=args.cores)
@@ -407,7 +416,7 @@ for i in range(len(beam_numbers)):
         # Call our function total_test_suites times
         jobs = []
         for _ in range(total_test_suits):
-            jobs.append(pool.apply_async(coverage_on_random_test_suit, args=([suit_size])))
+            jobs.append(pool.apply_async(coverage_on_random_test_suit, args=([suite_size])))
 
         # Get the results
         results = []
@@ -417,14 +426,14 @@ for i in range(len(beam_numbers)):
         # Its 8pm the pool is closed
         pool.close() 
 
-        # Get the average coverage for this test suit size
+        # Get the average coverage for this test suite size
         average_coverage.append(np.average(results))
 
         # Keep track of all the results
         all_results.append(np.average(results))
 
         # Plot the data
-        plt.scatter(np.full(len(results), suit_size), results, marker='o', c="C{}".format(i), s=0.5)
+        plt.scatter(np.full(len(results), suite_size), results, marker='o', c="C{}".format(i), s=0.5)
 
         # Create the pool for parallel processing
         pool =  multiprocessing.Pool(processes=args.cores)
@@ -432,7 +441,7 @@ for i in range(len(beam_numbers)):
         # Call our function total_test_suites times
         jobs = []
         for _ in range(total_test_suits):
-            jobs.append(pool.apply_async(coverage_on_random_test_suit_no_crashes, args=([suit_size])))
+            jobs.append(pool.apply_async(coverage_on_random_test_suite_no_crashes, args=([suite_size])))
 
         # Get the results
         results = []
@@ -442,21 +451,21 @@ for i in range(len(beam_numbers)):
         # Its 8pm the pool is closed
         pool.close() 
 
-        # Get the average coverage for this test suit size
+        # Get the average coverage for this test suite size
         average_coverage_no_crashes.append(np.average(results))
 
         # Plot the data
-        plt.scatter(np.full(len(results), suit_size), results, marker='*', c="C{}".format(i), s=0.5)
+        plt.scatter(np.full(len(results), suite_size), results, marker='*', c="C{}".format(i), s=0.5)
 
 
     # Save the results for correlation computation later
     all_coverage_data.append(all_results)
 
-    # Plot the average test suit coverage
-    plt.plot(test_suit_sizes, average_coverage, c="C{}".format(i), label="RSR{}".format(beam_number))
+    # Plot the average test suite coverage
+    plt.plot(test_suite_sizes, average_coverage, c="C{}".format(i), label="RSR{}".format(beam_number))
 
-    # Plot the average test suit coverage
-    plt.plot(test_suit_sizes, average_coverage_no_crashes, c="C{}".format(i), linestyle="--")
+    # Plot the average test suite coverage
+    plt.plot(test_suite_sizes, average_coverage_no_crashes, c="C{}".format(i), linestyle="--")
 
 # -----------------------------
 # Compute the code coverage
@@ -464,25 +473,25 @@ for i in range(len(beam_numbers)):
 print("Processing code coverage")
 average_code_coverage = []
 average_code_coverage_no_crashes = []
-for suit_size in test_suit_sizes:
-    print("Processing test suit size: {}".format(suit_size))
+for suite_size in test_suite_sizes:
+    print("Processing test suite size: {}".format(suite_size))
     # Create the pool for parallel processing
     pool =  multiprocessing.Pool(processes=args.cores)
 
     # Call our function total_test_suites times
     jobs = []
     for i in range(total_test_suits):
-        jobs.append(pool.apply_async(code_coverage_on_random_test_suit, args=([suit_size, i])))
+        jobs.append(pool.apply_async(code_coverage_on_random_test_suit, args=([suite_size, i])))
 
     # Get the results
     results = []
     for job in tqdm(jobs):
         results.append(job.get())
 
-    # Get the average code coverage for this test suit size
+    # Get the average code coverage for this test suite size
     average_code_coverage.append(np.average(results))
 
-    plt.scatter(np.full(len(results), suit_size), results, marker='o', c="black", s=0.5)
+    plt.scatter(np.full(len(results), suite_size), results, marker='o', c="black", s=0.5)
 
     # Its 8pm the pool is closed
     pool.close() 
@@ -493,26 +502,26 @@ for suit_size in test_suit_sizes:
     # Call our function total_test_suites times
     jobs = []
     for i in range(total_test_suits):
-        jobs.append(pool.apply_async(code_coverage_on_random_test_suit_no_crashes, args=([suit_size, i])))
+        jobs.append(pool.apply_async(code_coverage_on_random_test_suite_no_crashes, args=([suite_size, i])))
 
     # Get the results
     results = []
     for job in tqdm(jobs):
         results.append(job.get())
 
-    # Get the average code coverage for this test suit size
+    # Get the average code coverage for this test suite size
     average_code_coverage_no_crashes.append(np.average(results))
 
-    plt.scatter(np.full(len(results), suit_size), results, marker='*', c="black", s=0.5)
+    plt.scatter(np.full(len(results), suite_size), results, marker='*', c="black", s=0.5)
 
     # Its 8pm the pool is closed
     pool.close() 
 
-# Plot the average test suit coverage
-plt.plot(test_suit_sizes, average_code_coverage, c="black", label="CC")
+# Plot the average test suite coverage
+plt.plot(test_suite_sizes, average_code_coverage, c="black", label="CC")
 
-# Plot the average test suit coverage
-plt.plot(test_suit_sizes, average_code_coverage_no_crashes, c="black", linestyle="--")
+# Plot the average test suite coverage
+plt.plot(test_suite_sizes, average_code_coverage_no_crashes, c="black", linestyle="--")
 
 ax = plt.gca()
 
@@ -533,9 +542,10 @@ legend1 = ax.legend(flip(handles, num_cols), flip(labels, num_cols), loc='upper 
 legend2 = ax.legend(["With and Without Crashes", "Without Crashes"] , loc=0)
 
 # Set the labels and limits
-ax.set_xlabel("Test suit size")
+ax.set_xlabel("Test suite size")
 ax.set_ylabel("Coverage (%)")
 ax.set_ylim([-0.05, 1.05])
+
 
 # Readd legend 1 before showing
 plt.gca().add_artist(legend1)

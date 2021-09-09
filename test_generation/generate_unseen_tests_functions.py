@@ -342,7 +342,7 @@ def save_unseen_data_to_file(data, distance_tracker, segmented_lines, new_accura
 
     return counter + 1
 
-def save_unseen_data_to_file_single(data, segmented_lines, new_accuracy, total_samples, beams):
+def save_unseen_data_to_file_single(data, segmented_lines, new_accuracy, total_samples, beams, scenario):
 
     # Start each test with the max value vectors
     init_position = []
@@ -364,8 +364,10 @@ def save_unseen_data_to_file_single(data, segmented_lines, new_accuracy, total_s
     final_points.append(init_position)
     final_indices.append(np.full(beams, index * new_accuracy))
 
-    if not os.path.exists('../output/generated_tests/tests_single/{}/{}_beams'.format(total_samples, beams)):
-        os.makedirs('../output/generated_tests/tests_single/{}/{}_beams'.format(total_samples, beams))
+    save_path = '../output/{}/generated_tests/tests_single/tests/{}/{}_beams'.format(scenario, total_samples, beams)
+
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
 
     for i in range(len(data)):
         row = data[i]
@@ -384,8 +386,8 @@ def save_unseen_data_to_file_single(data, segmented_lines, new_accuracy, total_s
 
         final_indices.append(row)
         final_points.append(physical_row)
-        np.save("../output/generated_tests/tests_single/{}/{}_beams/test{}_points.npy".format(total_samples, beams, counter), final_points)
-        np.save("../output/generated_tests/tests_single/{}/{}_beams/test{}_index.npy".format(total_samples, beams, counter), final_indices)
+        np.save("{}/test{}_points.npy".format(save_path, counter), final_points)
+        np.save("{}/test{}_index.npy".format(save_path, counter), final_indices)
         final_points = []
         # Start the final points with the init data
         final_points.append(init_position)

@@ -19,9 +19,9 @@ base_directory = str(path[:path.rfind("/highway")])
 sys.path.append(base_directory)
 
 from general.reachset import ReachableSet
-from general.highway_config import RSRConfig
-from general.highway_config import HighwayKinematics
-from general.highway_config import HighwayEnvironmentConfig
+from general.environment_configurations import RSRConfig
+from general.environment_configurations import HighwayKinematics
+from general.environment_configurations import HighwayEnvironmentConfig
 
 from controllers.tracker import Tracker
 from controllers.car_controller import EgoController

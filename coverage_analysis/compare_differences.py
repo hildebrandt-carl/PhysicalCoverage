@@ -140,7 +140,7 @@ for i in range(len(beam_numbers)):
     pool =  multiprocessing.Pool(processes=args.cores)
     jobs = []
 
-    # Go through each of the different test suit sizes
+    # Go through each of the different test suite sizes
     for i in range(len(traces)):
         jobs.append(pool.apply_async(compute_physical_coverage_hash, args=([i])))
 
@@ -175,7 +175,7 @@ for i in range(len(beam_numbers)):
 pool =  multiprocessing.Pool(processes=args.cores)
 jobs = []
 
-# Go through each of the different test suit sizes
+# Go through each of the different test suite sizes
 print("Processing Code Coverage")
 
 for i in range(len(code_coverage_file_names)):
@@ -323,3 +323,23 @@ print("Tests")
 print(t)
 print("Signatures")
 print(s)
+
+print("Definitions of each field:")
+print("T: The total number of tests executed")
+print("P T: The total number of tests executed that were passing (no crashes)")
+print("F T: The total number of tests executed that were failing (crashes at least once)")
+print("Unique T: The total number of tests that have a unique signature (i.e. there is only 1 test with that signature)")
+print("Not Unique T: The total number of tests that have do not have a unique signature (i.e. there is more than 1 test with that signature)")
+print("Unique P T: The number of unique tests (The only test with that signature) that are passing")
+print("Unique F T: The number of unique tests (The only test with that signature) that are failing")
+print("Not Unique P T: The number of not unique tests (A test that shares a signature with at least 1 other test) that are passing")
+print("Not Unique F T: The number of not unique tests (A test that shares a signature with at least 1 other test) that are failing")
+
+print("S: The total number of signatures generated over all tests")
+print("Unique S: The total number of signatures that were only found by 1 test")
+print("Not Unique S: The total number of signautres that were found in 2 or more tests")
+print("Unique S P: Of the signatures that were only found by 1 tests, how many were passing tests")
+print("Unique S F: Of the signatures that were only found by 1 tests, how many were failing tests")
+print("Not Unique S All P: Of the signatures that were only found in 2 or more tests, how many of those signatures had all passing tests")
+print("Not Unique S All F: Of the signatures that were only found in 2 or more tests, how many of those signatures had all failing tests")
+print("Not Unique S PF: Of the signatures that were only found in 2 or more tests, how many of those signatures had both passing and failing tests")

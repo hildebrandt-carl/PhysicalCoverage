@@ -69,7 +69,7 @@ def getStep(vector, accuracy):
     return converted_vector
 
 
-def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_possible_crashes, ignore_crashes=False):
+def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_possible_crashes, base, ignore_crashes=False):
     test_vectors        = np.full((total_vectors, vector_size), np.inf, dtype='float64')
     collision_counter   = 0
     simulation_time     = ""
@@ -131,7 +131,7 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
         ego_magnitude = crash_ego_magnitudes[i]
         veh_magnitude = crash_veh_magnitudes[i]
         incident_angle = crash_incident_angles[i]
-        current_hash = hash_crash(ego_magnitude, veh_magnitude, incident_angle, base = 1)
+        current_hash = hash_crash(ego_magnitude, veh_magnitude, incident_angle, base=base)
         incident_hashes[0, i] = current_hash
 
     # Convert the simulated time to a float

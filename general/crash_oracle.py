@@ -3,7 +3,7 @@ import numpy as np
 def round_to_base(x, base):
     return base * round(x/base)
 
-def hash_crash(crash_ego_magnitude=None, crash_veh_magnitude=None, crash_incident_angle=None, base=5):
+def hash_crash(crash_ego_magnitude=None, crash_veh_magnitude=None, crash_incident_angle=None, base=1):
     # Check you got everything you needed
     assert(crash_ego_magnitude is not None)
     assert(crash_veh_magnitude is not None)
@@ -17,5 +17,16 @@ def hash_crash(crash_ego_magnitude=None, crash_veh_magnitude=None, crash_inciden
     return hash(tuple([crash_ego_magnitude, crash_veh_magnitude, crash_incident_angle]))
 
 class CrashOracle:
-    def __init__(self):
+    def __init__(self, scenario):
+
         self.max_possible_crashes = 10 
+
+        # The base is defined by the scenario
+        self.base = -1
+        if scenario == "highway_random" or scenario == "highway_generated":
+            self.base = 1
+        elif scenario == "beamng_random":
+            self.base = 5
+        else:
+            print("Error: Unknown scenario base")
+            exit()

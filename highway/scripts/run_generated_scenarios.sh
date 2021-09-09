@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Each of the beam counts
-beamcount=(6)
+beamcount=(1 2 3 4 5 6)
 
 # Launch counter
 counter=0
@@ -11,7 +11,7 @@ total_cores=50
 for totallines in "${beamcount[@]}"
 do
     # Find all the tests
-    tests=../../PhysicalCoverageData/highway/generated_tests/tests_single/$1/${totallines}_beams/*_points.npy
+    tests=../../PhysicalCoverageData/highway/generated_tests/tests_single/tests/$1/${totallines}_beams/*_points.npy
 
     echo "Processing ${totallines} beams"
 

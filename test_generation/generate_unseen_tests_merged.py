@@ -22,6 +22,7 @@ from generate_unseen_tests_functions import compute_reach_set_details
 from generate_unseen_tests_functions import create_image_representation
 
 from general.environment_configurations import RSRConfig
+from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
 parser = argparse.ArgumentParser()
@@ -33,13 +34,22 @@ args = parser.parse_args()
 
 # Create the configuration classes
 HK = HighwayKinematics()
+NG = BeamNGKinematics()
 RSR = RSRConfig()
 
 # Save the kinematics and RSR parameters
-new_steering_angle  = HK.steering_angle
-new_max_distance    = HK.max_velocity
 new_accuracy        = RSR.accuracy
 new_total_lines     = "*"
+
+if args.scenario == "highway":
+    new_steering_angle  = HK.steering_angle
+    new_max_distance    = HK.max_velocity
+elif args.scenario == "beamng":
+    new_steering_angle  = NG.steering_angle
+    new_max_distance    = NG.max_velocity
+else:
+    print("ERROR: Unknown scenario")
+    exit()
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
