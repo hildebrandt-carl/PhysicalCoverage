@@ -25,7 +25,7 @@ class CrashOracle:
         self.base = -1
         if scenario == "highway_random" or scenario == "highway_generated":
             self.base = 1
-        elif scenario == "beamng_random":
+        elif scenario == "beamng_random" or scenario == "beamng_generated":
             self.base = 5
         else:
             print("Error: Unknown scenario base")

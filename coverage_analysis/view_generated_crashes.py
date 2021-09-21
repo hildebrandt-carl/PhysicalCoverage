@@ -57,7 +57,6 @@ generated_crash_files = glob.glob(generated_data_path + "crash_*.npy")
 original_time_files = glob.glob(original_data_path + "time_*.npy")
 generated_time_files = glob.glob(generated_data_path + "time_*.npy")
 
-
 # Make sure you have all the files you need
 assert(len(original_crash_files) > 1)
 assert(len(generated_crash_files) > 1)
@@ -67,13 +66,13 @@ assert(len(generated_time_files) > 1)
 # Get the beam numbers
 random_crash_beam_numbers = get_beam_numbers(original_crash_files)
 generated_crash_beam_numbers = get_beam_numbers(generated_crash_files)
-generated_time_beam_numbers = get_beam_numbers(original_time_files)
+random_time_beam_numbers = get_beam_numbers(original_time_files)
 generated_time_beam_numbers = get_beam_numbers(generated_time_files)
 
 # Find the set of beam numbers which all sets of files have
 beam_numbers = list(set(random_crash_beam_numbers) &
                     set(generated_crash_beam_numbers) &
-                    set(generated_time_beam_numbers) &
+                    set(random_time_beam_numbers) &
                     set(generated_time_beam_numbers)) 
 beam_numbers = sorted(beam_numbers)
 
@@ -118,7 +117,6 @@ for i in range(len(beam_numbers)):
     # Get the beam number
     beam_number = beam_numbers[i]
     print("Processing beam number: {}".format(beam_number))
-
 
     # Get data
     o_crash_data = original_crash_data[i]
@@ -185,24 +183,62 @@ plt.axvline(x=times_array[-1], color='grey', linestyle='--', linewidth=1)
 plt.axhline(y=switch_point_y, color='grey', linestyle='--', linewidth=1)
 plt.axhline(y=crash_array[-1], color='grey', linestyle='--', linewidth=1)
 
-plt.text(10, switch_point_y, str(int(switch_point_y)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
-plt.text(10, crash_array[-1], str(int(crash_array[-1])), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
-plt.text(switch_point_x, 100, str(int(np.round(switch_point_x,0))), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
-plt.text(times_array[-1], 1000, str(int(np.round(times_array[-1],0))), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
+switch_point_y_interval = 0
+switch_point_x_interval = 0
+times_array_interval = 0
+ran_text_x = 0
+ran_text_y = 0
+gen_text_x = 0
+gen_text_y = 0
 
-plt.text(15, 1800, "Random Tests", fontsize=12, va='center', ha='center', color="black")
-plt.text(90, 1800, "Generated Tests", fontsize=12, va='center', ha='center', color="black")
+if args.scenario == "beamng":
+    switch_point_y_interval = 1
+    switch_point_x_interval = 100
+    times_array_interval = 150
+    ran_text_x = 1
+    ran_text_y = 250
+    gen_text_x = 90
+    gen_text_y = 1800
+elif args.scenario == "highway":
+    switch_point_y_interval = 10
+    switch_point_x_interval = 100
+    times_array_interval = 1000
+    ran_text_x = 15
+    ran_text_y = 1800
+    gen_text_x = 90
+    gen_text_y = 1800
 
+plt.text(switch_point_y_interval, switch_point_y, str(int(switch_point_y)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
+plt.text(switch_point_y_interval, crash_array[-1], str(int(crash_array[-1])), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
+plt.text(switch_point_x, switch_point_x_interval, str(int(np.round(switch_point_x,0))), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
+plt.text(times_array[-1], times_array_interval, str(int(np.round(times_array[-1],0))), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
+
+plt.text(ran_text_x, ran_text_y, "Random Tests", fontsize=12, va='center', ha='center', color="black")
+plt.text(gen_text_x, gen_text_y, "Generated Tests", fontsize=12, va='center', ha='center', color="black")
+
+
+crash_increase = np.round(((crash_array[-1] - switch_point_y) / switch_point_y) * 100, 2)
+time_increase = np.round(((times_array[-1] - switch_point_x) / switch_point_x) * 100, 2)
 print("----------------------------------")
-print("Percentage increase: {}".format(crash_array[-1] - switch_point_y))
-print("Additional time increase: {}".format(times_array[-1] - switch_point_x))
+print("Percentage increase: {}".format(crash_increase))
+print("Additional time increase: {}".format(time_increase))
 print("----------------------------------")
+
+time_interval = 0
+crash_interval = 0
+if args.scenario == "beamng":
+    time_interval = 1
+    crash_interval = 25
+elif args.scenario == "highway":
+    time_interval = 5
+    crash_interval = 250
 
 plt.xlabel("Time (days)")
 plt.ylabel("Total unique crashes")
-plt.xticks(np.arange(0, times_array[-1] + 1e-6, 5))
-plt.yticks(np.arange(0, crash_array[-1] + 1e-6, 250))
+plt.xticks(np.arange(0, times_array[-1] + 1e-6, time_interval))
+plt.yticks(np.arange(0, crash_array[-1] + 1e-6, crash_interval))
 plt.legend(loc=4)
+plt.title("Time increase: {}% - Crash increase: {}%".format(time_increase, crash_increase))
 plt.grid(alpha=0.5)
 plt.axes().minorticks_on()
 plt.show()

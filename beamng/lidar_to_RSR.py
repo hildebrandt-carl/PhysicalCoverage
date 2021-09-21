@@ -21,7 +21,9 @@ from general.environment_configurations import BeamNGKinematics
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--cores',          type=int, default=120,    help="number of available cores")
-parser.add_argument('--plot',            action='store_true')
+parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
+parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--plot',           action='store_true')
 args = parser.parse_args()
 
 # Create the configuration classes
@@ -33,9 +35,17 @@ steering_angle  = NG.steering_angle
 max_distance    = NG.max_velocity
 total_lines     = RSR.beam_count
 
-raw_file_location       = "../../PhysicalCoverageData/beamng/random_tests/physical_coverage/lidar/"
-output_file_location    = "../output/beamng/random_tests/physical_coverage/raw/"
-file_names = glob.glob(raw_file_location + "/*/*.csv")
+if args.scenario == "beamng_random":
+    raw_file_location       = "../../PhysicalCoverageData/beamng/random_tests/physical_coverage/lidar/"
+    output_file_location    = "../output/beamng/random_tests/physical_coverage/raw/"
+    file_names = glob.glob(raw_file_location + "/*/*.csv")
+elif args.scenario == "beamng_generated":
+    raw_file_location       = "../../PhysicalCoverageData/beamng/generated_tests/tests_single/lidar/{}/lidar_readings".format(args.total_samples)
+    output_file_location    = "../output/beamng/generated_tests/tests_single/raw/{}/".format(args.total_samples)
+    file_names = glob.glob(raw_file_location + "/*/*.csv")
+else:
+    print("Error: Unknown Scenario")
+    exit()
 
 print("Processing: {} files".format(len(file_names)))
 assert(len(file_names) > 0)
@@ -55,7 +65,10 @@ for file_name in file_names:
     folder = file_name[0:file_name.rfind('/')]
     folder = folder[folder.rfind('/')+1:]
 
-    external_vehicle_count = folder[folder.rfind("_")+1:]
+    if args.scenario == "beamng_random":
+        external_vehicle_count = folder[folder.rfind("_")+1:]
+    elif args.scenario == "beamng_generated":
+        external_vehicle_count = folder[0:folder.find("_")]
 
     if not os.path.exists(output_file_location + folder):
         os.makedirs(output_file_location + folder)
@@ -65,7 +78,7 @@ for file_name in file_names:
     save_name += folder + "/"
     save_name += name_only[0:-4] + ".txt"
 
-    # Run each of the files in a seperate process
+    # Run each of the files in a separate process
     jobs.append(pool.apply_async(process_file, args=(file_name, save_name, external_vehicle_count, file_number, total_lines, steering_angle, max_distance, args.plot)))
     file_number += 1
 
@@ -74,5 +87,5 @@ results = []
 for job in tqdm(jobs):
     results.append(job.get())
 
-pool.close()
+# pool.close()
 print("All files completed")

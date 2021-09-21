@@ -1,8 +1,12 @@
 def get_beam_numbers(files):
+
     beam_numbers = []
     for f in files:
         f_name = f[f.rfind("/"):]
-        f_name = f_name[f_name.find("_random")+7:]
+        if "random" in f_name:
+            f_name = f_name[f_name.find("_random")+7:]
+        elif "generated" in f_name:
+            f_name = f_name[f_name.find("_generated")+10:]
         beam = f_name[f_name.find("_b")+2:-4]
         if beam.find("_") != -1:
             beam = beam[:beam.find("_")]

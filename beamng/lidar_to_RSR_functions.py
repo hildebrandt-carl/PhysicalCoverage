@@ -226,29 +226,36 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
             # Make sure the vehicle counts match
             assert(data["veh_count"] == int(external_vehicle_count))
 
-            # Lidar is given as (x,y,z), (x,y,z), ... etc
-            unique_entries = int(data["lidar"].shape[0] / 3)
-            data["lidar"] = data["lidar"].reshape(unique_entries, -1)
+            # Lidar is given as (x,y,z), (x,y,z), ... etc 
+            # Only handle if points are given
+            if data["lidar"].shape[0] > 0:
+                unique_entries = int(data["lidar"].shape[0] / 3)
+                data["lidar"] = data["lidar"].reshape(unique_entries, -1)
 
-            # Change the lidar readings into the car frame
-            data["lidar"] = data["lidar"] - data["position"]
+                # Change the lidar readings into the car frame
+                data["lidar"] = data["lidar"] - data["position"]
 
-            # Plot the data
+                # Compute how much the world is rotated by
+                deltaX = data["orientation"][0] - data['origin'][0]
+                deltaY = data["orientation"][1] - data['origin'][1]
+                rotation = -1 * math.atan2(deltaY, deltaX)
+
+                # Rotate all points 
+                points_xy   = data["lidar"][:,0:2]
+                origin      = data["origin"][0:2]
+                data["rotated_lidar"] = rotate(points_xy, origin, rotation)
+                
+                # Handle the corner case of only 1 point
+                if unique_entries == 1:
+                    data["rotated_lidar"] = data["rotated_lidar"].reshape(1,-1)
+
+            else:
+                data["rotated_lidar"] = data["lidar"]
+
+
+            # Plot the points and rotated points
             if plot:
                 plt = create_frame_plot(data["lidar"], data["origin"], data["orientation"], "World frame", 1)
-
-            # Compute how much the world is rotated by
-            deltaX = data["orientation"][0] - data['origin'][0]
-            deltaY = data["orientation"][1] - data['origin'][1]
-            rotation = -1 * math.atan2(deltaY, deltaX)
-
-            # Rotate all points 
-            points_xy   = data["lidar"][:,0:2]
-            origin      = data["origin"][0:2]
-            data["rotated_lidar"] = rotate(points_xy, origin, rotation)
-
-            # Plot rotated points
-            if plot:
                 plt = create_frame_plot(data["rotated_lidar"], data["origin"], data["ego_orientation"] , "Vehicle frame", 2)
 
             # Create the car as an object
@@ -387,8 +394,8 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
         input_file.close()
     except Exception as e:
         print(e)
-        output_success = False
         print("Error in file: {}".format(file_name))
+        output_success = False        
 
     # Save the data to a file
     if output_success:

@@ -25,16 +25,11 @@ from general.environment_configurations import HighwayKinematics
 
 def vector_conversion(vector, steering_angle, max_distance, total_lines, original_total_lines):
 
-    # Get the steering angle and original max distance
-    HK = HighwayKinematics()
-    original_steering_angle = HK.steering_angle
-    original_max_distance = HK.max_velocity
-
     # Fix the vector to have to correct max_distance
     vector = np.clip(vector, 0, max_distance)
 
     # Get how many degrees between each line
-    line_space = (original_steering_angle * 2) / float(original_total_lines - 1)
+    line_space = (steering_angle * 2) / float(original_total_lines - 1)
 
     # Get the starting lines angle
     left_index = int(len(vector) / 2)
@@ -44,19 +39,17 @@ def vector_conversion(vector, steering_angle, max_distance, total_lines, origina
         current_steering_angle = line_space / 2
         left_index -= 1
 
+    # Floating point tolerance
+    tolerance = 1e-6
+
     # This is an overapproximation
-    while current_steering_angle < steering_angle:
+    while current_steering_angle < (steering_angle - tolerance):
         left_index -= 1
         right_index += 1
         current_steering_angle += line_space
 
     # Get the corrected steering angle
     steering_angle_corrected_vector = vector[left_index:right_index+1]
-
-    # Select the correct number of lines
-    if len(steering_angle_corrected_vector) < total_lines:
-        pass
-        # print("Requested more lines than we have, extrapolating")
     idx = np.round(np.linspace(0, len(steering_angle_corrected_vector) - 1, total_lines)).astype(int)
     final_vector = steering_angle_corrected_vector[idx]
 
@@ -67,7 +60,6 @@ def getStep(vector, accuracy):
     # The minimum should always be > 0
     converted_vector[converted_vector <= 0] = accuracy
     return converted_vector
-
 
 def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_possible_crashes, base, ignore_crashes=False):
     test_vectors        = np.full((total_vectors, vector_size), np.inf, dtype='float64')
@@ -162,7 +154,6 @@ def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_li
     test_vectors = np.array(test_vectors)
 
     return vehicle_count, crash, test_vectors
-
 
 def countVectorsInFile(f):
     vector_count = 0

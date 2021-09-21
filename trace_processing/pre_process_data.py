@@ -47,7 +47,13 @@ new_accuracy            = RSR.accuracy
 if args.scenario == "highway_random":
     new_steering_angle  = HK.steering_angle
     new_max_distance    = HK.max_velocity
+elif args.scenario == "highway_generated":
+    new_steering_angle  = HK.steering_angle
+    new_max_distance    = HK.max_velocity
 elif args.scenario == "beamng_random":
+    new_steering_angle  = NG.steering_angle
+    new_max_distance    = NG.max_velocity
+elif args.scenario == "beamng_generated":
     new_steering_angle  = NG.steering_angle
     new_max_distance    = NG.max_velocity
 else:
@@ -78,11 +84,14 @@ print("----------------------------------")
 all_files = None
 if args.scenario == "beamng_random":
     all_files = glob.glob("../../PhysicalCoverageData/beamng/random_tests/physical_coverage/raw/*/*.txt")
+elif args.scenario == "beamng_generated":
+    all_files = glob.glob("../../PhysicalCoverageData/beamng/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
 elif args.scenario == "highway_random":
     all_files = glob.glob("../../PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*/*.txt")
 elif args.scenario == "highway_generated":
     all_files = glob.glob("../../PhysicalCoverageData/highway/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
 else:
+    print("Error: Scenario not known")
     exit()
 
 total_files = len(all_files)
@@ -115,7 +124,8 @@ if (args.scenario == "highway_random") or (args.scenario == "beamng_random"):
         all_files = glob.glob(f + "/*.txt")
         names = random.sample(all_files, files_per_folder)
         file_names.append(names)
-if args.scenario == "highway_generated": 
+        
+if args.scenario == "highway_generated" or args.scenario == "beamng_generated": 
     # You want to select all files here so do nothing
     pass
 
@@ -199,12 +209,14 @@ save_name += ".npy"
 save_path = ""
 if args.scenario == "beamng_random":
     save_path = "../output/beamng/random_tests/physical_coverage/processed/{}".format(args.total_samples)
+elif args.scenario == "beamng_generated":
+    save_path = "../output/beamng/generated_tests/tests_single/processed/{}/".format(args.total_samples)
 elif args.scenario == "highway_random":
     save_path = "../output/highway/random_tests/physical_coverage/processed/{}".format(args.total_samples)
 elif args.scenario == "highway_generated":
-    save_path = "../output/highway/generated_tests/processed/{}/".format(args.total_samples)
+    save_path = "../output/highway/generated_tests/tests_single/processed/{}/".format(args.total_samples)
 else:
-    print("Error")
+    print("Error 4")
     exit()
 
 # Create the output directory if it doesn't exists
