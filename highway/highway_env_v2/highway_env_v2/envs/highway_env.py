@@ -85,6 +85,7 @@ class HighwayEnv(AbstractEnv):
                 vehicle.color_id = -1
                 vehicle.crash_ends_test = self.config["crash_ends_test"]
             else:
+                # These are cars used by generated tests
                 vehicle = ManualVehicle.create_random(self.road,
                                                       speed=25,
                                                       lane_id=self.config["initial_lane_id"],

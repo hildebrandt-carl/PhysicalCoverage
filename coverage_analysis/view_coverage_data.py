@@ -322,10 +322,10 @@ global ignored_lines
 ignored_lines = get_ignored_code_coverage_lines(args.scenario)
 
 # Make sure you have all the files you need
-assert(len(trace_file_names) > 1)
-assert(len(crash_file_names) > 1)
-assert(len(feasible_file_names) > 1)
-assert(len(code_coverage_file_names) > 1)
+assert(len(trace_file_names) >= 1)
+assert(len(crash_file_names) >= 1)
+assert(len(feasible_file_names) >= 1)
+assert(len(code_coverage_file_names) >= 1)
 
 # Get the beam numbers
 trace_beam_numbers = get_beam_numbers(trace_file_names)

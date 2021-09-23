@@ -388,9 +388,15 @@ def save_unseen_data_to_file_single(data, segmented_lines, new_accuracy, total_s
         final_points.append(physical_row)
         np.save("{}/test{}_points.npy".format(save_path, counter), final_points)
         np.save("{}/test{}_index.npy".format(save_path, counter), final_indices)
-        final_points = []
+        
         # Start the final points with the init data
+        final_points = []
         final_points.append(init_position)
+
+        # Reset the final indices with the init data
+        final_indices = []
+        final_indices.append(np.full(beams, index * new_accuracy))
+
         counter += 1
 
     return counter

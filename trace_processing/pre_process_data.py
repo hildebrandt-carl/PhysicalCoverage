@@ -177,10 +177,11 @@ print("---------Processing files---------")
 print("----------------------------------")
 
 # Create the numpy array 
-reach_vectors = np.zeros((total_files, vec_per_file, new_total_lines), dtype='float64')
-vehicles_per_trace = np.zeros(total_files, dtype=int)
-time_per_trace = np.zeros(total_files, dtype='float64')
-crash_hashes = np.zeros((total_files, max_crashes_per_test), dtype='float64')
+reach_vectors       = np.zeros((total_files, vec_per_file, new_total_lines), dtype='float64')
+vehicles_per_trace  = np.zeros(total_files, dtype=int)
+time_per_trace      = np.zeros(total_files, dtype='float64')
+crash_hashes        = np.zeros((total_files, max_crashes_per_test), dtype='float64')
+files_processed     = np.empty(total_files, dtype='U64')
 
 # For each file
 file_count = 0
@@ -197,6 +198,10 @@ for i in tqdm(range(total_files)):
     vehicles_per_trace[i]   = vehicle_count
     time_per_trace[i]       = simulation_time
     crash_hashes[i]         = incident_hashes
+
+    # Save the filename
+    file_name = file_name[file_name.rfind("/")+1:]
+    files_processed[i]      = file_name
 
 save_name = args.scenario
 save_name += "_s" + str(new_steering_angle) 
@@ -228,3 +233,4 @@ np.save(save_path + '/traces_{}'.format(save_name), reach_vectors)
 np.save(save_path + '/vehicles_{}'.format(save_name), vehicles_per_trace)
 np.save(save_path + '/time_{}'.format(save_name), time_per_trace)
 np.save(save_path + '/crash_hash_{}'.format(save_name), crash_hashes)
+np.save(save_path + '/processed_files_{}'.format(save_name), files_processed)

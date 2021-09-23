@@ -133,13 +133,13 @@ generated_crash_file_names = glob.glob(base_path + "crash_*.npy")
 generated_time_file_names  = glob.glob(base_path + "time_*.npy")
 
 # Make sure you have all the files you need
-assert(len(random_trace_file_names) > 1)
-assert(len(random_crash_file_names) > 1)
-assert(len(random_time_file_names) > 1)
-assert(len(generated_trace_file_names) > 1)
-assert(len(generated_crash_file_names) > 1)
-assert(len(generated_time_file_names) > 1)
-assert(len(feasible_file_names) > 1)
+assert(len(random_trace_file_names) >= 1)
+assert(len(random_crash_file_names) >= 1)
+assert(len(random_time_file_names) >= 1)
+assert(len(generated_trace_file_names) >= 1)
+assert(len(generated_crash_file_names) >= 1)
+assert(len(generated_time_file_names) >= 1)
+assert(len(feasible_file_names) >= 1)
 
 # Get the beam numbers
 random_trace_beam_numbers       = get_beam_numbers(random_trace_file_names)
@@ -187,6 +187,9 @@ for i in range(len(beam_numbers)):
 
     print("\nProcessing beams: {}".format(beam_numbers[i]))
 
+    # Compute the total possible observations for this
+    total_possible_observations = pow((new_max_distance / RSR.accuracy) + 1, beam_numbers[i])
+
     # Load the feasible files
     feasible_RSR_set = set()
     feasible_traces = np.load(feasibility_file)
@@ -206,6 +209,8 @@ for i in range(len(beam_numbers)):
     # Load the times
     random_times = np.load(random_time_file)
     generated_times = np.load(generated_time_file)
+
+
 
 
 
@@ -265,10 +270,14 @@ for i in range(len(beam_numbers)):
         # Get the results from each job
         test_RSR_values = job.get()
 
+        # Filter out any RSR values that were unintentionally seen in the test
+        test_RSR_values = test_RSR_values & feasible_RSR_set
+
         # Add them to the current RSR values
         final_unique_RSR = final_unique_RSR | test_RSR_values
 
         # Check the coverage
+        # coverage = len(final_unique_RSR) / total_possible_observations
         coverage = len(final_unique_RSR) / len(feasible_RSR_set)
         coverage_array.append(coverage)
         
@@ -304,10 +313,14 @@ for i in range(len(beam_numbers)):
         # Get the results from each job
         test_RSR_values = job.get()
 
+        # Filter out any RSR values that were unintentionally seen in the test
+        test_RSR_values = test_RSR_values & feasible_RSR_set
+
         # Add them to the current RSR values
         final_unique_RSR = final_unique_RSR | test_RSR_values
 
         # Check the coverage
+        # coverage = len(final_unique_RSR) / total_possible_observations
         coverage = len(final_unique_RSR) / len(feasible_RSR_set)
         coverage_array.append(coverage)
 
@@ -392,12 +405,16 @@ for i in range(len(beam_numbers)):
     switch_point = switch_point / 86400.0
     
 
+    # possible_coverage = len(feasible_RSR_set) / total_possible_observations
+
+
 
     # Plot the data
     print("Plotting the data")
     plt.figure(1)
     plt.plot(time_array, coverage_array, linestyle="-", color='C{}'.format(i), label="RSR{}".format(beam_number))
     plt.axvline(x=switch_point, color='grey', linestyle=':', linewidth=1)
+    # plt.axhline(y=possible_coverage, color='C{}'.format(i), linestyle=':', linewidth=2)
     plt.figure(2)
     plt.plot(time_array, total_crash_array, linestyle="--", color='C{}'.format(i))
     plt.plot(time_array, unique_crash_array, linestyle="-", color='C{}'.format(i), label="RSR{}".format(beam_number))

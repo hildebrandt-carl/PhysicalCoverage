@@ -61,13 +61,19 @@ class TrafficController:
         return np.array(current_goal)
 
 
-    def compute_traffic_commands(self, ego_position, obstacle_size=1):
+    def compute_traffic_commands(self, ego_position, obstacle_size=1, currently_colliding=False):
 
         # Used to return if the test is complete or not
         complete = False
 
         # Init the distance sum
         distance_to_goal_sum = 0
+
+        # If we are currently colliding go back to the init goal
+        if currently_colliding:
+            self.current_goal = self.assign_goal(index = 0)
+        else:
+            self.current_goal = self.assign_goal(index = self.goal_index)
 
         # Make each of the traffic vehicles drive faster
         for i in range(self.number_of_vehicles):
@@ -144,7 +150,7 @@ class TrafficController:
         print("|--Total distance to goal: {}".format(distance_to_goal_sum))
         
         # If the distance to goal is lower than 2.5 move to the next goal:
-        if distance_to_goal_sum <= 1:
+        if distance_to_goal_sum <= 1 and not currently_colliding:
             self.goal_index += 1
             # Check we are not out of goal positions
             if self.goal_index >= self.goals.shape[0]:

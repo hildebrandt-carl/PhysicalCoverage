@@ -18,7 +18,7 @@ base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/p
 
 # Find all the crash files
 all_files = glob.glob(base_path + "crash*.npy")
-assert(len(all_files) > 1)
+assert(len(all_files) >= 1)
 
 # Get all the beam numbers
 beam_numbers = get_beam_numbers(all_files)

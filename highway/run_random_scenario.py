@@ -21,7 +21,8 @@ sys.path.append(base_directory)
 from general.reachset import ReachableSet
 from general.environment_configurations import RSRConfig
 from general.environment_configurations import HighwayKinematics
-from general.environment_configurations import HighwayEnvironmentConfig
+
+from general.highway_config import HighwayEnvironmentConfig
 
 from controllers.tracker import Tracker
 from controllers.car_controller import EgoController

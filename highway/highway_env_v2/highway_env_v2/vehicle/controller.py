@@ -496,8 +496,9 @@ class ManualVehicle(Vehicle):
                 return
 
             if self._is_colliding(other):
-                self.speed = other.speed = min([self.speed, other.speed], key=abs)
-                self.crashed = other.crashed = True
+                # self.speed = other.speed = min([self.speed, other.speed], key=abs)
+                self.speed = 30
+                self.collided = other.collided = True
         elif isinstance(other, Obstacle):
             if not self.COLLISIONS_ENABLED:
                 return

@@ -117,8 +117,12 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
             ang_data = float(line[line.find(": ")+2:])
             crash_incident_angles.append(ang_data)
 
+    # Print warning
+    if collision_counter > max_possible_crashes:
+        print("Warning: More collisions found than max possible crashes, truncating crashes")
+
     # If there was a crash compute the incident hash
-    for i in range(collision_counter):
+    for i in range(min(collision_counter, max_possible_crashes)):
         # Get the incident data
         ego_magnitude = crash_ego_magnitudes[i]
         veh_magnitude = crash_veh_magnitudes[i]

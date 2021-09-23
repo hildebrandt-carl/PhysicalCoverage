@@ -126,7 +126,7 @@ while not done:
     obs = np.round(obs, 4)
 
     # Update the traffic vehicles
-    complete = traffic.compute_traffic_commands(env.controlled_vehicles[0].position, obstacle_size)
+    complete = traffic.compute_traffic_commands(env.controlled_vehicles[0].position, obstacle_size, info["collided"])
 
     # End if we are complete
     if complete:

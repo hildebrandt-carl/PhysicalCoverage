@@ -11,7 +11,6 @@ from prettytable import PrettyTable
 
 from general_functions import order_by_beam
 from general_functions import get_beam_numbers
-from general_functions import get_ignored_code_coverage_lines
 
 def compute_physical_coverage_hash(index):
 
@@ -34,40 +33,6 @@ def compute_physical_coverage_hash(index):
 
     return [coverage_hash, number_of_crashes]
 
-def compute_code_coverage_hash(index):
-    global code_coverage_file_names
-
-    coverage_hash = 0
-    number_of_crashes = 0
-
-    # Get the code coverage file
-    code_coverage_file = code_coverage_file_names[index]
-    f = open(code_coverage_file, "r")
-
-    all_lines_coverage = set()
-
-    # Read the file
-    for line in f: 
-        if "Lines covered:" in line:
-            covered_l = ast.literal_eval(line[15:])
-
-        if "Total lines covered:" in line:
-            total_covered_l = int(line[21:])
-            assert(len(covered_l) == total_covered_l)
-
-        if "Total physical crashes: " in line:
-            number_of_crashes = int(line[24:])
-
-    # Close the file
-    f.close()
-
-    all_lines_coverage = set(covered_l) - ignored_lines
-
-    # Get the coverage hash
-    all_lines_coverage = tuple(sorted(list(all_lines_coverage)))
-    coverage_hash = hash(all_lines_coverage)
-
-    return [coverage_hash, number_of_crashes]
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
@@ -81,38 +46,51 @@ print("----------------------------------")
 
 load_name = "*.npy"
 
-# Get the file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
-trace_file_names = glob.glob(base_path + "traces_*")
-crash_file_names = glob.glob(base_path + "crash_*")
+# Get the file names for the random data
+random_base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
+random_trace_file_names = glob.glob(random_base_path + "traces_*.npy")
+random_crash_file_names = glob.glob(random_base_path + "crash_*.npy")
 
-# Get the code coverage
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/code_coverage/raw/'
-global code_coverage_file_names
-code_coverage_file_names = glob.glob(base_path + "*/*.txt")
+# Get the file names for the generated data
+generated_base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/generated_tests/tests_single/processed/' + str(args.total_samples) + "/"
+generated_trace_file_names = glob.glob(generated_base_path + "traces_*.npy")
+generated_crash_file_names = glob.glob(generated_base_path + "crash_*.npy")
 
 # Make sure we have enough samples
-assert(len(trace_file_names) > 1)
-assert(len(crash_file_names) > 1)
-assert(len(code_coverage_file_names) > 1)
-
-# Select args.total_samples total code coverage files
-code_coverage_file_names = sample(code_coverage_file_names, args.total_samples)
-
-global ignored_lines
-ignored_lines = get_ignored_code_coverage_lines(args.scenario)
+assert(len(random_trace_file_names) >= 1)
+assert(len(random_crash_file_names) >= 1)
+assert(len(generated_trace_file_names) >= 1)
+assert(len(generated_crash_file_names) >= 1)
 
 # Get the beam numbers
-trace_beam_numbers = get_beam_numbers(trace_file_names)
-crash_beam_numbers = get_beam_numbers(crash_file_names)
+random_trace_beam_numbers = get_beam_numbers(random_trace_file_names)
+random_crash_beam_numbers = get_beam_numbers(random_crash_file_names)
+generated_trace_beam_numbers = get_beam_numbers(generated_trace_file_names)
+generated_crash_beam_numbers = get_beam_numbers(generated_crash_file_names)
 
 # Find the set of beam numbers which all sets of files have
-beam_numbers = list(set(trace_beam_numbers) | set(crash_beam_numbers))
+beam_numbers = list(set(random_trace_beam_numbers) |
+                    set(random_crash_beam_numbers) |
+                    set(generated_trace_beam_numbers) |
+                    set(generated_crash_beam_numbers) )
 beam_numbers = sorted(beam_numbers)
 
 # Sort the data based on the beam number
-trace_file_names = order_by_beam(trace_file_names, beam_numbers)
-crash_file_names = order_by_beam(crash_file_names, beam_numbers)
+random_trace_file_names = order_by_beam(random_trace_file_names, beam_numbers)
+random_crash_file_names = order_by_beam(random_crash_file_names, beam_numbers)
+generated_trace_file_names = order_by_beam(generated_trace_file_names, beam_numbers)
+generated_crash_file_names = order_by_beam(generated_crash_file_names, beam_numbers)
+
+# print(len(random_trace_file_names))
+# print(len(random_crash_file_names))
+# print(len(generated_trace_file_names))
+# print(len(generated_crash_file_names))
+
+trace_file_names = []
+crash_file_names = []
+for i in range(len(beam_numbers)):
+    trace_file_names.append([random_trace_file_names[i], generated_trace_file_names[i]])
+    crash_file_names.append([random_crash_file_names[i], generated_crash_file_names[i]])
 
 # Used to save the final results
 final_results = {}
@@ -127,14 +105,31 @@ for i in range(len(beam_numbers)):
 
     # Get the beam number and files we are currently considering
     beam_number = beam_numbers[i]
-    trace_file = trace_file_names[i]
-    crash_file = crash_file_names[i]
+    random_trace_file = trace_file_names[i][0]
+    random_crash_file = crash_file_names[i][0]
+    generated_trace_file = trace_file_names[i][1]
+    generated_crash_file = crash_file_names[i][1]
 
     # Load the traces
     global traces
     global crashes
-    traces = np.load(trace_file)
-    crashes = np.load(crash_file)
+    if random_trace_file != "" and generated_trace_file != "":
+        gt = np.load(generated_trace_file) 
+        rt = np.load(random_trace_file) # need to extend with inf to match gt
+        pad_amount = gt.shape[1] - rt.shape[1]
+        rt = np.pad(rt, ((0,0),(0,pad_amount),(0,0)), "constant", constant_values=np.inf)
+        
+        gc = np.load(generated_crash_file) 
+        rc = np.load(random_crash_file)
+        
+        traces  = np.concatenate([rt, gt])
+        crashes = np.concatenate([rc, gc])
+    elif random_trace_file != "":
+        traces = np.load(random_trace_file)
+        crashes = np.load(random_crash_file)
+
+
+
 
     # Create the pool for parallel processing
     pool =  multiprocessing.Pool(processes=args.cores)
@@ -175,36 +170,6 @@ for i in range(len(beam_numbers)):
 pool =  multiprocessing.Pool(processes=args.cores)
 jobs = []
 
-# Go through each of the different test suite sizes
-print("Processing Code Coverage")
-
-for i in range(len(code_coverage_file_names)):
-    jobs.append(pool.apply_async(compute_code_coverage_hash, args=([i])))
-
-# Get the results
-results = []
-for job in tqdm(jobs):
-    results.append(job.get())
-
-crashing_tests = 0
-non_crashing_tests = 0
-crash_count = 0
-
-# Put the results into the final results dict
-coverage_hashes = []
-crash_numbers = []
-for r in results:
-    coverage_hashes.append(r[0])
-    crash_numbers.append(r[1])
-    crash_count += r[1]
-    # If there was a crash
-    if r[1] >= 1:
-        crashing_tests += 1
-    else:
-        non_crashing_tests += 1
-
-    
-final_results["CC"] = [coverage_hashes, crash_numbers, crashing_tests, non_crashing_tests, crash_count]
 
 # Its 8pm the pool is closed
 pool.close() 
@@ -234,6 +199,7 @@ for key in sorted(final_results):
     unique_values, unique_indexes, counts = np.unique(coverage_hashes, return_inverse=True, return_counts=True)
 
     # Count the number of unique and not unique values
+    total_tests = len(coverage_hashes)
     total_unique_tests = len(unique_values[counts == 1])
     total_non_unique_tests = np.sum(counts[counts > 1])
     total_non_unique_signatures = len(unique_values[counts > 1])
@@ -305,14 +271,14 @@ for key in sorted(final_results):
                 exit()
 
     # Check your math son
-    assert(total_unique_tests + total_non_unique_tests == args.total_samples)
+    assert(total_unique_tests + total_non_unique_tests == total_tests)
     assert(not_unique_sig_all_passing_count + not_unique_sig_all_failing_count + not_unique_sig_mixed_count == total_non_unique_signatures)
 
     # Print the output
     print("Not unique: {}".format(total_unique_tests))
     print("Unique: {}".format(total_non_unique_tests))
     
-    t.add_row([key, args.total_samples, passing_test_count, failing_test_count, total_unique_tests, total_non_unique_tests, unique_tests_passing, unique_tests_failing, not_unique_tests_passing, not_unique_tests_failing])
+    t.add_row([key, total_tests, passing_test_count, failing_test_count, total_unique_tests, total_non_unique_tests, unique_tests_passing, unique_tests_failing, not_unique_tests_passing, not_unique_tests_failing])
     s.add_row([key, total_signatures, total_unique_signatures, total_non_unique_signatures, unique_tests_passing, unique_tests_failing, not_unique_sig_all_passing_count, not_unique_sig_all_failing_count, not_unique_sig_mixed_count])
 
 

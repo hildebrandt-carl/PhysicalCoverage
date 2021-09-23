@@ -5,7 +5,7 @@ beamcount=(1 2 3 4 5 6)
 
 # Launch counter
 counter=0
-total_cores=40
+total_cores=50
 
 # Run it for each of the total number of lines
 for totallines in "${beamcount[@]}"

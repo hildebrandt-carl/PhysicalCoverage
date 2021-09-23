@@ -58,10 +58,10 @@ original_time_files = glob.glob(original_data_path + "time_*.npy")
 generated_time_files = glob.glob(generated_data_path + "time_*.npy")
 
 # Make sure you have all the files you need
-assert(len(original_crash_files) > 1)
-assert(len(generated_crash_files) > 1)
-assert(len(original_time_files) > 1)
-assert(len(generated_time_files) > 1)
+assert(len(original_crash_files) >= 1)
+assert(len(generated_crash_files) >= 1)
+assert(len(original_time_files) >= 1)
+assert(len(generated_time_files) >= 1)
 
 # Get the beam numbers
 random_crash_beam_numbers = get_beam_numbers(original_crash_files)
