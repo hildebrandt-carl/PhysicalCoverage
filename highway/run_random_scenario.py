@@ -205,6 +205,8 @@ while not done:
     simulated_time = np.round(simulated_time_period * simulated_time_counter, 4)
 
     text_file.write("Vector: " + str(r_vector) + "\n")
+    text_file.write("Ego Position: " + str(np.round(env.controlled_vehicles[0].position,4)) + "\n")
+    text_file.write("Ego Velocity: " + str(np.round(env.controlled_vehicles[0].velocity, 4)) + "\n")
     text_file.write("Crash: " + str(info["crashed"]) + "\n")
     text_file.write("Collided: " + str(info["collided"]) + "\n")
     text_file.write("Operation Time: " + str(operation_time) + "\n")

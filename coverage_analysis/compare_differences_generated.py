@@ -50,47 +50,54 @@ load_name = "*.npy"
 random_base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
 random_trace_file_names = glob.glob(random_base_path + "traces_*.npy")
 random_crash_file_names = glob.glob(random_base_path + "crash_*.npy")
+# random_test_file_names  = glob.glob(random_base_path + "processed_files_*.npy")
 
 # Get the file names for the generated data
 generated_base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/generated_tests/tests_single/processed/' + str(args.total_samples) + "/"
 generated_trace_file_names = glob.glob(generated_base_path + "traces_*.npy")
 generated_crash_file_names = glob.glob(generated_base_path + "crash_*.npy")
+# generated_test_file_names  = glob.glob(generated_base_path + "processed_files_*.npy")
 
 # Make sure we have enough samples
 assert(len(random_trace_file_names) >= 1)
 assert(len(random_crash_file_names) >= 1)
+# assert(len(random_test_file_names) >= 1)
 assert(len(generated_trace_file_names) >= 1)
 assert(len(generated_crash_file_names) >= 1)
+# assert(len(generated_test_file_names) >= 1)
 
 # Get the beam numbers
 random_trace_beam_numbers = get_beam_numbers(random_trace_file_names)
 random_crash_beam_numbers = get_beam_numbers(random_crash_file_names)
+# random_test_beam_numbers = get_beam_numbers(random_test_file_names)
 generated_trace_beam_numbers = get_beam_numbers(generated_trace_file_names)
 generated_crash_beam_numbers = get_beam_numbers(generated_crash_file_names)
+# generated_test_beam_numbers = get_beam_numbers(generated_test_file_names)
 
 # Find the set of beam numbers which all sets of files have
 beam_numbers = list(set(random_trace_beam_numbers) |
                     set(random_crash_beam_numbers) |
+                    # set(random_test_beam_numbers) |
                     set(generated_trace_beam_numbers) |
-                    set(generated_crash_beam_numbers) )
+                    set(generated_crash_beam_numbers) )#|
+                    # set(generated_test_beam_numbers) )
 beam_numbers = sorted(beam_numbers)
 
 # Sort the data based on the beam number
-random_trace_file_names = order_by_beam(random_trace_file_names, beam_numbers)
-random_crash_file_names = order_by_beam(random_crash_file_names, beam_numbers)
-generated_trace_file_names = order_by_beam(generated_trace_file_names, beam_numbers)
-generated_crash_file_names = order_by_beam(generated_crash_file_names, beam_numbers)
+random_trace_file_names         = order_by_beam(random_trace_file_names, beam_numbers)
+random_crash_file_names         = order_by_beam(random_crash_file_names, beam_numbers)
+# random_test_beam_numbers        = order_by_beam(random_test_beam_numbers, beam_numbers)
+generated_trace_file_names      = order_by_beam(generated_trace_file_names, beam_numbers)
+generated_crash_file_names      = order_by_beam(generated_crash_file_names, beam_numbers)
+# generated_test_beam_numbers     = order_by_beam(generated_test_beam_numbers, beam_numbers)
 
-# print(len(random_trace_file_names))
-# print(len(random_crash_file_names))
-# print(len(generated_trace_file_names))
-# print(len(generated_crash_file_names))
-
-trace_file_names = []
-crash_file_names = []
+trace_file_names    = []
+crash_file_names    = []
+# test_file_names     = []
 for i in range(len(beam_numbers)):
     trace_file_names.append([random_trace_file_names[i], generated_trace_file_names[i]])
     crash_file_names.append([random_crash_file_names[i], generated_crash_file_names[i]])
+    # test_file_names.append([random_test_beam_numbers[i], generated_test_beam_numbers[i]])
 
 # Used to save the final results
 final_results = {}
@@ -105,10 +112,12 @@ for i in range(len(beam_numbers)):
 
     # Get the beam number and files we are currently considering
     beam_number = beam_numbers[i]
-    random_trace_file = trace_file_names[i][0]
-    random_crash_file = crash_file_names[i][0]
-    generated_trace_file = trace_file_names[i][1]
-    generated_crash_file = crash_file_names[i][1]
+    random_trace_file       = trace_file_names[i][0]
+    random_crash_file       = crash_file_names[i][0]
+    # random_test_file        = test_file_names[i][0]
+    generated_trace_file    = trace_file_names[i][1]
+    generated_crash_file    = crash_file_names[i][1]
+    # generated_test_file     = test_file_names[i][1]
 
     # Load the traces
     global traces
@@ -121,14 +130,17 @@ for i in range(len(beam_numbers)):
         
         gc = np.load(generated_crash_file) 
         rc = np.load(random_crash_file)
+
+        # gn = np.load(generated_test_file) 
+        # rn = np.load(random_test_file)
         
-        traces  = np.concatenate([rt, gt])
-        crashes = np.concatenate([rc, gc])
+        traces      = np.concatenate([rt, gt])
+        crashes     = np.concatenate([rc, gc])
+        # test_names  = np.concatenate([rn, gn])
     elif random_trace_file != "":
-        traces = np.load(random_trace_file)
-        crashes = np.load(random_crash_file)
-
-
+        traces      = np.load(random_trace_file)
+        crashes     = np.load(random_crash_file)
+        # test_names  = np.load(random_test_file)
 
 
     # Create the pool for parallel processing
@@ -151,10 +163,16 @@ for i in range(len(beam_numbers)):
     # Put the results into the final results dict
     coverage_hashes = []
     crash_numbers = []
-    for r in results:
+    for i in range(len(results)):
+        r = results[i]
         coverage_hashes.append(r[0])
         crash_numbers.append(r[1])
         crash_count += r[1]
+
+        if r[1] > 5:
+            # print("Test: {} - Crashes: {}".format(test_names[i], r[1]))
+            print("Test: {} - Crashes: {}".format(i, r[1]))
+
         # If there was a crash
         if r[1] >= 1:
             crashing_tests += 1

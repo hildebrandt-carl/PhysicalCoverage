@@ -11,6 +11,7 @@ from shapely.geometry import Point
 from shapely.geometry import Polygon
 from shapely.geometry import LineString
 
+np.set_printoptions(suppress=True)
 
 def create_frame_plot(data, origin, orientation, title, fig_num):
     fig = plt.figure(fig_num)
@@ -347,6 +348,8 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
 
             # Compute the vectorized reach set
             output_string += "Vector: {}\n".format(r_vector)
+            output_string += "Ego Position: {}\n".format(np.round(data["position"],4))
+            output_string += "Ego Velocity: {}\n".format(np.round(data["velocity"],4))
             output_string += "Crash: {}\n".format(bool(data["crash"]))
             output_string += "Collided: {}\n".format(bool(data["collided"]))
             output_string += "Operation Time: {}\n".format(technique_time)

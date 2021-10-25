@@ -64,7 +64,7 @@ test_number = []
 print(crash_data.shape)
 # Go through each of the tests
 for i in range(crash_data.shape[0]):
-    
+
     # Go through each of the possible crashes in the test
     for j in range(crash_data.shape[1]):
         # Get the crash data

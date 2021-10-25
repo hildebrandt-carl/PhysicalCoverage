@@ -52,6 +52,7 @@ print("----------------------------------")
 # Get the file names
 original_data_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
 generated_data_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/generated_tests/tests_single/processed/' + str(args.total_samples) + "/"
+
 original_crash_files = glob.glob(original_data_path + "crash_*.npy")
 generated_crash_files = glob.glob(generated_data_path + "crash_*.npy")
 original_time_files = glob.glob(original_data_path + "time_*.npy")
@@ -163,6 +164,7 @@ for i in range(len(beam_numbers)):
         # Get the current crash and time data
         c_data = g_crash_data[j]
         c_time = g_time_data[j]
+
         # If it is a crash
         for c in c_data:
             if ~np.isinf(c):
@@ -210,8 +212,8 @@ elif args.scenario == "highway":
 
 plt.text(switch_point_y_interval, switch_point_y, str(int(switch_point_y)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
 plt.text(switch_point_y_interval, crash_array[-1], str(int(crash_array[-1])), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
-plt.text(switch_point_x, switch_point_x_interval, str(int(np.round(switch_point_x,0))), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
-plt.text(times_array[-1], times_array_interval, str(int(np.round(times_array[-1],0))), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
+plt.text(switch_point_x, switch_point_x_interval, str(np.round(switch_point_x,2)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
+plt.text(times_array[-1], times_array_interval, str(np.round(times_array[-1],2)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
 
 plt.text(ran_text_x, ran_text_y, "Random Tests", fontsize=12, va='center', ha='center', color="black")
 plt.text(gen_text_x, gen_text_y, "Generated Tests", fontsize=12, va='center', ha='center', color="black")
@@ -238,7 +240,7 @@ plt.ylabel("Total unique crashes")
 plt.xticks(np.arange(0, times_array[-1] + 1e-6, time_interval))
 plt.yticks(np.arange(0, crash_array[-1] + 1e-6, crash_interval))
 plt.legend(loc=4)
-plt.title("Time increase: {}% - Crash increase: {}%".format(time_increase, crash_increase))
+plt.title("Time increase: {}% - Crash Increase: {}%".format(time_increase, crash_increase))
 plt.grid(alpha=0.5)
 plt.axes().minorticks_on()
 plt.show()

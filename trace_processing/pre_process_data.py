@@ -182,6 +182,9 @@ vehicles_per_trace  = np.zeros(total_files, dtype=int)
 time_per_trace      = np.zeros(total_files, dtype='float64')
 crash_hashes        = np.zeros((total_files, max_crashes_per_test), dtype='float64')
 files_processed     = np.empty(total_files, dtype='U64')
+ego_positions       = [None] * total_files
+ego_velocities      = [None] * total_files
+stall_infos         = np.zeros((total_files, vec_per_file, 3), dtype='float64')
 
 # For each file
 file_count = 0
@@ -191,13 +194,16 @@ for i in tqdm(range(total_files)):
 
     # Process the file
     f = open(file_name, "r")    
-    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_crashes_per_test, crash_base, True)
+    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes, ego_pos, ego_vel, stall_info = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_crashes_per_test, crash_base, True)
     f.close()
 
     reach_vectors[i]        = test_vectors
     vehicles_per_trace[i]   = vehicle_count
     time_per_trace[i]       = simulation_time
     crash_hashes[i]         = incident_hashes
+    ego_positions[i]        = ego_pos
+    ego_velocities[i]       = ego_vel
+    stall_infos[i]          = stall_info
 
     # Save the filename
     file_name = file_name[file_name.rfind("/")+1:]
@@ -228,9 +234,16 @@ else:
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
+
+print()
+
 print("Saving data")
 np.save(save_path + '/traces_{}'.format(save_name), reach_vectors)
 np.save(save_path + '/vehicles_{}'.format(save_name), vehicles_per_trace)
 np.save(save_path + '/time_{}'.format(save_name), time_per_trace)
 np.save(save_path + '/crash_hash_{}'.format(save_name), crash_hashes)
 np.save(save_path + '/processed_files_{}'.format(save_name), files_processed)
+np.save(save_path + '/ego_positions_{}'.format(save_name), ego_positions)
+np.save(save_path + '/ego_velocities_{}'.format(save_name), ego_velocities)
+np.save(save_path + '/stall_information_{}'.format(save_name), stall_infos)
+

@@ -69,9 +69,14 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
     current_vector      = 0
     incident_hashes     = np.full((1, max_possible_crashes), np.inf, dtype='float64')
 
-    crash_incident_angles = []
-    crash_ego_magnitudes = []
-    crash_veh_magnitudes = []
+    ego_velocities      = np.full((total_vectors, 3), np.inf, dtype='float64')
+    ego_positions       = np.full((total_vectors, 3), np.inf, dtype='float64')
+
+    crash_incident_angles   = []
+    crash_ego_magnitudes    = []
+    crash_veh_magnitudes    = []
+
+    stall_information   = np.full((total_vectors, 3), np.inf, dtype='float64')
 
     for line in f: 
         # Make sure we aren't writing too many lines
@@ -85,10 +90,31 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
         if "Vector: " in line:
             vector_str = line[line.find(": ")+3:-2]
             vector = np.fromstring(vector_str, dtype=float, sep=', ')
+            v = np.fromstring(vector_str, dtype=float, sep=',')
+            # Compute how many values are maxed out
+            tolerance = 1e-6
+            total_values_at_max = (v >= new_max_distance - tolerance).sum()
+            if total_values_at_max == np.max:
+                print("here")
+            # Get the closest obstacle for the stall data
+            closest_index = np.argmin(v)
+            stall_information[current_vector][0] = closest_index
+            stall_information[current_vector][1] = v[closest_index]
+            stall_information[current_vector][2] = total_values_at_max
+
             vector = vector_conversion(vector, new_steering_angle, new_max_distance, new_total_lines, len(vector))
             vector = getStep(vector, new_accuracy)
             test_vectors[current_vector] = vector
             current_vector += 1
+
+
+        if "Ego Position: " in line:
+            ego_position = np.fromstring(line[15:-1], dtype=np.float, sep=' ')
+            ego_positions[current_vector-1] = ego_position
+
+        if "Ego Velocity: " in line:
+            ego_velocity = np.fromstring(line[15:-1], dtype=np.float, sep=' ')
+            ego_velocities[current_vector-1] = ego_velocity
 
         if "Crash: True" in line:
             if not ignore_crashes:
@@ -133,7 +159,7 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
     # Convert the simulated time to a float
     simulation_time = float(simulation_time)
 
-    return vehicle_count, collision_counter, test_vectors, simulation_time, incident_hashes
+    return vehicle_count, collision_counter, test_vectors, simulation_time, incident_hashes, ego_positions, ego_velocities, stall_information
 
 def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, new_accuracy):
     test_vectors    = []

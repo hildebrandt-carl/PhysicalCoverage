@@ -216,6 +216,7 @@ for i in range(len(beam_numbers)):
 
     # Shuffle the data if it is not ordered
     if not args.ordered:
+        np.random.seed(42)
         # Perform a unified shuffle
         assert len(random_traces) == len(random_crashes) == len(random_times)
         assert len(generated_traces) == len(generated_crashes) == len(generated_times)

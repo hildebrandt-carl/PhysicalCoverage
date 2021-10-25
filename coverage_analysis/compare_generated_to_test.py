@@ -143,6 +143,9 @@ generated_processed_file_names  = order_by_beam(generated_processed_file_names, 
 total_tests_processed = 0
 total_tests_success = 0
 
+# Save the different success rates
+success_rate_array = []
+
 # For each of the different beams
 for i in range(len(beam_numbers)):
 
@@ -250,5 +253,14 @@ for i in range(len(beam_numbers)):
 
     # Print success rate
     success_rate = np.round((total_tests_success / total_tests_processed) * 100, 4)
-    print("Success rate: {}".format(success_rate))
+    success_rate_array.append(success_rate)
+
+print("")
+print("---------------------------------------")
+print("---------------Results-----------------")
+print("---------------------------------------")
+for i in range(len(beam_numbers)):
+    beam_number = beam_numbers[i]
+    success_rate = success_rate_array[i]
+    print("RSR {} Success rate: {}%".format(beam_number, success_rate))
 
