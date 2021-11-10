@@ -110,10 +110,20 @@ def processFile(f, total_vectors, vector_size, new_steering_angle, new_max_dista
 
         if "Ego Position: " in line:
             ego_position = np.fromstring(line[15:-1], dtype=np.float, sep=' ')
+            
+            # If the ego_positions are only 2 long its highway
+            if len(ego_position) == 2:
+                ego_position = np.pad(ego_position, (0, 1), 'constant')
+
             ego_positions[current_vector-1] = ego_position
 
-        if "Ego Velocity: " in line:
+        if "Ego Velocity: " in line:          
             ego_velocity = np.fromstring(line[15:-1], dtype=np.float, sep=' ')
+
+            # If the ego_positions are only 2 long its highway
+            if len(ego_velocity) == 2:
+                ego_velocity = np.pad(ego_velocity, (0, 1), 'constant')
+
             ego_velocities[current_vector-1] = ego_velocity
 
         if "Crash: True" in line:

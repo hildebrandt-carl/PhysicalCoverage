@@ -24,8 +24,11 @@ def compute_physical_coverage_hash(index):
     number_of_crashes = 0
 
     # Hash the RSR vectors
-    flattened_trace = tuple(list(trace.reshape(-1)))
-    coverage_hash = hash(flattened_trace) 
+    coverage_set = set()
+    for t in trace:
+        coverage_set.add(tuple(t))
+
+    coverage_hash = hash(tuple(sorted(list(coverage_set))))
 
     # Count the number of crashes
     for c in crash:
@@ -64,8 +67,7 @@ def compute_code_coverage_hash(index):
     all_lines_coverage = set(covered_l) - ignored_lines
 
     # Get the coverage hash
-    all_lines_coverage = tuple(sorted(list(all_lines_coverage)))
-    coverage_hash = hash(all_lines_coverage)
+    coverage_hash = hash(tuple(sorted(list(all_lines_coverage))))
 
     return [coverage_hash, number_of_crashes]
 
@@ -336,6 +338,7 @@ print("Unique F T: The number of unique tests (The only test with that signature
 print("Not Unique P T: The number of not unique tests (A test that shares a signature with at least 1 other test) that are passing")
 print("Not Unique F T: The number of not unique tests (A test that shares a signature with at least 1 other test) that are failing")
 
+print("Here we define signature as the signature of an entire test. i.e. 1 signature is generated for a test, based on all the RSR signatures it saw during that test.")
 print("S: The total number of signatures generated over all tests")
 print("Unique S: The total number of signatures that were only found by 1 test")
 print("Not Unique S: The total number of signautres that were found in 2 or more tests")

@@ -194,29 +194,31 @@ gen_text_x = 0
 gen_text_y = 0
 
 if args.scenario == "beamng":
-    switch_point_y_interval = 1
-    switch_point_x_interval = 100
-    times_array_interval = 150
-    ran_text_x = 1
-    ran_text_y = 250
-    gen_text_x = 90
-    gen_text_y = 1800
+    switch_point_y_interval = 5
+    switch_point_x_interval = 250
+    times_array_interval = 250
+    ran_text_x = 6
+    ran_text_y = 100
+    gen_text_x = 8.5
+    gen_text_y = 100
+    time_shift = 0
 elif args.scenario == "highway":
-    switch_point_y_interval = 10
-    switch_point_x_interval = 100
+    switch_point_y_interval = 40
+    switch_point_x_interval = 1000
     times_array_interval = 1000
-    ran_text_x = 15
-    ran_text_y = 1800
+    ran_text_x = 55
+    ran_text_y = 4000
     gen_text_x = 90
-    gen_text_y = 1800
+    gen_text_y = 4000
+    time_shift = 3
 
 plt.text(switch_point_y_interval, switch_point_y, str(int(switch_point_y)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
 plt.text(switch_point_y_interval, crash_array[-1], str(int(crash_array[-1])), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
 plt.text(switch_point_x, switch_point_x_interval, str(np.round(switch_point_x,2)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
-plt.text(times_array[-1], times_array_interval, str(np.round(times_array[-1],2)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
+plt.text(times_array[-1] - time_shift, times_array_interval, str(np.round(times_array[-1],2)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
 
-plt.text(ran_text_x, ran_text_y, "Random Tests", fontsize=12, va='center', ha='center', color="black")
-plt.text(gen_text_x, gen_text_y, "Generated Tests", fontsize=12, va='center', ha='center', color="black")
+plt.text(ran_text_x, ran_text_y, "Random\nTests", fontsize=12, va='center', ha='center', color="black")
+plt.text(gen_text_x, gen_text_y, "Generated\nTests", fontsize=12, va='center', ha='center', color="black")
 
 
 crash_increase = np.round(((crash_array[-1] - switch_point_y) / switch_point_y) * 100, 2)
@@ -232,15 +234,15 @@ if args.scenario == "beamng":
     time_interval = 1
     crash_interval = 25
 elif args.scenario == "highway":
-    time_interval = 5
-    crash_interval = 250
+    time_interval = 10
+    crash_interval = 500
 
 plt.xlabel("Time (days)")
-plt.ylabel("Total unique crashes")
+plt.ylabel("Total Unique Crashes")
 plt.xticks(np.arange(0, times_array[-1] + 1e-6, time_interval))
 plt.yticks(np.arange(0, crash_array[-1] + 1e-6, crash_interval))
-plt.legend(loc=4)
-plt.title("Time increase: {}% - Crash Increase: {}%".format(time_increase, crash_increase))
+plt.legend(loc=0)
+# plt.title("Time increase: {}% - Crash Increase: {}%".format(time_increase, crash_increase))
 plt.grid(alpha=0.5)
 plt.axes().minorticks_on()
 plt.show()

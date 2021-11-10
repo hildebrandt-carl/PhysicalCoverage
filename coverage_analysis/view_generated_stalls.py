@@ -266,29 +266,23 @@ gen_text_x = 0
 gen_text_y = 0
 
 if args.scenario == "beamng":
-    switch_point_y_interval = 1
-    switch_point_x_interval = 750
-    times_array_interval = 1250
-    ran_text_x = 1
-    ran_text_y = 250
-    gen_text_x = 90
-    gen_text_y = 1800
+    switch_point_y_interval = 4
+    switch_point_x_interval = 250
+    times_array_interval = 250
+    ran_text_x = 6
+    ran_text_y = 150
+    gen_text_x = 8.5
+    gen_text_y = 150
 elif args.scenario == "highway":
-    switch_point_y_interval = 10
-    switch_point_x_interval = 100
-    times_array_interval = 1000
-    ran_text_x = 15
-    ran_text_y = 1800
-    gen_text_x = 90
-    gen_text_y = 1800
+    exit()
 
 plt.text(switch_point_y_interval, switch_point_y, str(int(switch_point_y)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
 plt.text(switch_point_y_interval, stall_count_array[-1], str(int(stall_count_array[-1])), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
 plt.text(switch_point_x, switch_point_x_interval, str(np.round(switch_point_x,2)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
 plt.text(times_array[-1], times_array_interval, str(np.round(times_array[-1],2)), fontsize=10, va='center', ha='center', backgroundcolor='w', color="grey")
 
-# plt.text(ran_text_x, ran_text_y, "Random Tests", fontsize=12, va='center', ha='center', color="black")
-# plt.text(gen_text_x, gen_text_y, "Generated Tests", fontsize=12, va='center', ha='center', color="black")
+plt.text(ran_text_x, ran_text_y, "Random\nTests", fontsize=12, va='center', ha='center', color="black")
+plt.text(gen_text_x, gen_text_y, "Generated\nTests", fontsize=12, va='center', ha='center', color="black")
 
 
 stall_increase = np.round(((stall_count_array[-1] - switch_point_y) / switch_point_y) * 100, 2)
@@ -298,21 +292,12 @@ print("Percentage increase: {}".format(stall_increase))
 print("Additional time increase: {}".format(time_increase))
 print("----------------------------------")
 
-# time_interval = 0
-# velocity_interval = 0
-# if args.scenario == "beamng":
-#     time_interval = 1
-#     velocity_interval = 25
-# elif args.scenario == "highway":
-#     time_interval = 5
-#     velocity_interval = 250
-
 plt.xlabel("Time (days)")
-plt.ylabel("Total stalls")
-# plt.xticks(np.arange(0, times_array[-1] + 1e-6, 5))
-# plt.yticks(np.arange(0, stall_count_array[-1] + 1e-6, 5))
-plt.legend(loc=4)
-plt.title("Time increase: {}% - Stall increase: {}%".format(time_increase, stall_increase))
+plt.ylabel("Total Unique Stalls")
+plt.xticks(np.arange(0, times_array[-1] + 1e-6, 1))
+plt.yticks(np.arange(0, stall_count_array[-1] + 1e-6, 25))
+plt.legend(loc=0)
+# plt.title("Time increase: {}% - Stall increase: {}%".format(time_increase, stall_increase))
 plt.grid(alpha=0.5)
 plt.axes().minorticks_on()
 plt.show()

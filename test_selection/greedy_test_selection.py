@@ -306,31 +306,35 @@ plt.figure(1)
 # For each of the different beams
 print("Generating random tests")
 random_coverage_percentages, random_crash_count, random_test_suite_size = random_selection(args.cores, test_suite_sizes)
-plt.scatter(random_test_suite_size, random_crash_count, c="C0", label="Random", s=5)
+plt.scatter(random_test_suite_size, random_crash_count, c="C0", marker="s", label="Random", s=5)
 x_line, y_line = line_of_best_fit(random_test_suite_size, random_crash_count)
 plt.plot(x_line, y_line, '--', color="C0")
 
 print("Generating best case greedy tests")
 best_coverage_percentages, best_crash_count, best_test_suite_size = greedy_selection(args.cores, test_suite_sizes, "max", greedy_sample_size)
-plt.scatter(best_test_suite_size, best_crash_count, c="C1", s=5, label="Greedy Best")
+plt.scatter(best_test_suite_size, best_crash_count, c="C1", marker="o", s=6, label="Greedy Best")
 x_line, y_line = line_of_best_fit(best_test_suite_size, best_crash_count)
 plt.plot(x_line, y_line, '--', color="C1")
 
 print("Generating worst case greedy tests")
 worst_coverage_percentages, worst_crash_count, worst_test_suite_size = greedy_selection(args.cores, test_suite_sizes, "min", greedy_sample_size)
-plt.scatter(worst_test_suite_size, worst_crash_count, c="C2", s=5, label="Greedy Worst")
+plt.scatter(worst_test_suite_size, worst_crash_count, c="C2", marker="^", s=7, label="Greedy Worst")
 x_line, y_line = line_of_best_fit(worst_test_suite_size, worst_crash_count)
 plt.plot(x_line, y_line, '--', color="C2")
 
 if args.scenario == "highway":
     increment = 50
 if args.scenario == "beamng":
-    increment = 5
+    increment = 10
 
-plt.legend()
+plt.plot([], [] ,'--', color="black",label="Line of Best Fit")
+
+plt.legend(markerscale=5)
 plt.xticks(np.arange(0, np.max(random_test_suite_size) + 0.01,  args.total_samples/100))
 plt.yticks(np.arange(0, np.max(best_crash_count) + 0.01, increment))
 plt.ylabel("Unique Crashes")
 plt.xlabel("Test Suite Size")
+# Round the x ticks to 3 places
+plt.ticklabel_format(style='sci', axis='x', scilimits=(2,3))
 plt.grid(alpha=0.5)
 plt.show()

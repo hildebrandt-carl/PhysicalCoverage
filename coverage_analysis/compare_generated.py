@@ -415,20 +415,40 @@ for i in range(len(beam_numbers)):
     plt.figure(1)
     plt.plot(time_array, coverage_array, linestyle="-", color='C{}'.format(i), label="RSR{}".format(beam_number))
     plt.axvline(x=switch_point, color='grey', linestyle=':', linewidth=1)
+    plt.axvline(x=switch_point, color='grey', linestyle='--', linewidth=2)
     # plt.axhline(y=possible_coverage, color='C{}'.format(i), linestyle=':', linewidth=2)
     plt.figure(2)
     plt.plot(time_array, total_crash_array, linestyle="--", color='C{}'.format(i))
     plt.plot(time_array, unique_crash_array, linestyle="-", color='C{}'.format(i), label="RSR{}".format(beam_number))
-    plt.axvline(x=switch_point, color='grey', linestyle=':', linewidth=1)
+    plt.axvline(x=switch_point, color='grey', linestyle='--', linewidth=2)
+
+
+
+if args.scenario == "beamng":
+    x_tick_interval = 1
+    ran_text_x = 6
+    ran_text_y = 0.1
+    gen_text_x = 8.5
+    gen_text_y = 0.1
+elif args.scenario == "highway":
+    x_tick_interval = 10
+    ran_text_x = 50
+    ran_text_y = 0.1
+    gen_text_x = 90
+    gen_text_y = 0.1
 
 
 # Draw the plot
 plt.figure(1)
-plt.legend()
+plt.legend(loc="right")
 plt.xlabel("Time (Days)")
-plt.ylabel("Coverage (% of all feasible)")
+plt.ylabel("Coverage (% of all Feasible)")
+plt.xticks(np.arange(0, time_array[-1] + 1e-6, x_tick_interval))
+plt.yticks(np.arange(0, 1 + 1e-6, 0.1))
 plt.ticklabel_format(style='plain')
 plt.grid(alpha=0.5)
+plt.text(ran_text_x, ran_text_y, "Random\nTests", fontsize=12, va='center', ha='center', color="black")
+plt.text(gen_text_x, gen_text_y, "Generated\nTests", fontsize=12, va='center', ha='center', color="black")
 
 plt.figure(2)
 l1 = plt.legend()

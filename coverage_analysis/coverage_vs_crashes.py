@@ -99,7 +99,7 @@ def coverage_on_random_test_suit(suite_size):
 # Determine the test sizes for this plot
 def determine_test_suite_sizes(total_tests):
     # We now need to sample tests of different sizes to create the plot
-    percentage_of_all_tests = np.arange(0,100.0001, 10)
+    percentage_of_all_tests = np.arange(0,100.0001, 5)
     percentage_of_all_tests[0] += 1
     test_sizes = []
 
@@ -245,9 +245,10 @@ feasible_file_names = order_by_beam(feasible_file_names, beam_numbers)
 
 # Get the test suite sizes
 test_suite_sizes = determine_test_suite_sizes(args.total_samples)
+print(test_suite_sizes)
 
 # Compute the total coverage for tests of different sizes
-total_test_suits = 10
+total_test_suits = 50
 
 # Create the output figure
 plt.figure(1)
@@ -259,10 +260,12 @@ all_coverage_data = []
 
 # Define colors for the matplotlib
 
+max_beam = 6
+
 # For each of the different beams
 for i in range(len(beam_numbers)):
 
-    if beam_numbers[i] > 6:
+    if beam_numbers[i] > max_beam:
         continue
 
     print("Processing beams: {}".format(beam_numbers[i]))
@@ -336,14 +339,21 @@ for i in range(len(beam_numbers)):
         # Keep track of all the results
         all_results.append(np.average(results))
 
+        # get the color
+        color_code = max_beam-i-1
+        if color_code == 0:
+            color_code = 2
+        elif color_code == 2:
+            color_code = 0
+
         # Plot the data
-        ax1.scatter(np.full(len(results), suite_size), results, marker='o', c="C{}".format(i), s=0.5)
+        ax1.scatter(np.full(len(results), suite_size), results, marker='o', c="C{}".format(color_code), s=0.5)
 
     # Save the results for correlation computation later
     all_coverage_data.append(all_results)
 
     # Plot the average test suite coverage
-    ax1.plot(test_suite_sizes, average_coverage, c="C{}".format(i), label="RSR{}".format(beam_number))
+    ax1.plot(test_suite_sizes, average_coverage, c="C{}".format(color_code), label="RSR{}".format(beam_number))
 
 
 print("Computing crash rate")
@@ -439,4 +449,8 @@ ax2.tick_params(axis='y', colors="black")
 ax2.spines["right"].set_edgecolor("black")
 
 ax1.set_ylim([-0.05, 1.05])
+ax1.grid(alpha=0.5)
+ax1.set_yticks(np.arange(0, 1 + 1e-6, 0.1))
+ax1.set_xticks(test_suite_sizes)
+ax1.ticklabel_format(style='sci', axis='x', scilimits=(2,3))
 plt.show()
