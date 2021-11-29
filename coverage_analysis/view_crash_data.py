@@ -58,12 +58,23 @@ unique_crash_count = 0
 # Used to find the unique values
 unique_crash_data = set()
 
+# Keep track of the overall tests success rate
+successful_runs = 0
+unsuccessful_runs = 0
+
 # Keep track of what test we are doing
 test_number = []
 
 print(crash_data.shape)
 # Go through each of the tests
 for i in range(crash_data.shape[0]):
+
+    # Check if this trace had a crash
+    if np.isinf(crash_data[i]).all():
+        # No crash
+        successful_runs += 1
+    else:
+        unsuccessful_runs += 1
 
     # Go through each of the possible crashes in the test
     for j in range(crash_data.shape[1]):
@@ -85,6 +96,14 @@ for i in range(crash_data.shape[0]):
         accumulative_total_crashes.append(total_crash_count)
         accumulative_unique_crashes.append(unique_crash_count)
         test_number.append(i)
+
+
+print("Total successful runs (no faults detected): {}".format(successful_runs))
+print("Total unsuccessful runs  (faults detected): {}".format(unsuccessful_runs))
+total_runs = unsuccessful_runs + successful_runs
+print("Total runs: {}".format(total_runs))
+print("Success rate: {}%".format((successful_runs / total_runs) * 100))
+print("---------")
 
 # Print the final information
 # assert(total_crash_count == crash_data.shape[0] - np.count_nonzero(np.isnan(crash_data)))

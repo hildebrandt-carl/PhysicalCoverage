@@ -1,6 +1,7 @@
 import re
 import ast
 import glob
+import random
 import argparse
 
 from tqdm import tqdm
@@ -15,6 +16,7 @@ args = parser.parse_args()
 
 
 files = glob.glob("../../PhysicalCoverageData/{}/random_tests/code_coverage/raw/*/*.txt".format(args.scenario))
+random.shuffle(files)
 print("Processing: {} files".format(len(files)))
 
 all_lines_coverage = set()
