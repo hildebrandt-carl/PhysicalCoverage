@@ -7,5 +7,5 @@ beamcount=(1 2 3 4 5 6 7 8 9 10)
 for totallines in "${beamcount[@]}"
 do
     # Run the script
-    python3 pre_process_data.py --scenario beamng_generated --total_samples $1 --beam_count $totallines  &
+    python3 pre_process_data.py --scenario beamng_generated --cores 120 --total_samples $1 --beam_count $totallines
 done

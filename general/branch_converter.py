@@ -310,80 +310,94 @@ class BranchConverter:
             self.coverage_array[75] += 1
 
             #b77
-            if (71 in el):
-                self.coverage_array[76] += 1
+            self.coverage_array[76] = -1 # What happens if we ignore check collision code
+            # if (71 in el):
+            #     self.coverage_array[76] += 1
 
             #b78
-            if (74 in el):
-                self.coverage_array[77] += 1
+            self.coverage_array[77] = -1 # What happens if we ignore check collision code
+            # if (74 in el):
+            #     self.coverage_array[77] += 1
 
             #b79
-            if (73 in el):
-                self.coverage_array[78] += 1
+            self.coverage_array[78] = -1 # What happens if we ignore check collision code
+            # if (73 in el):
+            #     self.coverage_array[78] += 1
 
             #b80
-            if (83 in el):
-                self.coverage_array[79] += 1
+            self.coverage_array[79] = -1 # What happens if we ignore check collision code
+            # if (83 in el):
+            #     self.coverage_array[79] += 1
 
             #b81
-            if (75 in el):
-                self.coverage_array[80] += 1
+            self.coverage_array[80] = -1 # What happens if we ignore check collision code
+            # if (75 in el):
+            #     self.coverage_array[80] += 1
 
             #b82
-            if (77 in el):
-                self.coverage_array[81] += 1
+            self.coverage_array[81] = -1 # What happens if we ignore check collision code
+            # if (77 in el):
+            #     self.coverage_array[81] += 1
 
             #b83
-            if (76 in el):
-                self.coverage_array[82] += 1
+            self.coverage_array[82] = -1 # What happens if we ignore check collision code
+            # if (76 in el):
+            #     self.coverage_array[82] += 1
 
             #b84
-            if (78 in el):
-                self.coverage_array[83] += 1
+            self.coverage_array[83] = -1 # What happens if we ignore check collision code
+            # if (78 in el):
+            #     self.coverage_array[83] += 1
 
             #b85 -- Impossible to tell with current metric
             self.coverage_array[84] = -1
 
             #b86
-            if (81 in el):
-                self.coverage_array[85] += 1
+            self.coverage_array[85] = -1 # What happens if we ignore check collision code
+            # if (81 in el):
+            #     self.coverage_array[85] += 1
 
             #b87
-            if (84 in el):
-                self.coverage_array[86] += 1
+            self.coverage_array[86] = -1 # What happens if we ignore check collision code
+            # if (84 in el):
+            #     self.coverage_array[86] += 1
 
             #b88
-            if (91 in el):
-                self.coverage_array[87] += 1
+            self.coverage_array[87] = -1 # What happens if we ignore check collision code
+            # if (91 in el):
+            #     self.coverage_array[87] += 1
 
             #b89
-            if (86 in el):
-                self.coverage_array[88] += 1
+            self.coverage_array[88] = -1 # What happens if we ignore check collision code
+            # if (86 in el):
+            #     self.coverage_array[88] += 1
 
             #b90
-            if (85 in el):
-                self.coverage_array[89] += 1
+            self.coverage_array[89] = -1 # What happens if we ignore check collision code
+            # if (85 in el):
+            #     self.coverage_array[89] += 1
 
             #b91 -- Impossible to tell with current metric
             self.coverage_array[90] = -1
 
             #b92
-            if (87 in el):
-                self.coverage_array[91] += 1
+            self.coverage_array[91] = -1 # What happens if we ignore check collision code
 
             #b93 -- Impossible to tell with current metric
             self.coverage_array[92] = -1
 
             #b94
-            if (90 in el):
-                self.coverage_array[93] += 1
+            self.coverage_array[93] = -1 # What happens if we ignore check collision code
+            # if (90 in el):
+            #     self.coverage_array[93] += 1
 
             #b95 -- Impossible to tell with current metric
             self.coverage_array[94] = -1
 
             #b96
-            if (92 in el):
-                self.coverage_array[95] += 1
+            self.coverage_array[95] = -1 # What happens if we ignore check collision code
+            # if (92 in el):
+            #     self.coverage_array[95] += 1
 
         self.coverage_array = np.clip(self.coverage_array, -1, 1)
         return self.coverage_array

@@ -6,6 +6,7 @@ import glob
 import math
 import random 
 import argparse
+import multiprocessing
 
 from pathlib import Path
 current_file = Path(__file__)
@@ -32,6 +33,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--beam_count',     type=int, default=4,    help="The number of beams used to vectorize the reachable set")
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
+parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
 args = parser.parse_args()
 
 # Create the configuration classes
@@ -59,6 +61,11 @@ elif args.scenario == "beamng_generated":
 else:
     print("ERROR: Unknown scenario")
     exit()
+
+print("")
+print("----------------------------------")
+print("")
+print("Processing RSR{}\n".format(new_total_lines))
 
 # Get the total number of possible crashes per test
 max_crashes_per_test = CO.max_possible_crashes
@@ -182,20 +189,25 @@ vehicles_per_trace  = np.zeros(total_files, dtype=int)
 time_per_trace      = np.zeros(total_files, dtype='float64')
 crash_hashes        = np.zeros((total_files, max_crashes_per_test), dtype='float64')
 files_processed     = np.empty(total_files, dtype='U64')
-ego_positions       = [None] * total_files
-ego_velocities      = [None] * total_files
+ego_positions       = np.zeros((total_files, vec_per_file, 3), dtype='float64')
+ego_velocities      = np.zeros((total_files, vec_per_file, 3), dtype='float64')
 stall_infos         = np.zeros((total_files, vec_per_file, 3), dtype='float64')
 
-# For each file
-file_count = 0
-for i in tqdm(range(total_files)):
+total_processors = int(args.cores)
+pool =  multiprocessing.Pool(processes=total_processors)
+
+# Call our function total_test_suites times
+jobs = []
+for i in range(total_files):
     # Get the filename
     file_name = file_names[i]
+    # Start the job
+    jobs.append(pool.apply_async(processFile, args=([file_name, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_crashes_per_test, crash_base, True])))
 
-    # Process the file
-    f = open(file_name, "r")    
-    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes, ego_pos, ego_vel, stall_info = processFile(f, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_crashes_per_test, crash_base, True)
-    f.close()
+# Get the results
+for i, job in enumerate(tqdm(jobs)):
+    result = job.get()
+    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes, ego_pos, ego_vel, stall_info = result
 
     reach_vectors[i]        = test_vectors
     vehicles_per_trace[i]   = vehicle_count
@@ -208,6 +220,9 @@ for i in tqdm(range(total_files)):
     # Save the filename
     file_name = file_name[file_name.rfind("/")+1:]
     files_processed[i]      = file_name
+
+# Close your pools
+pool.close()
 
 save_name = args.scenario
 save_name += "_s" + str(new_steering_angle) 
@@ -234,7 +249,6 @@ else:
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
-
 print()
 
 print("Saving data")
@@ -246,4 +260,3 @@ np.save(save_path + '/processed_files_{}'.format(save_name), files_processed)
 np.save(save_path + '/ego_positions_{}'.format(save_name), ego_positions)
 np.save(save_path + '/ego_velocities_{}'.format(save_name), ego_velocities)
 np.save(save_path + '/stall_information_{}'.format(save_name), stall_infos)
-

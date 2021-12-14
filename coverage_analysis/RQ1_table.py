@@ -114,7 +114,10 @@ def compute_RSR_details():
     inconsistent_class_count    = np.size(consistent_class) - np.count_nonzero(consistent_class)
 
     # Compute the percentage of consistency
-    percentage_of_inconsistency = int(np.round((inconsistent_class_count / np.size(consistent_class)) * 100, 0))
+    if np.size(consistent_class) <= 0:
+        percentage_of_inconsistency = 0
+    else:
+        percentage_of_inconsistency = int(np.round((inconsistent_class_count / np.size(consistent_class)) * 100, 0))
 
     # Make sure that there is no count where the count is < 1: Make sure that single + multi == total
     assert(len(count_of_signatures[np.argwhere(count_of_signatures < 1).reshape(-1)]) == 0)
