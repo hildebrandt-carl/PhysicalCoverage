@@ -4,7 +4,7 @@
 vehicle_count=(1 2 3 4 5 6 7 8 9 10)
 
 # Run it 
-for value in {1..500}
+for value in {1..2}
 do
     for tot_vehicle in "${vehicle_count[@]}"
     do
@@ -19,7 +19,7 @@ do
         done
         
         # Create the save name
-        save_name="$tot_vehicle-$current_date-$rand_string.txt"
+        save_name="$tot_vehicle-$current_date-$rand_string"
 
         # Run the script
         python3 run_random_scenario.py --no_plot --environment_vehicles $tot_vehicle --save_name $save_name 

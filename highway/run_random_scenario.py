@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from copy import copy
+from coverage import Coverage
 from math import pi, atan2, degrees
 
 # Hot fix to get general accepted
@@ -27,7 +28,6 @@ from general.highway_config import HighwayEnvironmentConfig
 from controllers.tracker import Tracker
 from controllers.car_controller import EgoController
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--save_name', type=str, default="output.txt", help="The save name of the run")
 parser.add_argument('--environment_vehicles', type=int, default=10, help="total_number of vehicles in the environment")
@@ -36,7 +36,7 @@ args = parser.parse_args()
 
 # Get the different configurations
 HK = HighwayKinematics()
-RSR = RSRConfig(beam_count=30)
+RSR = RSRConfig(beam_count=31)
 
 # Variables - Used for timing
 total_lines     = RSR.beam_count
@@ -54,8 +54,17 @@ if not os.path.exists(physical_coverage_path):
 if not os.path.exists(code_coverage_path):
     os.makedirs(code_coverage_path)
 
-physical_coverage_save_name = physical_coverage_path + "/{}".format(args.save_name)
-code_coverage_save_name = code_coverage_path + "/{}".format(args.save_name)
+physical_coverage_save_name = physical_coverage_path + "/{}.txt".format(args.save_name)
+code_coverage_save_name = code_coverage_path + "/{}.xml".format(args.save_name)
+
+# TODO figure out how to put the code coverage save name
+# Start the line and branch coverage
+cov = Coverage(branch=True,
+               cover_pylib=False,
+               source=["controllers.car_controller", "highway_env_v2.vehicle.controller"],
+               concurrency=["Thread"],
+               data_file=None)
+cov.start()
 
 # Save the output file
 text_file = open(physical_coverage_save_name, "w")
@@ -247,46 +256,13 @@ while not done:
         text_file.write("Incident vehicle velocity magnitude: {}\n".format(veh_mag))
         text_file.write("Angle of incident: {}\n\n".format(angle_of_incidence))
 
-
-# Output the code coverage for both the car and controller
-print("Getting the code coverage:")
-covered_lines_env, all_lines_env = env.get_lines_covered()
-covered_lines_con, all_lines_con = car_controller.get_lines_covered()
-
-covered_lines_env   = covered_lines_env + 1000
-all_lines_env       = all_lines_env + 1000
-covered_lines_con   = covered_lines_con + 2000
-all_lines_con       = all_lines_con + 2000
-
-covered_lines = np.concatenate([covered_lines_env, covered_lines_con])
-all_lines = np.concatenate([all_lines_env, all_lines_con])
-
-covered_lines_set = set(covered_lines)
-all_lines_set = set(all_lines)
-
-uncovered_lines_set = all_lines_set - covered_lines_set
-
-print("Total covered lines: {}".format(len(covered_lines_set)))
-print("Total uncovered lines: {}".format(len(uncovered_lines_set)))
-print("Total lines: {}".format(len(all_lines_set)))
-
-# Compute the coverage
-coverage = len(covered_lines_set) / len(all_lines_set)
-print("Coveraged: {}".format(coverage))
 print("-----------------------------")
 
-f = open(code_coverage_save_name, "w")
-f.write("Lines covered: {}\n".format(sorted(list(covered_lines_set))))
-f.write("Total lines covered: {}\n".format(len(list(covered_lines_set))))
-f.write("-----------------------------\n")
-f.write("All Lines: {}\n".format(sorted(list(all_lines_set))))
-f.write("Total Lines: {}\n".format(len(list(all_lines_set))))
-f.write("-----------------------------\n")
-f.write("Lines not covered: {}\n".format(sorted(list(uncovered_lines_set))))
-f.write("Total lines not covered: {}\n".format(len(list(uncovered_lines_set))))
-f.write("-----------------------------\n")
-f.write("Total physical crashes: {}\n".format(total_physical_accidents))
-f.close()
+# Stop the line and branch coverage
+print("Coverage saved to: {}".format(code_coverage_save_name))
+cov.stop()
+cov.xml_report(outfile=code_coverage_save_name)
+cov.erase()
 
 env.close()
 text_file.close()
