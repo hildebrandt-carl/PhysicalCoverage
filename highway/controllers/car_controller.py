@@ -135,7 +135,7 @@ class EgoController:
                 else:
                     action = action_enum.SLOWER.value
 
-        # If the desired lane is not equal to the current lane & the car isnt turning, we need to turn
+        # If the desired lane is not equal to the current lane & the car isn't turning, we need to turn
         if (action != action_enum.LANE_RIGHT.value) and (action != action_enum.LANE_LEFT.value):
             if (self.desired_lane != self.current_lane) and (abs(ego_heading) < 1):
                 self.desired_lane = self.current_lane

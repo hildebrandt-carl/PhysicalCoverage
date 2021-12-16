@@ -2,6 +2,7 @@
 
 import os
 import glob
+import copy
 import argparse
 import multiprocessing
 
@@ -10,13 +11,86 @@ import xml.etree.ElementTree as ET
 
 from tqdm import tqdm
 
+def compute_coverage(file_name, save_path):
+    global preprocessed_crash_arrays
+    global preprocessed_file_arrays
+
+    # Load the data
+    data = ET.parse(file_name)
+
+    # Save this files coverage data
+    coverage_data = {}
+
+    # Loop through the different files
+    for c in data.iter('class'):
+
+        all_lines = []
+        lines_covered = []
+
+        all_branches = []
+        branches_covered = []
+
+        # Get the current class
+        current_class = c.attrib['filename']
+        current_class = current_class[current_class.rfind("/")+1:]
+
+        # Loop through each line
+        for line in c.iter("line"):
+
+            # Compute the line coverage
+            line_number = int(line.attrib["number"])
+            line_hit    = int(line.attrib["hits"])
+
+            # Save the data
+            all_lines.append(line_number)
+            if line_hit:
+                lines_covered.append(line_number)
+
+            # Compute the branch coverage
+            if "branch" in line.attrib.keys():
+                branch_number     = str(line.attrib["number"])
+                branch_coverage   = str(line.attrib["condition-coverage"])
+                branch_hits       = int(branch_coverage[branch_coverage.rfind("(")+1:branch_coverage.rfind("/")])
+
+                # Determine if we hit both branches
+                if branch_hits == 2:
+                    branches_covered.append(branch_number)
+                elif branch_hits == 1:
+                    # Determine which branch is missing
+                    missing_branch = line.attrib["missing-branches"]
+                    branches_covered.append(str(branch_number) + "_" + missing_branch)
+
+                # Save this as part of all branches
+                all_branches.append(branch_number)
+
+        # Save this information
+        coverage_data[current_class] = [lines_covered, all_lines, branches_covered, all_branches]
+    
+    # Compute the save name
+    external_vehicles_str = file_name[file_name.rfind("raw/")+4:file_name.rfind("/")]
+    save_name = file_name[file_name.rfind("/")+1:-4] + ".txt"
+    code_coverage_save_name = save_path + external_vehicles_str + "/" + save_name
+
+    # Figure out which crash array to look at:
+    c_array = preprocessed_crash_arrays[external_vehicles_str]
+    f_array = preprocessed_file_arrays[external_vehicles_str]
+
+    # Get the array index
+    arr_index = np.where(f_array == save_name)
+    if f_array[arr_index][0] != save_name:
+        print("Error: The name we associate with crashes does not match the code coverage file")
+        exit()
+
+    # Get the crash count    
+    crash_count = np.sum(~np.isinf(c_array[arr_index]))
+
+    return [coverage_data, code_coverage_save_name, crash_count]
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
 args = parser.parse_args()
-
-
 
 print("----------------------------------")
 print("----------Locating Files----------")
@@ -30,7 +104,10 @@ elif args.scenario == "beamng_generated":
     print("To be implemented")
     exit()
 elif args.scenario == "highway_random":
-    all_files = glob.glob("../../PhysicalCoverageData/highway/random_tests/code_coverage/raw/*/*.xml")
+    base = "../../PhysicalCoverageData/highway/random_tests"
+    all_files = glob.glob(base + "/code_coverage/raw/*/*.xml")
+    crash_info = glob.glob(base + "/physical_coverage/processed/{}/crash_hash*.npy".format(args.total_samples))
+    file_info = glob.glob(base + "/physical_coverage/processed/{}/processed_files*.npy".format(args.total_samples))
 elif args.scenario == "highway_generated":
     print("To be implemented")
     exit()
@@ -61,8 +138,26 @@ if len(np.shape(file_names)) > 1:
 total_files = len(file_names)
 print("Total files selected for processing: " + str(total_files))
 
+if (len(crash_info) == 0) or (len(file_info) == 0):
+    print("Please run the preprocessing data first before runing this")
+    exit()
+
+# Load the crash information
+global preprocessed_crash_arrays
+global preprocessed_file_arrays
+preprocessed_crash_arrays = {}
+preprocessed_file_arrays = {}
+for i in range(10):
+    # Find the index of the correct file
+    c_index = [idx for idx, s in enumerate(crash_info) if '_b{}_'.format(i+1) in s][0]
+    f_index = [idx for idx, s in enumerate(file_info) if '_b{}_'.format(i+1) in s][0]
+    c_name = crash_info[c_index]
+    f_name = file_info[f_index]
+    preprocessed_crash_arrays["{}_external_vehicles".format(i+1)] = copy.deepcopy(np.load(c_name))
+    preprocessed_file_arrays["{}_external_vehicles".format(i+1)] = copy.deepcopy(np.load(f_name))
+
 print("----------------------------------")
-print("-----Creating Output Location------")
+print("-----Creating Output Location-----")
 print("----------------------------------")
 
 all_files = None
@@ -93,70 +188,29 @@ print("----------------------------------")
 print("---------Processing files---------")
 print("----------------------------------")
 
-for i in tqdm(range(total_files)):
+total_processors = int(args.cores)
+pool =  multiprocessing.Pool(processes=total_processors)
 
-    # Get the file name
-    file_name = file_names[i]
+# Call our function total_test_suites times
+jobs = []
+for i in range(total_files):
+    jobs.append(pool.apply_async(compute_coverage, args=([file_names[i], save_path])))
 
-    # Load the data
-    data = ET.parse(file_name)
+# Get the results
+results = []
+for job in tqdm(jobs):
+    results.append(job.get())
 
-    # Save this files coverage data
-    coverage_data = {}
-    
-    # Loop through the different files
-    for c in data.iter('class'):
+print("----------------------------------")
+print("---------Saving the data----------")
+print("----------------------------------")
 
-        all_lines = []
-        lines_covered = []
+for r in tqdm(results):
 
-        all_branches = []
-        branches_covered = []
+    # Get the coverage data and save name
+    coverage_data, code_coverage_save_name, total_physical_accidents = r 
 
-        # Get the current class
-        current_class = c.attrib['filename']
-        current_class = current_class[current_class.rfind("/")+1:]
-
-        # Loop through each line
-        for line in c.iter("line"):
-
-            # Compute the line coverage
-            line_number = int(line.attrib["number"])
-            line_hit    = int(line.attrib["hits"])
-
-            # Save the data
-            all_lines.append(line_number)
-            if line_hit:
-                lines_covered.append(line_number)
-
-            # Compute the branch coverage
-            if "branch" in line.attrib.keys():
-                branch_number   = int(line.attrib["number"])
-                branch_coverage = str(line.attrib["condition-coverage"])
-                branch_hits     = int(branch_coverage[branch_coverage.rfind("(")+1:branch_coverage.rfind("/")])
-                
-                # Save the data (Each branch has two branches (hence two numbers))
-                all_branches.append(branch_number)
-                all_branches.append(branch_number)
-                for _ in range(branch_hits):
-                    branches_covered.append(branch_number)
-
-        # Compute the line coverage
-        line_coverage = (len(lines_covered) / len(all_lines)) * 100
-        line_coverage = np.round(line_coverage, 2)
-        # print("Line Coverage: {}/{} - {}%".format(len(lines_covered), len(all_lines), line_coverage))
-        # Compute the branch coverage
-        branch_coverage = (len(branches_covered) / len(all_branches)) * 100
-        branch_coverage = np.round(branch_coverage, 2)
-        # print("Branch Coverage: {}/{} - {}%".format(len(branches_covered), len(all_branches), branch_coverage))
-
-        # Save this information
-        coverage_data[current_class] = [lines_covered, all_lines, branches_covered, all_branches]
-
-    # Save the file
-    save_name = file_name[file_name.rfind("raw/")+4:-4] + ".txt"
-    code_coverage_save_name = save_path + save_name
-
+    # Open the file for writing
     f = open(code_coverage_save_name, "w")
 
     # For each of the subfiles
@@ -167,8 +221,6 @@ for i in tqdm(range(total_files)):
         all_lines           = coverage_data[key][1]
         branches_covered    = coverage_data[key][2]
         all_branches        = coverage_data[key][3]
-
-        total_physical_accidents = 0
 
         # Save the data
         f.write("-----------------------------\n")
@@ -185,7 +237,9 @@ for i in tqdm(range(total_files)):
         f.write("-----------------------------\n")
         f.write("All branches: {}\n".format(sorted(list(all_branches))))
         f.write("Total branches: {}\n".format(len(list(all_branches))))
-        f.write("-----------------------------\n")
 
-
+    # Save the total number of crashes
+    f.write("-----------------------------\n")
+    f.write("Total physical crashes: {}\n".format(total_physical_accidents))
+    f.write("-----------------------------\n")
     f.close()

@@ -1,5 +1,4 @@
 import ast
-import sys
 import glob
 import copy
 import argparse
@@ -16,14 +15,10 @@ from prettytable import PrettyTable
 
 from general_functions import order_by_beam
 from general_functions import get_beam_numbers
-from general_functions import get_ignored_code_coverage_lines
-
-from pathlib import Path
-current_file = Path(__file__)
-path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/coverage_analysis")])
-sys.path.append(base_directory)
-from general.branch_converter import BranchConverter
+from general_functions import clean_branch_data
+from general_functions import get_lines_covered
+from general_functions import get_ignored_lines
+from general_functions import get_ignored_branches
 
 def compute_RSR_details():
     global traces
@@ -349,71 +344,65 @@ def compute_line_coverage_hash(index):
     global code_coverage_file_names
     global ignored_lines
 
-    coverage_hash = 0
-    number_of_crashes = 0
+    coverage_hash = None
+    number_of_crashes = None
 
     # Get the code coverage file
     code_coverage_file = code_coverage_file_names[index]
-    f = open(code_coverage_file, "r")
 
-    all_lines_coverage = set()
+    # Get the coverage
+    coverage_data = get_lines_covered(code_coverage_file)
+    lines_covered = coverage_data[0]
+    number_of_crashes = coverage_data[4]
 
-    # Read the file
-    for line in f: 
-        if "Lines covered:" in line:
-            covered_l = ast.literal_eval(line[15:])
+    # Make sure converting to a set was done correctly
+    lines_covered_set = set(lines_covered)
+    assert(len(lines_covered) == len(lines_covered_set))
 
-        if "Total lines covered:" in line:
-            total_covered_l = int(line[21:])
-            assert(len(covered_l) == total_covered_l)
+    # Remove the ignored lines
+    lines_covered_set -= ignored_lines
 
-        if "Total physical crashes: " in line:
-            number_of_crashes = int(line[24:])
-
-    # Close the file
-    f.close()
-
-    all_lines_coverage = set(covered_l) - ignored_lines
+    # Sort the lines
+    all_lines_coverage = sorted(list(lines_covered_set))
 
     # Get the coverage hash
-    coverage_hash = hash(tuple(sorted(list(all_lines_coverage))))
+    coverage_hash = hash(tuple(all_lines_coverage))
 
     return [coverage_hash, number_of_crashes]
 
 def compute_branch_coverage_hash(index, scenario):
     global code_coverage_file_names
-    global ignored_lines
+    global ignored_branches
 
-    coverage_hash = 0
-    number_of_crashes = 0
+    coverage_hash = None
+    number_of_crashes = None
 
     # Get the code coverage file
     code_coverage_file = code_coverage_file_names[index]
-    f = open(code_coverage_file, "r")
 
-    all_lines_coverage = set()
+    # Get the coverage
+    coverage_data = get_lines_covered(code_coverage_file)
+    branches_covered = coverage_data[2]
+    all_branches = coverage_data[3]
+    number_of_crashes = coverage_data[4]
 
-    # Read the file
-    for line in f: 
-        if "Lines covered:" in line:
-            covered_l = ast.literal_eval(line[15:])
+    # Make sure converting to a set was done correctly
+    all_branches_set = set(all_branches)
+    assert(len(all_branches) == len(all_branches_set))
+    branches_covered_set = set(branches_covered)
+    assert(len(branches_covered) == len(branches_covered_set))
 
-        if "Total lines covered:" in line:
-            total_covered_l = int(line[21:])
-            assert(len(covered_l) == total_covered_l)
+    # Clean the branch data
+    all_branches_set_clean, branches_covered_set_clean = clean_branch_data(all_branches_set, branches_covered_set)
 
-        if "Total physical crashes: " in line:
-            number_of_crashes = int(line[24:])
+    # Remove the ignored lines
+    branches_covered_set_clean -= ignored_branches
 
-    # Close the file
-    f.close()
-
-    # Compute the branch coverage
-    bc = BranchConverter(scenario)
-    branch_coverage = bc.compute_branch_coverage(covered_l)
+    # Sort the lines
+    branches_covered_set_clean = sorted(list(branches_covered_set_clean))
 
     # Get the coverage hash
-    coverage_hash = hash(tuple(branch_coverage))
+    coverage_hash = hash(tuple(branches_covered_set_clean))
 
     return [coverage_hash, number_of_crashes]
 
@@ -435,7 +424,7 @@ trace_file_names = glob.glob(base_path + "traces_*.npy")
 crash_file_names = glob.glob(base_path + "crash_*.npy")
 
 # Get the code coverage
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/code_coverage/raw/'
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/code_coverage/processed/' + str(args.total_samples) + "/"
 global code_coverage_file_names
 code_coverage_file_names = glob.glob(base_path + "*/*.txt")
 
@@ -448,7 +437,9 @@ assert(len(code_coverage_file_names) >= 1)
 assert(len(code_coverage_file_names) == args.total_samples)
 
 global ignored_lines
-ignored_lines = get_ignored_code_coverage_lines(args.scenario)
+global ignored_branches
+ignored_lines       = set(get_ignored_lines(args.scenario))
+ignored_branches    = set(get_ignored_branches(args.scenario))
 
 # Get the beam numbers
 trace_beam_numbers = get_beam_numbers(trace_file_names)
@@ -467,7 +458,7 @@ t = PrettyTable()
 t.field_names = ["Coverage Type", "Total Signatures" , "Single Test Signatures", "Multitest Signatures", "Consistent Multitest Signatures", "Inconsistent Multitest Signatures", "Percentage Inconsistent"]
 
 # Compute the line coverage details
-print("Processing Line Coverage")
+print("\nProcessing Line Coverage")
 results                         = compute_line_coverage_details()
 total_signatures_count          = results[0]
 single_test_signatures_count    = results[1]
@@ -484,7 +475,7 @@ print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsisten
 t.add_row(["Line Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
 # Compute the branch coverage details
-print("Processing Branch Coverage")
+print("\nProcessing Branch Coverage")
 results                         = compute_branch_coverage_details(args.scenario)
 total_signatures_count          = results[0]
 single_test_signatures_count    = results[1]
@@ -500,10 +491,9 @@ print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
 t.add_row(["Branch Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
-
 # Loop through each of the files and compute both an RSR signature as well as determine if there was a crash
 for beam_number in beam_numbers:
-    print("Processing RSR{}".format(beam_number))
+    print("\nProcessing RSR{}".format(beam_number))
     key = "RSR{}".format(beam_number)
 
     # Get the trace and crash files

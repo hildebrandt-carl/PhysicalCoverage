@@ -11,7 +11,7 @@ import multiprocessing
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/trace_processing")])
+base_directory = str(path[:path.rfind("/preprocessing")])
 sys.path.append(base_directory)
 
 import numpy as np
@@ -25,8 +25,8 @@ from general.environment_configurations import HighwayKinematics
 
 from general.crash_oracle import CrashOracle
 
-from pre_process_functions import processFile
-from pre_process_functions import countVectorsInFile
+from preprocess_functions import processFile
+from preprocess_functions import countVectorsInFile
 
 
 parser = argparse.ArgumentParser()
@@ -207,7 +207,7 @@ for i in range(total_files):
 # Get the results
 for i, job in enumerate(tqdm(jobs)):
     result = job.get()
-    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes, ego_pos, ego_vel, stall_info = result
+    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes, ego_pos, ego_vel, stall_info, file_name = result
 
     reach_vectors[i]        = test_vectors
     vehicles_per_trace[i]   = vehicle_count

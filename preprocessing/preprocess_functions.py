@@ -54,7 +54,7 @@ def vector_conversion_distribution(vector, steering_angle, max_distance, total_l
 
     # Updates are here when selecting angles (Each beam represents a 2 degree beam)
     # Beam 0 starts at -30 degrees
-    # Beam 29 ends at 30 degrees
+    # Beam 30 ends at 30 degrees
     angle_distribution = {
         1:  [0],
         2:  [-6, 6],
@@ -68,23 +68,11 @@ def vector_conversion_distribution(vector, steering_angle, max_distance, total_l
         10: [-28, -22, -12, -6, -2, 2, 6, 12, 22, 28],
     }
 
-    # angle_distribution = {
-    #     1:  [0],
-    #     2:  [-30, 30],
-    #     3:  [-30, 0, 30],
-    #     4:  [-30, -10, 10, 30],
-    #     5:  [-30, -15, 0, 15, 30],
-    #     6:  [-30, -18, -6, 6, 18, 30],
-    #     7:  [-30, -20, -10, 0, 10, 20, 30],
-    #     8:  [-30, -21.5, -13, -4.6, 4.5, 13, 21.5, 30],
-    #     9:  [-30, -22.5, -15, 7.5, 0, 7.5, 15, 22.5, 30],
-    #     10: [-30, -23.4, -16.8, -10.2, -3.6, 3.6, 10.2, 16.8, 23.4, 30],
-    # }
-
     current_distribution = angle_distribution[total_lines]
     # Compute the indexes
-    idx = np.round(((np.array(current_distribution) + 30) / (60/29)),0)
-    idx = np.clip(idx, 0, 29).astype(int)
+    l = original_total_lines - 1
+    idx = np.round(((np.array(current_distribution) + 30) / (60/l)),0)
+    idx = np.clip(idx, 0, l).astype(int)
     final_vector = steering_angle_corrected_vector[idx]
     return final_vector
 
@@ -182,12 +170,15 @@ def centralBeamWithExponentialSampling(vector):
         12: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]),
         13: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]),
         14: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+        15: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+        16: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]),
+        17: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]),
     }
 
     sample_distribution = {
-        1:  np.array([14]),
-        2:  np.array([4, 4]),
-        3:  np.array([3, 3, 3]),
+        1:  np.array([15]),
+        2:  np.array([5, 5]),
+        3:  np.array([3, 4, 3]),
         4:  np.array([2, 3, 3, 2]),
         5:  np.array([2, 2, 2, 2, 2]),
         6:  np.array([2, 2, 2, 2, 2, 2]),
@@ -389,7 +380,7 @@ def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_m
     # Close the file
     f.close()
 
-    return vehicle_count, collision_counter, test_vectors, simulation_time, incident_hashes, ego_positions, ego_velocities, stall_information
+    return vehicle_count, collision_counter, test_vectors, simulation_time, incident_hashes, ego_positions, ego_velocities, stall_information, file_name
 
 def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, new_accuracy):
     test_vectors    = []
