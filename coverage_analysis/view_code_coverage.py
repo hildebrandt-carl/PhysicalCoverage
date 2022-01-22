@@ -1,29 +1,37 @@
 import re
+import sys
 import glob
 import random
 import argparse
 import multiprocessing
 
-from tqdm import tqdm
-from general_functions import get_lines_covered
-from general_functions import clean_branch_data
-from general_functions import get_ignored_lines
-from general_functions import get_ignored_branches
-
 import numpy as np
 import matplotlib.pyplot as plt
 
+from tqdm import tqdm
+from pathlib import Path
+current_file = Path(__file__)
+path = str(current_file.absolute())
+base_directory = str(path[:path.rfind("/coverage_analysis")])
+sys.path.append(base_directory)
+
+from general.line_coverage_configuration import clean_branch_data
+from general.line_coverage_configuration import get_code_coverage
+from general.line_coverage_configuration import get_ignored_lines
+from general.line_coverage_configuration import get_ignored_branches
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
-parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
+parser.add_argument('--number_of_tests',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--scenario',         type=str, default="",   help="beamng/highway")
+parser.add_argument('--cores',            type=int, default=4,    help="number of available cores")
 args = parser.parse_args()
 
 # Get the files
-file_path = "../../PhysicalCoverageData/{}/random_tests/code_coverage/processed/{}/*/*.txt".format(args.scenario, args.total_samples)
+file_path = "../../PhysicalCoverageData/{}/random_tests/code_coverage/processed/{}/*/*.txt".format(args.scenario, args.number_of_tests)
 files = glob.glob(file_path)
 random.shuffle(files)
 print("Processing: {} files".format(len(files)))
+assert(len(files) > 0)
 
 # Keep track of all the different sets
 lines_covered_set       = set()
@@ -45,10 +53,8 @@ pool =  multiprocessing.Pool(processes=total_processors)
 
 # Call our function total_test_suites times
 jobs = []
-# for i in range(50000):
-    # f = files[i]
 for f in files:
-    jobs.append(pool.apply_async(get_lines_covered, args=([f])))
+    jobs.append(pool.apply_async(get_code_coverage, args=([f])))
 
 # Get the results
 for job in tqdm(jobs):
@@ -73,7 +79,11 @@ for job in tqdm(jobs):
     all_branches_set        = all_branches_set      | set(all_branches)
 
     # Clean the branch data
-    all_branches_set_clean, branches_covered_set_clean = clean_branch_data(all_branches_set, branches_covered_set)
+    if args.scenario == "highway":
+        all_branches_set_clean, branches_covered_set_clean = clean_branch_data(all_branches_set, branches_covered_set)
+    else:
+        all_branches_set_clean = all_branches_set
+        branches_covered_set_clean = branches_covered_set
 
     # Remove the ignored lines
     lines_covered_set           -= ignored_lines
@@ -98,12 +108,6 @@ pool.close()
 branches_covered_set = branches_covered_set_clean
 all_branches_set = all_branches_set_clean
 
-# Print the statistics
-print("Total lines: {}".format(len(all_lines_set)))
-print("Total lines covered: {}".format(len(lines_covered_set)))
-print("Total branches: {}".format(len(all_branches_set)))
-print("Total branches covered: {}".format(len(branches_covered_set)))
-
 # Print line details
 print("")
 print("All lines: {}".format(sorted(list(all_lines_set))))
@@ -115,6 +119,22 @@ print("")
 print("All branches: {}".format(sorted(list(all_branches_set))))
 print("Branches covered: {}".format(sorted(list(branches_covered_set))))
 print("Branches not covered: {}".format(sorted(list(all_branches_set - branches_covered_set))))
+print("")
+
+# Print the statistics
+all_lines_l = len(all_lines_set)
+covered_lines_l = len(lines_covered_set)
+all_branches_l = len(all_branches_set)
+covered_branches_l = len(branches_covered_set)
+
+print("")
+print("Total lines: {}".format(all_lines_l))
+print("Total lines covered: {}".format(covered_lines_l))
+print("Line coverage: {}%".format((covered_lines_l / all_lines_l) * 100))
+print("Total branches: {}".format(all_branches_l))
+print("Total branches covered: {}".format(covered_branches_l))
+print("Branch coverage: {}%".format((covered_branches_l/ all_branches_l) * 100))
+print("")
 print("")
 
 plt.plot(line_coverage_array, label="Line Coverage")

@@ -23,7 +23,7 @@ from general.reachset import ReachableSet
 from general.environment_configurations import RSRConfig
 from general.environment_configurations import HighwayKinematics
 
-from general.highway_config import HighwayEnvironmentConfig
+from highway_config import HighwayEnvironmentConfig
 
 from controllers.tracker import Tracker
 from controllers.car_controller import EgoController

@@ -23,7 +23,7 @@ from general.environment_configurations import RSRConfig
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
-from general.crash_oracle import CrashOracle
+from general.failure_oracle import FailureOracle
 
 from preprocess_functions import processFile
 from preprocess_functions import countVectorsInFile
@@ -40,11 +40,10 @@ args = parser.parse_args()
 HK = HighwayKinematics()
 NG = BeamNGKinematics()
 RSR = RSRConfig(beam_count = args.beam_count)
-CO = CrashOracle(scenario=args.scenario)
+FO = FailureOracle(scenario=args.scenario)
 
 # Save the kinematics and RSR parameters
 new_total_lines         = RSR.beam_count
-new_accuracy            = RSR.accuracy
 
 if args.scenario == "highway_random":
     new_steering_angle  = HK.steering_angle
@@ -68,8 +67,9 @@ print("")
 print("Processing RSR{}\n".format(new_total_lines))
 
 # Get the total number of possible crashes per test
-max_crashes_per_test = CO.max_possible_crashes
-crash_base           = CO.base
+max_crashes_per_test = FO.max_possible_crashes
+max_stalls_per_test  = FO.max_possible_stalls
+failure_base         = FO.base
 
 print("----------------------------------")
 print("-----Reach Set Configuration------")
@@ -78,11 +78,6 @@ print("----------------------------------")
 print("Max steering angle:\t" + str(new_steering_angle))
 print("Total beams:\t\t" + str(new_total_lines))
 print("Max velocity:\t\t" + str(new_max_distance))
-print("Vector accuracy:\t" + str(new_accuracy))
-
-# Compute total possible values using the above
-unique_observations_per_cell = (new_max_distance / float(new_accuracy))
-total_possible_observations = pow(unique_observations_per_cell, new_total_lines)
 
 print("----------------------------------")
 print("----------Locating Files----------")
@@ -188,10 +183,10 @@ reach_vectors       = np.zeros((total_files, vec_per_file, new_total_lines), dty
 vehicles_per_trace  = np.zeros(total_files, dtype=int)
 time_per_trace      = np.zeros(total_files, dtype='float64')
 crash_hashes        = np.zeros((total_files, max_crashes_per_test), dtype='float64')
+stall_hashes        = np.zeros((total_files, max_stalls_per_test), dtype='float64')
 files_processed     = np.empty(total_files, dtype='U64')
 ego_positions       = np.zeros((total_files, vec_per_file, 3), dtype='float64')
 ego_velocities      = np.zeros((total_files, vec_per_file, 3), dtype='float64')
-stall_infos         = np.zeros((total_files, vec_per_file, 3), dtype='float64')
 
 total_processors = int(args.cores)
 pool =  multiprocessing.Pool(processes=total_processors)
@@ -202,20 +197,20 @@ for i in range(total_files):
     # Get the filename
     file_name = file_names[i]
     # Start the job
-    jobs.append(pool.apply_async(processFile, args=([file_name, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_crashes_per_test, crash_base, True])))
+    jobs.append(pool.apply_async(processFile, args=([file_name, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, max_crashes_per_test,  max_stalls_per_test, failure_base, args.scenario, True])))
 
 # Get the results
 for i, job in enumerate(tqdm(jobs)):
     result = job.get()
-    vehicle_count, crash_count, test_vectors, simulation_time, incident_hashes, ego_pos, ego_vel, stall_info, file_name = result
+    vehicle_count, crash_count, test_vectors, simulation_time, crash_hash, stall_hash, ego_pos, ego_vel, file_name = result
 
     reach_vectors[i]        = test_vectors
     vehicles_per_trace[i]   = vehicle_count
     time_per_trace[i]       = simulation_time
-    crash_hashes[i]         = incident_hashes
+    crash_hashes[i]         = crash_hash
+    stall_hashes[i]         = stall_hash
     ego_positions[i]        = ego_pos
     ego_velocities[i]       = ego_vel
-    stall_infos[i]          = stall_info
 
     # Save the filename
     file_name = file_name[file_name.rfind("/")+1:]
@@ -228,7 +223,6 @@ save_name = args.scenario
 save_name += "_s" + str(new_steering_angle) 
 save_name += "_b" + str(new_total_lines) 
 save_name += "_d" + str(new_max_distance) 
-save_name += "_a" + str(new_accuracy)
 save_name += "_t" + str(total_files)
 save_name += ".npy"
    
@@ -256,7 +250,7 @@ np.save(save_path + '/traces_{}'.format(save_name), reach_vectors)
 np.save(save_path + '/vehicles_{}'.format(save_name), vehicles_per_trace)
 np.save(save_path + '/time_{}'.format(save_name), time_per_trace)
 np.save(save_path + '/crash_hash_{}'.format(save_name), crash_hashes)
+np.save(save_path + '/stall_hash_{}'.format(save_name), stall_hashes)
 np.save(save_path + '/processed_files_{}'.format(save_name), files_processed)
 np.save(save_path + '/ego_positions_{}'.format(save_name), ego_positions)
 np.save(save_path + '/ego_velocities_{}'.format(save_name), ego_velocities)
-np.save(save_path + '/stall_information_{}'.format(save_name), stall_infos)

@@ -16,10 +16,22 @@ def hash_crash(crash_ego_magnitude=None, crash_veh_magnitude=None, crash_inciden
 
     return hash(tuple([crash_ego_magnitude, crash_veh_magnitude, crash_incident_angle]))
 
-class CrashOracle:
+def hash_stall(angle_to_closest_obstacle=None, distance_to_closest_obstacle=None, base=1):
+    # Check you got everything you needed
+    assert(angle_to_closest_obstacle is not None)
+    assert(distance_to_closest_obstacle is not None)
+
+    # Round all the values to ints 
+    angle_to_closest_obstacle = round_to_base(angle_to_closest_obstacle, base=base)
+    distance_to_closest_obstacle = round_to_base(distance_to_closest_obstacle, base=base)
+
+    return hash(tuple([angle_to_closest_obstacle, distance_to_closest_obstacle]))
+
+class FailureOracle:
     def __init__(self, scenario):
 
         self.max_possible_crashes = 10 
+        self.max_possible_stalls  = 10
 
         # The base is defined by the scenario
         self.base = -1

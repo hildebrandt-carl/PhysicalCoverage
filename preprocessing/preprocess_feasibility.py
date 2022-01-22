@@ -11,7 +11,7 @@ import pandas as pd
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/trace_processing")])
+base_directory = str(path[:path.rfind("/preprocessing")])
 sys.path.append(base_directory)
 
 from tqdm import tqdm
@@ -20,36 +20,25 @@ from general.environment_configurations import RSRConfig
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
-from pre_process_functions import processFileFeasibility
+from preprocess_functions import processFileFeasibility
+from preprocess_functions import getFeasibleVectors
 
-def beamng_handler(beam, new_steering_angle, new_max_distance, new_accuracy):
+def beamng_handler(new_steering_angle, new_max_distance, RRS_number):
 
-    # Compute the new_total_lines
-    new_total_lines = int(beam)
+    # Get the new_total_lines
+    new_total_lines = int(RRS_number)
 
-    # Compute all vectors
+    # All vectors are possible in beamng
+    test_vectors = [np.full(new_total_lines, new_max_distance)]
+    
+    # Create the set of feasible vectors
     feasible_vectors = set()
-    tmp_vec = np.full(new_total_lines, new_max_distance)
-    while tmp_vec[-1] >= new_accuracy:
-        # Add the current vector
-        feasible_vectors.add(tuple(tmp_vec))
 
-        # Remove the value from the first position
-        tmp_vec[0] -= new_accuracy
+    # Get all the vectors and all feasible vectors
+    all_vectors, feasible_vectors = getFeasibleVectors(test_vectors, new_total_lines, "beamng")
 
-        # make sure it doesn't go below new_accuracy
-        for i in range(len(tmp_vec) - 1):
-            if tmp_vec[i] < new_accuracy:
-                tmp_vec[i] = new_max_distance
-                tmp_vec[i+1] -= new_accuracy
-
-    # Get a list of all vectors
-    feasible_vectors = np.array(list(feasible_vectors))
     total_feasible_vectors = np.shape(feasible_vectors)[0]
-
-    # All vectors are feasible
-    total_all_vectors = total_feasible_vectors
-
+    total_all_vectors = np.shape(all_vectors)[0]
     per = round((total_feasible_vectors/total_all_vectors) * 100, 4)
 
     print("----------------------------------")
@@ -57,7 +46,7 @@ def beamng_handler(beam, new_steering_angle, new_max_distance, new_accuracy):
     print("----------------------------------")
     print("Determining Percentage Feasible")
     print("Total feasible vectors: {}".format(total_feasible_vectors))
-    print("Total possible vectors: {}".format(total_feasible_vectors))
+    print("Total possible vectors: {}".format(total_all_vectors))
     print("Percentage of feasible space {}% ".format(per))
 
     save_path = '../output/beamng/feasibility/processed/'
@@ -71,63 +60,24 @@ def beamng_handler(beam, new_steering_angle, new_max_distance, new_accuracy):
     
     return True
 
-def highway_handler(file_name, new_steering_angle, new_max_distance, new_accuracy):
+def highway_handler(file_name, new_steering_angle, new_max_distance, RRS_number):
 
-    # Compute the new_total_lines
-    beams = file_name[file_name.rfind('s')+1:file_name.rfind('.')]
-    new_total_lines = int(beams)
+    # Get the new_total_lines
+    new_total_lines = int(RRS_number)
 
     # Process the data
-    f = open(file_name, "r")    
-    vehicle_count, crash, test_vectors = processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, new_accuracy)
+    f = open(file_name, "r")  
+    vehicle_count, crash, test_vectors = processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, "highway")
     f.close()
-
+    
     # Create the set of feasible vectors
     feasible_vectors = set()
 
-    # Go through and add each of the vectors
-    for i in tqdm(range(len(test_vectors))):
-        vec = test_vectors[i]
-        tmp_vec = copy.deepcopy(vec)
+    # Get all the vectors and all feasible vectors
+    all_vectors, feasible_vectors = getFeasibleVectors(test_vectors, new_total_lines, "highway")
 
-        # Loop through all smaller vectors
-        while tmp_vec[-1] >= new_accuracy:
-
-            # Add the current vector
-            feasible_vectors.add(tuple(tmp_vec))
-
-            # Remove the value from the first position
-            tmp_vec[0] -= new_accuracy
-
-            # make sure it doesn't go below 0
-            for i in range(len(tmp_vec) - 1):
-                if tmp_vec[i] < new_accuracy:
-                    tmp_vec[i] = vec[i]
-                    tmp_vec[i+1] -= new_accuracy
-
-    feasible_vectors = np.array(list(feasible_vectors))
     total_feasible_vectors = np.shape(feasible_vectors)[0]
-
-    # Compute all vectors
-    all_vectors = set()
-    tmp_vec = np.full(new_total_lines, new_max_distance)
-    while tmp_vec[-1] >= new_accuracy:
-        # Add the current vector
-        all_vectors.add(tuple(tmp_vec))
-
-        # Remove the value from the first position
-        tmp_vec[0] -= new_accuracy
-
-        # make sure it doesn't go below new_accuracy
-        for i in range(len(tmp_vec) - 1):
-            if tmp_vec[i] < new_accuracy:
-                tmp_vec[i] = new_max_distance
-                tmp_vec[i+1] -= new_accuracy
-
-    # Get a list of all vectors
-    all_vectors = np.array(list(all_vectors))
     total_all_vectors = np.shape(all_vectors)[0]
-
     per = round((total_feasible_vectors/total_all_vectors) * 100, 4)
 
     print("----------------------------------")
@@ -161,7 +111,6 @@ NG = BeamNGKinematics()
 RSR = RSRConfig()
 
 # Save the kinematics and RSR parameters
-new_accuracy            = RSR.accuracy
 if args.scenario == "highway":
     new_steering_angle  = HK.steering_angle
     new_max_distance    = HK.max_velocity
@@ -178,7 +127,6 @@ print("----------------------------------")
 
 print("Max steering angle:\t" + str(new_steering_angle))
 print("Max velocity:\t\t" + str(new_max_distance))
-print("Vector accuracy:\t" + str(new_accuracy))
 
 print("----------------------------------")
 print("-----------Loading Data-----------")
@@ -196,23 +144,21 @@ pool =  multiprocessing.Pool(processes=total_processors)
 
 # Handle highway
 if args.scenario == "highway":
-    file_names = glob.glob("../../PhysicalCoverageData/highway/feasibility/raw/feasible_vectors*.txt")
-    file_names.sort()
+    feasibility_file = glob.glob("../../PhysicalCoverageData/highway/feasibility/raw/feasible_vectors.txt")
+    assert(len(feasibility_file) == 1)
+    print("file found: {}".format(feasibility_file[0]))
 
-    print("Files found: {}".format(file_names))
-
-    # Call our function total_test_suites times
+    # Call our function for each beam
     jobs = []
-    for file_name in file_names:
-        jobs.append(pool.apply_async(highway_handler, args=([file_name, new_steering_angle, new_max_distance, new_accuracy])))
+    for RRS_number in range(1,11):
+        jobs.append(pool.apply_async(highway_handler, args=([feasibility_file[0], new_steering_angle, new_max_distance, RRS_number])))
 
 # Handle beamng
 if args.scenario == "beamng":
     # Call our function for each beam
-    beams = [1,2,3,4,5,6,7,8,9]
     jobs = []
-    for beam in beams:
-        jobs.append(pool.apply_async(beamng_handler, args=([beam, new_steering_angle, new_max_distance, new_accuracy])))
+    for RRS_number in range(1,11):
+        jobs.append(pool.apply_async(beamng_handler, args=([new_steering_angle, new_max_distance, RRS_number])))
 
 
 # Get the results

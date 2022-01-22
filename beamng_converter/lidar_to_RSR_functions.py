@@ -1,6 +1,7 @@
+import ast
 import math
 import time
-import ast
+import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -396,7 +397,7 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
         # Close the input files
         input_file.close()
     except Exception as e:
-        print(e)
+        logging.exception(e)
         print("Error in file: {}".format(file_name))
         output_success = False        
 

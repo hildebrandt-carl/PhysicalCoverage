@@ -39,6 +39,9 @@ def compute_coverage(load_name, return_dict, return_key, base_path, new_max_dist
     unique_observations_per_cell = (new_max_distance / float(new_accuracy))
     total_possible_observations = int(pow(unique_observations_per_cell, total_beams))
 
+    print("total_possible_observations: {}".format(total_possible_observations))
+    print("total_beams: {}".format(total_beams))
+
     print("Processing: " + load_name)
     traces = np.load(base_path + "traces" + load_name)
     vehicles = np.load(base_path + "vehicles" + load_name)

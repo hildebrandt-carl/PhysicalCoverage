@@ -6,24 +6,23 @@ import glob
 import math
 import random 
 import argparse
-
-from pathlib import Path
-current_file = Path(__file__)
-path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/trace_processing")])
-sys.path.append(base_directory)
+import itertools
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
-from general.crash_oracle import hash_crash
+from general.failure_oracle import hash_crash
+from general.failure_oracle import hash_stall
+from general.environment_configurations import get_predfined_points
+from general.environment_configurations import get_angle_distribution
+from general.environment_configurations import get_sample_distribution
 
 from general.environment_configurations import RSRConfig
 from general.environment_configurations import HighwayKinematics
 
-def vector_conversion_distribution(vector, steering_angle, max_distance, total_lines, original_total_lines):
+def vector_conversion_distribution(vector, steering_angle, max_distance, total_lines, original_total_lines, scenario):
 
     # Fix the vector to have to correct max_distance
     vector = np.clip(vector, 0, max_distance)
@@ -55,18 +54,7 @@ def vector_conversion_distribution(vector, steering_angle, max_distance, total_l
     # Updates are here when selecting angles (Each beam represents a 2 degree beam)
     # Beam 0 starts at -30 degrees
     # Beam 30 ends at 30 degrees
-    angle_distribution = {
-        1:  [0],
-        2:  [-6, 6],
-        3:  [-10, 0, 10],
-        4:  [-15, -6, 6, 15],
-        5:  [-15, -8, 0, 8, 15],
-        6:  [-20, -10, -6, 6, 10, 20],
-        7:  [-20, -12, -6, 0, 6, 12, 20],
-        8:  [-20, -14, -8, 4, 4, 8, 14, 20],
-        9:  [-26, -18, -12, 6, 0, 6, 12, 18, 26],
-        10: [-28, -22, -12, -6, -2, 2, 6, 12, 22, 28],
-    }
+    angle_distribution = get_angle_distribution(scenario)
 
     current_distribution = angle_distribution[total_lines]
     # Compute the indexes
@@ -76,117 +64,15 @@ def vector_conversion_distribution(vector, steering_angle, max_distance, total_l
     final_vector = steering_angle_corrected_vector[idx]
     return final_vector
 
-def vector_conversion_centralized(vector, steering_angle, max_distance, total_lines, original_total_lines):
-
-    # Fix the vector to have to correct max_distance
-    vector = np.clip(vector, 0, max_distance)
-
-    # Get how many degrees between each line
-    line_space = (steering_angle * 2) / float(original_total_lines - 1)
-
-    # Get the starting lines angle
-    left_index = int(len(vector) / 2)
-    right_index = int(len(vector) / 2)
-    current_steering_angle = 0
-    if (original_total_lines % 2) == 0: 
-        current_steering_angle = line_space / 2
-        left_index -= 1
-
-    # Floating point tolerance
-    tolerance = 1e-6
-
-    # This is an overapproximation
-    beam_count = 0
-    while current_steering_angle < (steering_angle - tolerance):
-        left_index -= 1
-        right_index += 1
-        current_steering_angle += line_space
-
-    # Get the corrected steering angle
-    steering_angle_corrected_vector = np.array(vector[left_index:right_index+1])
-
-    # Updates are here when selecting angles (Each beam represents a 2 degree beam)
-    angle_between_vectors = 4
-    idx = np.linspace(0, total_lines-1, num=total_lines).astype(int) * (angle_between_vectors/2)
-    idx = idx - idx[int(len(idx)/2)]
-    if len(idx) % 2 == 0:
-        idx += 1
-    idx = idx + int(len(steering_angle_corrected_vector)/2)
-    idx = idx.astype(int)
-    final_vector = steering_angle_corrected_vector[idx]
-
-    return final_vector
-
-def vector_conversion(vector, steering_angle, max_distance, total_lines, original_total_lines):
-
-    # Fix the vector to have to correct max_distance
-    vector = np.clip(vector, 0, max_distance)
-
-    # Get how many degrees between each line
-    line_space = (steering_angle * 2) / float(original_total_lines - 1)
-
-    # Get the starting lines angle
-    left_index = int(len(vector) / 2)
-    right_index = int(len(vector) / 2)
-    current_steering_angle = 0
-    if (original_total_lines % 2) == 0: 
-        current_steering_angle = line_space / 2
-        left_index -= 1
-
-    # Floating point tolerance
-    tolerance = 1e-6
-
-    # This is an overapproximation
-    while current_steering_angle < (steering_angle - tolerance):
-        left_index -= 1
-        right_index += 1
-        current_steering_angle += line_space
-
-    # Get the corrected steering angle
-    steering_angle_corrected_vector = vector[left_index:right_index+1]
-    idx = np.round(np.linspace(0, len(steering_angle_corrected_vector) - 1, total_lines)).astype(int)
-    final_vector = steering_angle_corrected_vector[idx]
-
-    return final_vector
-
-def centralBeamWithExponentialSampling(vector):
+def centralBeamWithExponentialSampling(vector, scenario):
 
     # Get the vector length
     vec_len = len(vector)
     converted_vector = np.zeros(vec_len)
 
     # Get the predefined point distribution
-    predfined_point_distribution = {
-        2:  np.array([5,10]),
-        3:  np.array([5, 6, 10]),
-        4:  np.array([5, 6, 7, 10]),
-        5:  np.array([5, 6, 7, 8, 10]),
-        6:  np.array([5, 6, 7, 8, 9, 10]),
-        7:  np.array([5, 6, 7, 8, 9, 10, 11]),
-        8:  np.array([5, 6, 7, 8, 9, 10, 11, 12]),
-        9:  np.array([5, 6, 7, 8, 9, 10, 11, 12, 13]),
-        10: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14]),
-        11: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]),
-        12: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]),
-        13: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]),
-        14: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
-        15: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
-        16: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]),
-        17: np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]),
-    }
-
-    sample_distribution = {
-        1:  np.array([15]),
-        2:  np.array([5, 5]),
-        3:  np.array([3, 4, 3]),
-        4:  np.array([2, 3, 3, 2]),
-        5:  np.array([2, 2, 2, 2, 2]),
-        6:  np.array([2, 2, 2, 2, 2, 2]),
-        7:  np.array([2, 2, 2, 2, 2, 2, 2]),
-        8:  np.array([2, 2, 2, 2, 2, 2, 2, 2]),
-        9:  np.array([2, 2, 2, 2, 2, 2, 2, 2, 2]),
-        10: np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2]),
-    }
+    predfined_point_distribution = get_predfined_points(scenario)
+    sample_distribution = get_sample_distribution(scenario)
 
     # Load the current distribution
     current_distribution = sample_distribution[vec_len]
@@ -202,57 +88,8 @@ def centralBeamWithExponentialSampling(vector):
     # Print the converted vector
     return converted_vector  
 
-def centalBeamSampling(vector):
-    # Get the vector length
-    vec_len = len(vector)
-    converted_vector = np.zeros(vec_len)
-
-    # Save the distribution
-    distribution = {
-        1:  [6],
-        2:  [6, 6],
-        3:  [4, 10, 4],
-        4:  [4, 8, 8, 4],
-        5:  [3, 7, 10, 7, 3],
-        6:  [3, 7, 8, 8, 7, 3],
-        7:  [3, 5, 7, 12, 7, 5, 3],
-        8:  [3, 5, 7, 9, 9, 7, 5, 3],
-        9:  [3, 4, 6, 9, 10, 9, 6, 4, 3],
-        10: [3, 4, 6, 8, 9, 9, 8, 6, 4, 3],
-    }
-
-    # Load the current distribution
-    current_distribution = distribution[vec_len]
-
-    # Process the vector
-    for i, v in enumerate(vector):
-        num_samples = current_distribution[i]
-        accuracy = 30 / (num_samples)
-        final_v = np.round(np.array(v, dtype=float) / accuracy) * accuracy
-        final_v = max(accuracy, final_v)
-        converted_vector[i] = final_v
-
-    return converted_vector
-
-def exponentialSampling(vector):
-    # Predefine the points
-    converted_vector = np.zeros(len(vector))
-    predefined_points = np.array([5, 6, 7, 8, 9, 10])
-    # predefined_points = np.array([5, 10, 15, 20, 25, 30])
-    for i, v in enumerate(vector):
-        distance = np.absolute(predefined_points - v)
-        index = np.argmin(distance)
-        converted_vector[i] = predefined_points[index]
-    return converted_vector
-
-def getStep(vector, accuracy):
-    # Numpy rounds even numbers down and odd numbers up (make it always round down)
-    converted_vector = np.round((np.array(vector, dtype=float)  - 1e-6) / accuracy) * accuracy
-    # The minimum should always be > 0
-    converted_vector[converted_vector <= 0] = accuracy
-    return converted_vector
-
-def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, new_accuracy, max_possible_crashes, base, ignore_crashes=False):
+def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, max_possible_crashes, max_possible_stalls, base, scenario, ignore_crashes=False):
+    
     # Open the file
     f = open(file_name, "r")  
     
@@ -261,7 +98,8 @@ def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_m
     simulation_time     = ""
     vehicle_count       = -1
     current_vector      = 0
-    incident_hashes     = np.full((1, max_possible_crashes), np.inf, dtype='float64')
+    crash_hashes     = np.full((1, max_possible_crashes), np.inf, dtype='float64')
+    stall_hashes     = np.full((1, max_possible_stalls), np.inf, dtype='float64')
 
     ego_velocities      = np.full((total_vectors, 3), np.inf, dtype='float64')
     ego_positions       = np.full((total_vectors, 3), np.inf, dtype='float64')
@@ -271,6 +109,9 @@ def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_m
     crash_veh_magnitudes    = []
 
     stall_information   = np.full((total_vectors, 3), np.inf, dtype='float64')
+    currently_stalling = False
+    stall_location = None
+    car_has_started_driving = False
 
     debug_count = 0
     for line in f: 
@@ -286,35 +127,42 @@ def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_m
             vector_str = line[line.find(": ")+3:-2]
             vector = np.fromstring(vector_str, dtype=float, sep=', ')
             v = np.fromstring(vector_str, dtype=float, sep=',')
-            # Compute how many values are maxed out
-            tolerance = 1e-6
-            total_values_at_max = (v >= new_max_distance - tolerance).sum()
-            if total_values_at_max == np.max:
-                print("here")
-            # Get the closest obstacle for the stall data
-            closest_index = np.argmin(v)
-            stall_information[current_vector][0] = closest_index
-            stall_information[current_vector][1] = v[closest_index]
-            stall_information[current_vector][2] = total_values_at_max
 
-            # Original method for seperating the vectors
-            # vector = vector_conversion(vector, new_steering_angle, new_max_distance, new_total_lines, len(vector))
-            # vector = vector_conversion_centralized(vector, new_steering_angle, new_max_distance, new_total_lines, len(vector))
-            vector = vector_conversion_distribution(vector, new_steering_angle, new_max_distance, new_total_lines, len(vector))
+            # Seperating the vectors
+            vector = vector_conversion_distribution(vector, new_steering_angle, new_max_distance, new_total_lines, len(vector), scenario)
             
-            # Original method of converting to correct granularity
-            # vector = getStep(vector, new_accuracy)
-            # vector = exponentialSampling(vector)
-            # vector = centalBeamSampling(vector)
-            vector = centralBeamWithExponentialSampling(vector)
+            # Converting to correct granularity
+            vector = centralBeamWithExponentialSampling(vector, scenario)
             test_vectors[current_vector] = vector
-            current_vector += 1
 
             debug_count += 1
             if debug_count % 15 == 0:
                 pass
                 # plot_debugging_centralized(v, vector, new_steering_angle)
                 # plot_debugging(v, vector, new_steering_angle)
+
+            # Determine the angle between each vector
+            angle_between_beams = (new_steering_angle * 2) / len(v)
+
+            # Get the closest obstacle for the stall data
+            closest_index = np.argmin(v)
+
+            # Compute the largest gap moving forward
+            tolerance = 1e-6
+            gap_angle = v >= new_max_distance - tolerance
+            largest_gap_array = np.diff(np.where(np.concatenate(([gap_angle[0]], gap_angle[:-1] != gap_angle[1:], [True])))[0])[::2]
+            if len(largest_gap_array) >= 1:
+                largest_gap = np.max(largest_gap_array)
+            else:
+                largest_gap = 0 
+
+            # Save this information for processing later
+            stall_information[current_vector][0] = closest_index
+            stall_information[current_vector][1] = v[closest_index]
+            stall_information[current_vector][2] = largest_gap * angle_between_beams
+
+            # Increment the vector
+            current_vector += 1
 
         if "Ego Position: " in line:
             ego_position = np.fromstring(line[15:-1], dtype=np.float, sep=' ')
@@ -372,17 +220,46 @@ def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_m
         veh_magnitude = crash_veh_magnitudes[i]
         incident_angle = crash_incident_angles[i]
         current_hash = hash_crash(ego_magnitude, veh_magnitude, incident_angle, base=base)
-        incident_hashes[0, i] = current_hash
+        crash_hashes[0, i] = current_hash
 
     # Convert the simulated time to a float
     simulation_time = float(simulation_time)
 
+    # Determine the number of stalls
+    stall_counter = 0
+    for i, vel in enumerate(ego_velocities):
+
+        current_velocity = np.sum(abs(vel))
+
+        # Check if the car has started driving or not
+        if current_velocity > 5:
+            car_has_started_driving = True
+
+        # If we have stopped moving and the gap is greater than 15 degrees
+        stopped_moving = current_velocity < 0.01
+        can_move_forward = stall_information[i][2] > 15
+
+        # Check if we are stalling
+        if stopped_moving and can_move_forward and not currently_stalling and car_has_started_driving:
+            stall_hashes[0, stall_counter] = hash_stall(stall_information[i][0], stall_information[i][1], base=base)
+            stall_counter += 1
+            currently_stalling = True
+            stall_position = ego_positions[i]
+
+        # If we are currently stalling check to see if we have un-stalled
+        if currently_stalling:
+            current_position = ego_positions[i]
+            distance_between_stalls = np.linalg.norm(current_position - stall_position)
+            # After having driven 5m we can stall again
+            if distance_between_stalls >= 5:
+                currently_stalling = False
+
     # Close the file
     f.close()
 
-    return vehicle_count, collision_counter, test_vectors, simulation_time, incident_hashes, ego_positions, ego_velocities, stall_information, file_name
+    return vehicle_count, collision_counter, test_vectors, simulation_time, crash_hashes, stall_hashes, ego_positions, ego_velocities, file_name
 
-def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, new_accuracy):
+def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, scenario):
     test_vectors    = []
     crash           = False
     vehicle_count   = -1
@@ -395,7 +272,10 @@ def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_li
         if "Vector: " in line:
             vector_str = line[line.find(": ")+3:-2]
             vector = np.fromstring(vector_str, dtype=float, sep=', ')
-            vector = getStep(vector, new_accuracy)
+            # Seperating the vectors
+            vector = vector_conversion_distribution(vector, new_steering_angle, new_max_distance, new_total_lines, len(vector), scenario)
+            # Converting to correct granularity
+            vector = centralBeamWithExponentialSampling(vector, scenario)
             test_vectors.append(np.array(vector))
             current_vector += 1
         # Look for crashes
@@ -405,6 +285,64 @@ def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_li
     test_vectors = np.array(test_vectors)
 
     return vehicle_count, crash, test_vectors
+
+def getFeasibleVectors(test_vectors, new_total_lines, scenario):
+
+    threshold = 1e-6
+
+    # Get the predefined points and sample distribution
+    predfined_point_distribution = get_predfined_points(scenario)
+    sample_distribution = get_sample_distribution(scenario)
+
+    # Get the number of samples allowed for each reading
+    number_samples_allowed = sample_distribution[new_total_lines]
+
+    # Init
+    feasible_vectors_set = set()
+    all_vectors_set = set()
+
+    # Compute all vectors
+    possible_cell_values = []
+    for i in range(len(test_vectors[0])):
+        sample_points_allowed = predfined_point_distribution[number_samples_allowed[i]]
+        possible_cell_values.append(sample_points_allowed)
+
+    # Create all possible variations of the array
+    all_combinations = list(itertools.product(*possible_cell_values))
+
+    # Save these
+    for combination in all_combinations:
+        all_vectors_set.add(tuple(combination))
+
+    # For each vector
+    for v in test_vectors:
+        # This holds what each of the different cells could contain
+        possible_cell_values = []
+        # Loop through each of the individual readings (i index) )(r reading)
+        for i, r in enumerate(v):
+            # Determine the possible sample points
+            sample_points_allowed = predfined_point_distribution[number_samples_allowed[i]]
+            # Only get sample points smaller than the current reading
+            possible_values = sample_points_allowed[np.where(sample_points_allowed <= (r + threshold))]
+            possible_cell_values.append(possible_values)
+
+        # Create all possible variations of the array
+        all_combinations = list(itertools.product(*possible_cell_values))
+
+        # Save these
+        for combination in all_combinations:
+            feasible_vectors_set.add(tuple(combination))
+
+    # Turn to a list of lists
+    all_vectors = []
+    for v in all_vectors_set:
+        all_vectors.append(list(v))
+
+    feasible_vectors = []
+    for v in feasible_vectors_set:
+        feasible_vectors.append(list(v))
+
+    return all_vectors, feasible_vectors
 
 def countVectorsInFile(f):
     vector_count = 0

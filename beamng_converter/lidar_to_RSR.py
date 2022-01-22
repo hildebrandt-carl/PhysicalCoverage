@@ -65,7 +65,8 @@ for file_name in file_names:
     folder = file_name[0:file_name.rfind('/')]
     folder = folder[folder.rfind('/')+1:]
 
-    external_vehicle_count = folder[folder.rfind("_")+1:]
+    # Compute the number of external vehicles
+    external_vehicle_count = folder[:folder.find("_")]
 
     if not os.path.exists(output_file_location + folder):
         os.makedirs(output_file_location + folder)

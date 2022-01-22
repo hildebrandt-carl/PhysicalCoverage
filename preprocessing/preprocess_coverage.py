@@ -1,6 +1,7 @@
 
 
 import os
+import ast
 import glob
 import copy
 import argparse
@@ -11,7 +12,45 @@ import xml.etree.ElementTree as ET
 
 from tqdm import tqdm
 
-def compute_coverage(file_name, save_path):
+def compute_coverage_beamng(file_name, save_path):
+
+    # Compute the save name
+    save_name = file_name[file_name.rfind("/")+1:]
+    external_vehicles_str = file_name[:file_name.find("_external_vehicles")+18]
+    external_vehicles_str = external_vehicles_str[external_vehicles_str.rfind("/")+1:] + "/"
+    code_coverage_save_name = save_path + external_vehicles_str + save_name
+
+    # Create the coverage line
+    coverage_data = {}
+    lines_covered = []
+    all_lines = []
+    branches_covered = []
+    all_branches = []
+    crash_count = -1
+
+    # Read the file
+    with open(file_name, "r") as f:
+        for line in f:
+            # Get the data
+            if "Lines covered:" in line[0:15]:
+                lines_covered       = ast.literal_eval(line[15:-1])
+            elif "All lines:" in line[0:11]:
+                all_lines           = ast.literal_eval(line[11:-1])
+            elif "Branches covered:" in line[0:18]:
+                branches_covered    = ast.literal_eval(line[18:-1])
+            elif "All branches:" in line[0:14]:
+                all_branches        = ast.literal_eval(line[14:-1])
+            elif "Total physical crashes:" in line[0:23]:
+                crash_count         = int(line[23:-1])
+
+    # Convert the branch data to strings to match the highwayenv data
+    branches_covered = [str(x) for x in branches_covered]
+    all_branches = [str(x) for x in all_branches]
+
+    coverage_data["ai.lua"] = [lines_covered, all_lines, branches_covered, all_branches]
+    return [coverage_data, code_coverage_save_name, crash_count]
+
+def compute_coverage_highway(file_name, save_path):
     global preprocessed_crash_arrays
     global preprocessed_file_arrays
 
@@ -98,8 +137,8 @@ print("----------------------------------")
 
 all_files = None
 if args.scenario == "beamng_random":
-    print("To be implemented")
-    exit()
+    base = "../../PhysicalCoverageData/beamng/random_tests"
+    all_files = glob.glob(base + "/code_coverage/raw/*/*.txt")
 elif args.scenario == "beamng_generated":
     print("To be implemented")
     exit()
@@ -138,23 +177,24 @@ if len(np.shape(file_names)) > 1:
 total_files = len(file_names)
 print("Total files selected for processing: " + str(total_files))
 
-if (len(crash_info) == 0) or (len(file_info) == 0):
-    print("Please run the preprocessing data first before runing this")
-    exit()
+if "highway" in args.scenario:
+    if (len(crash_info) == 0) or (len(file_info) == 0):
+        print("Please run the preprocessing data first before runing this")
+        exit()
 
-# Load the crash information
-global preprocessed_crash_arrays
-global preprocessed_file_arrays
-preprocessed_crash_arrays = {}
-preprocessed_file_arrays = {}
-for i in range(10):
-    # Find the index of the correct file
-    c_index = [idx for idx, s in enumerate(crash_info) if '_b{}_'.format(i+1) in s][0]
-    f_index = [idx for idx, s in enumerate(file_info) if '_b{}_'.format(i+1) in s][0]
-    c_name = crash_info[c_index]
-    f_name = file_info[f_index]
-    preprocessed_crash_arrays["{}_external_vehicles".format(i+1)] = copy.deepcopy(np.load(c_name))
-    preprocessed_file_arrays["{}_external_vehicles".format(i+1)] = copy.deepcopy(np.load(f_name))
+    # Load the crash information
+    global preprocessed_crash_arrays
+    global preprocessed_file_arrays
+    preprocessed_crash_arrays = {}
+    preprocessed_file_arrays = {}
+    for i in range(10):
+        # Find the index of the correct file
+        c_index = [idx for idx, s in enumerate(crash_info) if '_b{}_'.format(i+1) in s][0]
+        f_index = [idx for idx, s in enumerate(file_info) if '_b{}_'.format(i+1) in s][0]
+        c_name = crash_info[c_index]
+        f_name = file_info[f_index]
+        preprocessed_crash_arrays["{}_external_vehicles".format(i+1)] = copy.deepcopy(np.load(c_name))
+        preprocessed_file_arrays["{}_external_vehicles".format(i+1)] = copy.deepcopy(np.load(f_name))
 
 print("----------------------------------")
 print("-----Creating Output Location-----")
@@ -162,8 +202,7 @@ print("----------------------------------")
 
 all_files = None
 if args.scenario == "beamng_random":
-    print("To be implemented")
-    exit()
+    save_path = "../output/beamng/random_tests/code_coverage/processed/{}/".format(args.total_samples)
 elif args.scenario == "beamng_generated":
     print("To be implemented")
     exit()
@@ -176,7 +215,7 @@ else:
     print("Error: Scenario not known")
     exit()
 
-# # Create the output directory if it doesn't exists
+# Create the output directory if it doesn't exists
 for i in range(10):
     new_path = save_path + "{}_external_vehicles/".format(i+1)
     if not os.path.exists(new_path):
@@ -194,7 +233,10 @@ pool =  multiprocessing.Pool(processes=total_processors)
 # Call our function total_test_suites times
 jobs = []
 for i in range(total_files):
-    jobs.append(pool.apply_async(compute_coverage, args=([file_names[i], save_path])))
+    if "highway" in args.scenario:
+        jobs.append(pool.apply_async(compute_coverage_highway, args=([file_names[i], save_path])))
+    elif "beamng" in args.scenario:
+        jobs.append(pool.apply_async(compute_coverage_beamng, args=([file_names[i], save_path])))
 
 # Get the results
 results = []

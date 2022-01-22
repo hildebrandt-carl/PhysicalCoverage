@@ -4,13 +4,10 @@ import argparse
 import scipy.stats
 import multiprocessing
 
-from time import sleep
-from copy import copy
-
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/test_selection")])
+base_directory = str(path[:path.rfind("/coverage_analysis")])
 sys.path.append(base_directory)
 
 import numpy as np
@@ -38,22 +35,24 @@ def line_of_best_fit(x, y):
 def random_select(number_of_tests):
     global traces
     global crashes
+    global stalls
     global feasible_RSR_set
-    global unique_crashes_set
+    global unique_failure_set
 
     # Generate the indices for the random tests cases
     local_state = np.random.RandomState()
     indices = local_state.choice(traces.shape[0], size=number_of_tests, replace=False)
 
-    # Get the coverage and crash set
+    # Get the coverage and failure set
     seen_RSR_set = set()
-    seen_crash_set = set()
+    seen_failure_set = set()
 
     # Go through each of the different tests
     for i in indices:
         # Get the vectors
         vectors = traces[i]
         crash = crashes[i]
+        stall = stalls[i]
 
         # Go through the traces and compute coverage
         for v in vectors:
@@ -65,14 +64,19 @@ def random_select(number_of_tests):
         # Check if there was a crash and if there was count it
         for c in crash:
             if ~np.isinf(c):
-                seen_crash_set.add(c)
+                seen_failure_set.add(c)
+
+        # Check if there was a stall and if there was count it
+        for s in stall:
+            if ~np.isinf(s):
+                seen_failure_set.add(s)
 
     # Compute the coverage and the crash percentage
     coverage_percentage = float(len(seen_RSR_set)) / len(feasible_RSR_set)
-    crash_percentage =  float(len(seen_crash_set)) / len(unique_crashes_set)
-    crashes_found = len(seen_crash_set)
+    failure_percentage =  float(len(seen_failure_set)) / len(unique_failure_set)
+    failures_found = len(seen_failure_set)
 
-    return [coverage_percentage, crashes_found, number_of_tests]
+    return [coverage_percentage, failures_found, number_of_tests]
 
 def coverage_computation(index, seen_RSR_set):
     global traces
@@ -96,15 +100,16 @@ def coverage_computation(index, seen_RSR_set):
 def greedy_select(test_suite_size, selection_type, greedy_sample_size):
     global traces
     global crashes
+    global stalls
     global feasible_RSR_set
-    global unique_crashes_set
+    global unique_failure_set
 
     # Get all the available indices
     available_indices = set(np.arange(traces.shape[0]))
 
     # Get the coverage and crash set
     seen_RSR_set = set()
-    seen_crash_set = set()
+    seen_failure_set = set()
 
     # For each of the tests in the test suite
     for _ in range(test_suite_size):
@@ -141,18 +146,22 @@ def greedy_select(test_suite_size, selection_type, greedy_sample_size):
 
         # Check for crashes in this trace
         crash = crashes[selected_index]
-
         for c in crash:
             if ~np.isinf(c):
-                seen_crash_set.add(c)
+                seen_failure_set.add(c)
 
+        # Check for stalls in this trace
+        stall = stalls[selected_index]
+        for s in stall:
+            if ~np.isinf(s):
+                seen_failure_set.add(s)
 
     # Compute the coverage and the crash percentage
     coverage_percentage = float(len(seen_RSR_set)) / len(feasible_RSR_set)
-    # crash_percentage =  float(len(seen_crash_set)) / len(unique_crashes_set)
-    crash_count = len(seen_crash_set)
+    # failure_percentage =  float(len(seenseen_failure_set_crash_set)) / len(unique_crashes_set)
+    failure_count = len(seen_failure_set)
 
-    return [coverage_percentage, crash_count, test_suite_size]
+    return [coverage_percentage, failure_count, test_suite_size]
 
 # multiple core
 def greedy_selection(cores, test_suite_sizes, selection_type, greedy_sample_size):
@@ -205,18 +214,21 @@ def random_selection(cores, test_suite_sizes):
     return random_coverage_percentages, random_crash_count, result_test_suite_size
 
 # Use the tests_per_test_suite
-def determine_test_suite_sizes(total_samples):
-    increment = 0.001
-    test_suite_size_percentage = np.arange(increment, 0.100001, increment)
-    test_suite_sizes = test_suite_size_percentage * total_samples
+def determine_test_suite_sizes(number_of_tests):
+    increment = 0.0001
+    test_suite_size_percentage = np.arange(increment, 0.0100001, increment)
+    test_suite_sizes = test_suite_size_percentage * number_of_tests
     return test_suite_sizes
 
+# Declare the greedy sample size
+greedy_sample_size = 100
 
+# Get the input arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
-parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
-parser.add_argument('--beam_count',     type=int, default=3,    help="The number of beams you want to consider")
+parser.add_argument('--number_of_tests',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--scenario',         type=str, default="",   help="beamng/highway")
+parser.add_argument('--cores',            type=int, default=4,    help="number of available cores")
+parser.add_argument('--RRS_number',       type=int, default=3,    help="The number of beams you want to consider")
 args = parser.parse_args()
 
 # Create the configuration classes
@@ -225,7 +237,6 @@ NG = BeamNGKinematics()
 RSR = RSRConfig()
 
 # Save the kinematics and RSR parameters
-new_accuracy = RSR.accuracy
 if args.scenario == "highway":
     new_steering_angle  = HK.steering_angle
     new_max_distance    = HK.max_velocity
@@ -242,7 +253,6 @@ print("----------------------------------")
 
 print("Max steering angle:\t" + str(new_steering_angle))
 print("Max velocity:\t\t" + str(new_max_distance))
-print("Vector accuracy:\t" + str(new_accuracy))
 
 print("----------------------------------")
 print("-----------Loading Data-----------")
@@ -252,38 +262,45 @@ load_name = ""
 load_name += "_s" + str(new_steering_angle) 
 load_name += "_b" + str('*') 
 load_name += "_d" + str(new_max_distance) 
-load_name += "_a" + str(new_accuracy)
-load_name += "_t" + str(args.total_samples)
+load_name += "_t" + str(args.number_of_tests)
 load_name += ".npy"
 
 # Get the file names
 
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
+base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.number_of_tests) + "/"
 print(base_path)
-trace_file = glob.glob(base_path + "traces_*_b{}_*".format(args.beam_count))
-crash_file = glob.glob(base_path + "crash_*_b{}_*".format(args.beam_count))
+trace_file = glob.glob(base_path + "traces_*_b{}_*".format(args.RRS_number))
+crash_file = glob.glob(base_path + "crash_*_b{}_*".format(args.RRS_number))
+stall_file = glob.glob(base_path + "stall_*_b{}_*".format(args.RRS_number))
 
 # Get the feasible vectors
 base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/'
-feasible_file = glob.glob(base_path + "*_b{}.npy".format(args.beam_count))
+feasible_file = glob.glob(base_path + "*_b{}.npy".format(args.RRS_number))
 
 # Check we have files
 assert(len(trace_file) == 1)
 assert(len(crash_file) == 1)
+assert(len(stall_file) == 1)
 assert(len(feasible_file) == 1)
+
+# Get the file name out of the array
 trace_file = trace_file[0]
 crash_file = crash_file[0]
+stall_file = stall_file[0]
 feasible_file = feasible_file[0]
 
 # Get the test suite sizes
-test_suite_sizes = determine_test_suite_sizes(args.total_samples)
-greedy_sample_size = 100
+test_suite_sizes = determine_test_suite_sizes(args.number_of_tests)
+print("Considered test suite sizes: {}".format(test_suite_sizes))
+
 
 # Load the traces
 global traces
 global crashes
-traces = np.load(trace_file)
+global stalls
+traces  = np.load(trace_file)
 crashes = np.load(crash_file)
+stalls  = np.load(stall_file)
 
 # Create the feasible set
 feasible_traces = np.load(feasible_file)
@@ -292,13 +309,17 @@ feasible_RSR_set = set()
 for scene in feasible_traces:
     feasible_RSR_set.add(tuple(scene))
 
-# Create the crash unique set
-global unique_crashes_set
-unique_crashes_set = set()
+# Create the failure unique set
+global unique_failure_set
+unique_failure_set = set()
 for crash in crashes:
     for c in crash:
         if ~np.isinf(c):
-            unique_crashes_set.add(c)
+            unique_failure_set.add(c)
+for stall in stalls:
+    for s in stall:
+        if ~np.isinf(s):
+            unique_failure_set.add(s)
 
 # Create the figure
 plt.figure(1)
@@ -330,11 +351,11 @@ if args.scenario == "beamng":
 plt.plot([], [] ,'--', color="black",label="Line of Best Fit")
 
 plt.legend(markerscale=5)
-plt.xticks(np.arange(0, np.max(random_test_suite_size) + 0.01,  args.total_samples/100))
+# plt.xticks(np.arange(0, np.max(random_test_suite_size) + 0.01,  args.number_of_tests/100))
 plt.yticks(np.arange(0, np.max(best_crash_count) + 0.01, increment))
-plt.ylabel("Unique Crashes")
+plt.ylabel("Unique Failures")
 plt.xlabel("Test Suite Size")
 # Round the x ticks to 3 places
-plt.ticklabel_format(style='sci', axis='x', scilimits=(2,3))
+# plt.ticklabel_format(style='sci', axis='x', scilimits=(2,3))
 plt.grid(alpha=0.5)
 plt.show()

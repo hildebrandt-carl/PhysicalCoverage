@@ -1,24 +1,27 @@
-import ast
+import sys
 import glob
-import copy
 import argparse
 import multiprocessing
 
-import numpy as np
-import matplotlib.pyplot as plt
+from pathlib import Path
+current_file = Path(__file__)
+path = str(current_file.absolute())
+base_directory = str(path[:path.rfind("/coverage_analysis")])
+sys.path.append(base_directory)
 
-from random import sample
+import numpy as np
 
 from tqdm import tqdm
+from random import sample
 from collections import Counter
 from prettytable import PrettyTable
 
-from general_functions import order_by_beam
-from general_functions import get_beam_numbers
-from general_functions import clean_branch_data
-from general_functions import get_lines_covered
-from general_functions import get_ignored_lines
-from general_functions import get_ignored_branches
+from general.file_functions import get_beam_number_from_file
+from general.file_functions import order_files_by_beam_number
+from general.line_coverage_configuration import clean_branch_data
+from general.line_coverage_configuration import get_code_coverage
+from general.line_coverage_configuration import get_ignored_lines
+from general.line_coverage_configuration import get_ignored_branches
 
 def compute_RSR_details():
     global traces
@@ -101,8 +104,8 @@ def compute_RSR_details():
     total_signatures_count = len(final_signatures)
 
     # Get the total number of single test and multitest signatures
-    single_test_signatures_count = len(count_of_signatures[np.argwhere(count_of_signatures == 1).reshape(-1)])
-    multi_test_signatures_count = len(count_of_signatures[np.argwhere(count_of_signatures > 1).reshape(-1)])
+    single_test_signatures_count    = len(count_of_signatures[np.argwhere(count_of_signatures == 1).reshape(-1)])
+    multi_test_signatures_count     = len(count_of_signatures[np.argwhere(count_of_signatures > 1).reshape(-1)])
 
     # Get the total number of consistent vs inconsistent classes
     consistent_class_count      = np.count_nonzero(consistent_class)
@@ -218,9 +221,6 @@ def compute_line_coverage_details():
 
 def compute_branch_coverage_details(scenario):
 
-    if scenario != "highway":
-        return [0,0,0,0,0,0]
-
     global code_coverage_file_names
 
     # Get the total number of tests
@@ -288,13 +288,10 @@ def compute_branch_coverage_details(scenario):
         # Get all the crash data for a specific signature
         single_class_crash_data = all_crash_detections[interested_indices]
 
-        # Check if all the data is consisten
+        # Check if all the data is consistent
         consistent = np.all(single_class_crash_data == single_class_crash_data[0])
         consistent_class[count_index] = bool(consistent)
         count_index += 1
-
-    # Final signatures holds the list of all signatures
-    # Count of signatures holds the list intergers representing how many times each signature was seen
 
     # Get the total signatures
     total_signatures_count = len(final_signatures)
@@ -351,7 +348,7 @@ def compute_line_coverage_hash(index):
     code_coverage_file = code_coverage_file_names[index]
 
     # Get the coverage
-    coverage_data = get_lines_covered(code_coverage_file)
+    coverage_data = get_code_coverage(code_coverage_file)
     lines_covered = coverage_data[0]
     number_of_crashes = coverage_data[4]
 
@@ -381,7 +378,7 @@ def compute_branch_coverage_hash(index, scenario):
     code_coverage_file = code_coverage_file_names[index]
 
     # Get the coverage
-    coverage_data = get_lines_covered(code_coverage_file)
+    coverage_data = get_code_coverage(code_coverage_file)
     branches_covered = coverage_data[2]
     all_branches = coverage_data[3]
     number_of_crashes = coverage_data[4]
@@ -392,8 +389,12 @@ def compute_branch_coverage_hash(index, scenario):
     branches_covered_set = set(branches_covered)
     assert(len(branches_covered) == len(branches_covered_set))
 
-    # Clean the branch data
-    all_branches_set_clean, branches_covered_set_clean = clean_branch_data(all_branches_set, branches_covered_set)
+    if scenario == "highway":
+        # Clean the branch data
+        all_branches_set_clean, branches_covered_set_clean = clean_branch_data(all_branches_set, branches_covered_set)
+    else:
+        all_branches_set_clean = all_branches_set
+        branches_covered_set_clean = branches_covered_set
 
     # Remove the ignored lines
     branches_covered_set_clean -= ignored_branches
@@ -442,16 +443,16 @@ ignored_lines       = set(get_ignored_lines(args.scenario))
 ignored_branches    = set(get_ignored_branches(args.scenario))
 
 # Get the beam numbers
-trace_beam_numbers = get_beam_numbers(trace_file_names)
-crash_beam_numbers = get_beam_numbers(crash_file_names)
+trace_beam_numbers = get_beam_number_from_file(trace_file_names)
+crash_beam_numbers = get_beam_number_from_file(crash_file_names)
 
 # Find the set of beam numbers which all sets of files have
 beam_numbers = list(set(trace_beam_numbers) | set(crash_beam_numbers))
 beam_numbers = sorted(beam_numbers)
 
 # Sort the data based on the beam number
-trace_file_names = order_by_beam(trace_file_names, beam_numbers)
-crash_file_names = order_by_beam(crash_file_names, beam_numbers)
+trace_file_names = order_files_by_beam_number(trace_file_names, beam_numbers)
+crash_file_names = order_files_by_beam_number(crash_file_names, beam_numbers)
 
 # Create the output table
 t = PrettyTable()

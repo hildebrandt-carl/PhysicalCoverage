@@ -17,22 +17,21 @@ path = str(current_file.absolute())
 base_directory = str(path[:path.rfind("/highway")])
 sys.path.append(base_directory)
 
+from highway_config import HighwayEnvironmentConfig
 from general.reachset import ReachableSet
 from general.environment_configurations import RSRConfig
 from general.environment_configurations import HighwayKinematics
-from general.environment_configurations import HighwayEnvironmentConfig
 
 from controllers.tracker import Tracker
 from controllers.car_controller import EgoController
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--total_lines', type=int, default="3", help="The number of beams")
 parser.add_argument('--no_plot', action='store_true')
 args = parser.parse_args()
 
 # Get the different configurations
 HK = HighwayKinematics()
-RSR = RSRConfig(beam_count=args.total_lines)
+RSR = RSRConfig(beam_count=31)
 
 # Variables - Used for timing
 total_lines     = RSR.beam_count
@@ -40,8 +39,8 @@ steering_angle  = HK.steering_angle
 max_distance    = HK.max_velocity
 
 # Create the output directory if it doesn't exists
-if not os.path.exists('../output/feasibility/raw'):
-    os.makedirs('../output/feasibility/raw')
+if not os.path.exists('../output/highway/feasibility/raw'):
+    os.makedirs('../output/highway/feasibility/raw')
 
 # Declare how accurate you want it
 total_headings = 20
@@ -54,7 +53,7 @@ max_heading = HK.steering_angle # Degrees
 environment_vehicles = 0
 
 # Save the output file
-text_file = open("../output/feasibility/raw/feasible_vectors{}.txt".format(total_lines), "w")
+text_file = open("../output/highway/feasibility/raw/feasible_vectors.txt", "w")
 text_file.write("Name: %s\n" % "Feasible vector generation")
 e = datetime.datetime.now()
 text_file.write("Date: %s/%s/%s\n" % (e.day, e.month, e.year))
