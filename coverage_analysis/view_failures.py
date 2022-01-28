@@ -23,16 +23,24 @@ def unison_shuffled_copies(a, b):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--number_of_tests', type=int, default=1,  help="The number of tests used while computing coverage")
-parser.add_argument('--scenario',      type=str, default="", help="beamng/highway")
-parser.add_argument('--ordered',       action='store_true')
+parser.add_argument('--distribution',    type=str, default="",   help="linear/center_close/center_mid")
+parser.add_argument('--scenario',        type=str, default="", help="beamng/highway")
+parser.add_argument('--ordered',         action='store_true')
 args = parser.parse_args()
 
-# Get the base path
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.number_of_tests) + "/"
+# Checking the distribution
+if not (args.distribution == "linear" or args.distribution == "center_close" or args.distribution == "center_mid"):
+    print("ERROR: Unknown distribution ({})".format(args.distribution))
+    exit()
 
-# Find all the crash files
-crash_files = glob.glob(base_path + "crash*.npy")
-stall_files = glob.glob(base_path + "stall*.npy")
+# Get the file names
+base_path = '../../PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+crash_files = glob.glob(base_path + "crash_*")
+stall_files = glob.glob(base_path + "stall_*")
+
+
+
+# Check that you have found the files
 assert(len(crash_files) >= 1)
 assert(len(stall_files) >= 1)
 

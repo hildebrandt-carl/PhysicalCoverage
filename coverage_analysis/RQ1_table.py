@@ -1,5 +1,6 @@
 import sys
 import glob
+import hashlib
 import argparse
 import multiprocessing
 
@@ -313,6 +314,106 @@ def compute_branch_coverage_details(scenario):
 
     return [total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, percentage_of_inconsistency]
 
+def compute_path_coverage_details(scenario):
+
+    if scenario == "highway":
+        return [0, 0, 0, 0, 0, 0]
+
+    global code_coverage_file_names
+
+    # Get the total number of tests
+    total_number_of_tests = len(code_coverage_file_names)
+
+    # Use multiprocessing to compute the trace signature and if a crash was detected
+    total_processors    = int(args.cores)
+    pool                = multiprocessing.Pool(processes=total_processors)
+
+    # Call our function on each file
+    jobs = []
+    for i in range(total_number_of_tests):
+        jobs.append(pool.apply_async(get_path_coverage_hash, args=([i, scenario])))
+
+    # Get the results
+    results = []
+    for job in tqdm(jobs):
+        results.append(job.get())
+
+    # Close the pool
+    pool.close()
+
+    # Turn all the signatures into a list
+    all_signatures = np.zeros(total_number_of_tests)
+    all_crash_detections = np.zeros(total_number_of_tests)
+
+    # Go through each results
+    for i in range(total_number_of_tests):
+
+        # Get the result (r)
+        r = results[i]
+
+        # Get the signature and the results
+        signature, crash_detected = r
+
+        # Collect all the signatures
+        all_signatures[i] = signature
+        all_crash_detections[i] = crash_detected
+
+    # Print out the number of unique signatures
+    count_of_signatures = Counter(all_signatures)
+
+    # Get the signatures and the count
+    final_signatures, count_of_signatures = zip(*count_of_signatures.items())
+    count_of_signatures = np.array(count_of_signatures)
+
+    # Determine how many classes have more than 1 test
+    total_multiclasses = np.sum(count_of_signatures >= 2)
+    consistent_class = np.zeros(total_multiclasses, dtype=bool)
+
+    # Loop through each of the final signatures
+    count_index = 0
+    for i in range(len(final_signatures)):
+        # Get the signature and count
+        current_sig = final_signatures[i]
+        current_count = count_of_signatures[i]
+
+        if current_count <= 1:
+            continue
+
+        # Loop through the signatures and get the indices where this signature is in the array
+        interested_indices = np.argwhere(all_signatures == current_sig).reshape(-1)
+        assert(len(interested_indices) == current_count)
+
+        # Get all the crash data for a specific signature
+        single_class_crash_data = all_crash_detections[interested_indices]
+
+        # Check if all the data is consistent
+        consistent = np.all(single_class_crash_data == single_class_crash_data[0])
+        consistent_class[count_index] = bool(consistent)
+        count_index += 1
+
+    # Get the total signatures
+    total_signatures_count = len(final_signatures)
+
+    # Get the total number of single test and multitest signatures
+    single_test_signatures_count = len(count_of_signatures[np.argwhere(count_of_signatures == 1).reshape(-1)])
+    multi_test_signatures_count = len(count_of_signatures[np.argwhere(count_of_signatures > 1).reshape(-1)])
+
+    # Get the total number of consistent vs inconsistent classes
+    consistent_class_count      = np.count_nonzero(consistent_class)
+    inconsistent_class_count    = np.size(consistent_class) - np.count_nonzero(consistent_class)
+
+    # Compute the percentage of consistency
+    if np.size(consistent_class) == 0:
+        percentage_of_inconsistency = np.inf
+    else:
+        percentage_of_inconsistency = int(np.round((inconsistent_class_count / np.size(consistent_class)) * 100, 0))
+
+    # Make sure that there is no count where the count is < 1: Make sure that single + multi == total
+    assert(len(count_of_signatures[np.argwhere(count_of_signatures < 1).reshape(-1)]) == 0)
+    assert(single_test_signatures_count + multi_test_signatures_count == total_signatures_count)
+
+    return [total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, percentage_of_inconsistency]
+
 def compute_trace_signature_and_crash(index):
     global traces
     global crashes
@@ -330,7 +431,8 @@ def compute_trace_signature_and_crash(index):
         trace_signature.add(tuple(sig))
 
     # Create the hash of the signature for each comparison
-    trace_hash = hash(tuple(sorted(trace_signature)))
+    trace_string = str(tuple(sorted(trace_signature)))
+    trace_hash = hashlib.md5(trace_string.encode()).hexdigest()
 
     # Check if this trace had a crash
     crash_detected = not np.isinf(crash).all()
@@ -350,7 +452,7 @@ def compute_line_coverage_hash(index):
     # Get the coverage
     coverage_data = get_code_coverage(code_coverage_file)
     lines_covered = coverage_data[0]
-    number_of_crashes = coverage_data[4]
+    number_of_crashes = coverage_data[5]
 
     # Make sure converting to a set was done correctly
     lines_covered_set = set(lines_covered)
@@ -363,7 +465,8 @@ def compute_line_coverage_hash(index):
     all_lines_coverage = sorted(list(lines_covered_set))
 
     # Get the coverage hash
-    coverage_hash = hash(tuple(all_lines_coverage))
+    all_lines_string = str(tuple(all_lines_coverage))
+    coverage_hash = hashlib.md5(all_lines_string.encode()).hexdigest()
 
     return [coverage_hash, number_of_crashes]
 
@@ -376,12 +479,14 @@ def compute_branch_coverage_hash(index, scenario):
 
     # Get the code coverage file
     code_coverage_file = code_coverage_file_names[index]
-
+    
     # Get the coverage
     coverage_data = get_code_coverage(code_coverage_file)
-    branches_covered = coverage_data[2]
-    all_branches = coverage_data[3]
-    number_of_crashes = coverage_data[4]
+
+    # Break the coverage up into its components
+    branches_covered    = coverage_data[2]
+    all_branches        = coverage_data[3]
+    number_of_crashes   = coverage_data[5]
 
     # Make sure converting to a set was done correctly
     all_branches_set = set(all_branches)
@@ -403,14 +508,35 @@ def compute_branch_coverage_hash(index, scenario):
     branches_covered_set_clean = sorted(list(branches_covered_set_clean))
 
     # Get the coverage hash
-    coverage_hash = hash(tuple(branches_covered_set_clean))
+    branches_covered_string = str(tuple(branches_covered_set_clean))
+    coverage_hash = hashlib.md5(branches_covered_string.encode()).hexdigest()
 
     return [coverage_hash, number_of_crashes]
 
+def get_path_coverage_hash(index, scenario):
+    global code_coverage_file_names
+
+    coverage_hash = None
+    number_of_crashes = None
+
+    # Get the code coverage file
+    code_coverage_file = code_coverage_file_names[index]
+
+    # Get the coverage
+    coverage_data = get_code_coverage(code_coverage_file)
+
+    # Break the coverage up into its components
+    path_signature      = coverage_data[4]
+    number_of_crashes   = coverage_data[5]
+
+    return [path_signature, number_of_crashes]
+
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
-parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
+parser.add_argument('--number_of_tests', type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--distribution',    type=str, default="",   help="linear/center_close/center_mid")
+parser.add_argument('--scenario',        type=str, default="",   help="beamng/highway")
+parser.add_argument('--cores',           type=int, default=4,    help="number of available cores")
 args = parser.parse_args()
 
 print("----------------------------------")
@@ -419,13 +545,18 @@ print("----------------------------------")
 
 load_name = "*.npy"
 
+# Checking the distribution
+if not (args.distribution == "linear" or args.distribution == "center_close" or args.distribution == "center_mid"):
+    print("ERROR: Unknown distribution ({})".format(args.distribution))
+    exit()
+
 # Get the file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
+base_path = '../../PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
 trace_file_names = glob.glob(base_path + "traces_*.npy")
 crash_file_names = glob.glob(base_path + "crash_*.npy")
 
 # Get the code coverage
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/code_coverage/processed/' + str(args.total_samples) + "/"
+base_path = '../../PhysicalCoverageData/{}/random_tests/code_coverage/processed/{}/'.format(args.scenario, args.number_of_tests)
 global code_coverage_file_names
 code_coverage_file_names = glob.glob(base_path + "*/*.txt")
 
@@ -434,8 +565,8 @@ assert(len(trace_file_names) >= 1)
 assert(len(crash_file_names) >= 1)
 assert(len(code_coverage_file_names) >= 1)
 
-# Select args.total_samples total code coverage files
-assert(len(code_coverage_file_names) == args.total_samples)
+# Select args.number_of_tests total code coverage files
+assert(len(code_coverage_file_names) == args.number_of_tests)
 
 global ignored_lines
 global ignored_branches
@@ -492,6 +623,23 @@ print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
 t.add_row(["Branch Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
+# Compute the branch coverage details
+print("\nProcessing Path Coverage")
+results                         = compute_path_coverage_details(args.scenario)
+total_signatures_count          = results[0]
+single_test_signatures_count    = results[1]
+multi_test_signatures_count     = results[2]
+consistent_class_count          = results[3]
+inconsistent_class_count        = results[4]
+percentage_of_inconsistency     = results[5]
+print("Total signatures: {}".format(total_signatures_count))
+print("Total single test signatures: {}".format(single_test_signatures_count))
+print("Total multi test signatures: {}".format(multi_test_signatures_count))
+print("Total consistent classes: {}".format(consistent_class_count))
+print("Total inconsistent classes: {}".format(inconsistent_class_count))
+print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
+t.add_row(["Path Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+
 # Loop through each of the files and compute both an RSR signature as well as determine if there was a crash
 for beam_number in beam_numbers:
     print("\nProcessing RSR{}".format(beam_number))
@@ -520,6 +668,9 @@ for beam_number in beam_numbers:
     t.add_row([key, total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
 # Display the table
+print("")
+print("Scenario: {}".format(args.scenario))
+print("Number of tests: {}".format(args.number_of_tests))
+print("Distribution: {}".format(args.distribution))
+print("")
 print(t)
-
-

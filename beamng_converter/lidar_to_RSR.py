@@ -20,10 +20,10 @@ from general.environment_configurations import RSRConfig
 from general.environment_configurations import BeamNGKinematics
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--cores',          type=int, default=120,    help="number of available cores")
-parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
-parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--plot',           action='store_true')
+parser.add_argument('--cores',            type=int, default=120,    help="number of available cores")
+parser.add_argument('--scenario',         type=str, default="",   help="beamng/highway")
+parser.add_argument('--number_of_tests',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--plot',             action='store_true')
 args = parser.parse_args()
 
 # Create the configuration classes
@@ -40,8 +40,8 @@ if args.scenario == "beamng_random":
     output_file_location    = "../output/beamng/random_tests/physical_coverage/raw/"
     file_names = glob.glob(raw_file_location + "/*/*.csv")
 elif args.scenario == "beamng_generated":
-    raw_file_location       = "../../PhysicalCoverageData/beamng/generated_tests/tests_single/lidar/{}/lidar_readings".format(args.total_samples)
-    output_file_location    = "../output/beamng/generated_tests/tests_single/raw/{}/".format(args.total_samples)
+    raw_file_location       = "../../PhysicalCoverageData/beamng/generated_tests/tests_single/lidar/{}/lidar_readings".format(args.number_of_tests)
+    output_file_location    = "../output/beamng/generated_tests/tests_single/raw/{}/".format(args.number_of_tests)
     file_names = glob.glob(raw_file_location + "/*/*.csv")
 else:
     print("Error: Unknown Scenario")

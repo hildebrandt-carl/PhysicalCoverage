@@ -20,10 +20,14 @@ from general.environment_configurations import RSRConfig
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
+from general.RRS_distributions import linear_distribution
+from general.RRS_distributions import center_close_distribution
+from general.RRS_distributions import center_mid_distribution
+
 from preprocess_functions import processFileFeasibility
 from preprocess_functions import getFeasibleVectors
 
-def beamng_handler(new_steering_angle, new_max_distance, RRS_number):
+def beamng_handler(new_steering_angle, new_max_distance, RRS_number, distribution):
 
     # Get the new_total_lines
     new_total_lines = int(RRS_number)
@@ -35,7 +39,7 @@ def beamng_handler(new_steering_angle, new_max_distance, RRS_number):
     feasible_vectors = set()
 
     # Get all the vectors and all feasible vectors
-    all_vectors, feasible_vectors = getFeasibleVectors(test_vectors, new_total_lines, "beamng")
+    all_vectors, feasible_vectors = getFeasibleVectors(test_vectors, new_total_lines, distribution)
 
     total_feasible_vectors = np.shape(feasible_vectors)[0]
     total_all_vectors = np.shape(all_vectors)[0]
@@ -49,7 +53,7 @@ def beamng_handler(new_steering_angle, new_max_distance, RRS_number):
     print("Total possible vectors: {}".format(total_all_vectors))
     print("Percentage of feasible space {}% ".format(per))
 
-    save_path = '../output/beamng/feasibility/processed/'
+    save_path = '../output/beamng/feasibility/processed/{}/'.format(args.distribution)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
@@ -60,21 +64,21 @@ def beamng_handler(new_steering_angle, new_max_distance, RRS_number):
     
     return True
 
-def highway_handler(file_name, new_steering_angle, new_max_distance, RRS_number):
+def highway_handler(file_name, new_steering_angle, new_max_distance, RRS_number, distribution):
 
     # Get the new_total_lines
     new_total_lines = int(RRS_number)
 
     # Process the data
     f = open(file_name, "r")  
-    vehicle_count, crash, test_vectors = processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, "highway")
+    vehicle_count, crash, test_vectors = processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, distribution)
     f.close()
     
     # Create the set of feasible vectors
     feasible_vectors = set()
 
     # Get all the vectors and all feasible vectors
-    all_vectors, feasible_vectors = getFeasibleVectors(test_vectors, new_total_lines, "highway")
+    all_vectors, feasible_vectors = getFeasibleVectors(test_vectors, new_total_lines, distribution)
 
     total_feasible_vectors = np.shape(feasible_vectors)[0]
     total_all_vectors = np.shape(all_vectors)[0]
@@ -89,7 +93,7 @@ def highway_handler(file_name, new_steering_angle, new_max_distance, RRS_number)
     print("Total possible vectors: {}".format(total_all_vectors))
     print("Percentage of feasible space {}% ".format(per))
 
-    save_path = '../output/highway/feasibility/processed/'
+    save_path = '../output/highway/feasibility/processed/{}/'.format(args.distribution)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
@@ -101,6 +105,7 @@ def highway_handler(file_name, new_steering_angle, new_max_distance, RRS_number)
     return True
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--distribution',   type=str, default="",    help="linear/center_close/center_mid")
 parser.add_argument('--scenario',       type=str, default="",    help="beamng/highway")
 parser.add_argument('--cores',          type=int, default=4,     help="number of available cores")
 args = parser.parse_args()
@@ -119,6 +124,17 @@ elif args.scenario == "beamng":
     new_max_distance    = NG.max_velocity
 else:
     print("ERROR: Unknown scenario")
+    exit()
+
+# Get the distribution
+if args.distribution   == "linear":
+    distribution  = linear_distribution(args.scenario)
+elif args.distribution == "center_close":
+    distribution  = center_close_distribution(args.scenario)
+elif args.distribution == "center_mid":
+    distribution  = center_mid_distribution(args.scenario)
+else:
+    print("ERROR: Unknown distribution ({})".format(args.distribution))
     exit()
 
 print("----------------------------------")
@@ -151,14 +167,14 @@ if args.scenario == "highway":
     # Call our function for each beam
     jobs = []
     for RRS_number in range(1,11):
-        jobs.append(pool.apply_async(highway_handler, args=([feasibility_file[0], new_steering_angle, new_max_distance, RRS_number])))
+        jobs.append(pool.apply_async(highway_handler, args=([feasibility_file[0], new_steering_angle, new_max_distance, RRS_number, distribution])))
 
 # Handle beamng
 if args.scenario == "beamng":
     # Call our function for each beam
     jobs = []
     for RRS_number in range(1,11):
-        jobs.append(pool.apply_async(beamng_handler, args=([new_steering_angle, new_max_distance, RRS_number])))
+        jobs.append(pool.apply_async(beamng_handler, args=([new_steering_angle, new_max_distance, RRS_number, distribution])))
 
 
 # Get the results

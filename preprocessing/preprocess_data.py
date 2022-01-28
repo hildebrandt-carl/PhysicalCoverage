@@ -23,6 +23,10 @@ from general.environment_configurations import RSRConfig
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
+from general.RRS_distributions import linear_distribution
+from general.RRS_distributions import center_close_distribution
+from general.RRS_distributions import center_mid_distribution
+
 from general.failure_oracle import FailureOracle
 
 from preprocess_functions import processFile
@@ -32,6 +36,7 @@ from preprocess_functions import countVectorsInFile
 parser = argparse.ArgumentParser()
 parser.add_argument('--beam_count',     type=int, default=4,    help="The number of beams used to vectorize the reachable set")
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--distribution',   type=str, default="",   help="linear/center_close/center_mid")
 parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
 parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
 args = parser.parse_args()
@@ -58,7 +63,17 @@ elif args.scenario == "beamng_generated":
     new_steering_angle  = NG.steering_angle
     new_max_distance    = NG.max_velocity
 else:
-    print("ERROR: Unknown scenario")
+    print("ERROR: Unknown scenario ({})".format(args.scenario))
+    exit()
+
+if args.distribution == "linear":
+    distribution  = linear_distribution(args.scenario)
+elif args.distribution == "center_close":
+    distribution  = center_close_distribution(args.scenario)
+elif args.distribution == "center_mid":
+    distribution  = center_mid_distribution(args.scenario)
+else:
+    print("ERROR: Unknown distribution ({})".format(args.distribution))
     exit()
 
 print("")
@@ -197,7 +212,7 @@ for i in range(total_files):
     # Get the filename
     file_name = file_names[i]
     # Start the job
-    jobs.append(pool.apply_async(processFile, args=([file_name, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, max_crashes_per_test,  max_stalls_per_test, failure_base, args.scenario, True])))
+    jobs.append(pool.apply_async(processFile, args=([file_name, vec_per_file, new_total_lines, new_steering_angle, new_max_distance, new_total_lines, max_crashes_per_test,  max_stalls_per_test, failure_base, distribution, True,])))
 
 # Get the results
 for i, job in enumerate(tqdm(jobs)):
@@ -228,13 +243,13 @@ save_name += ".npy"
    
 save_path = ""
 if args.scenario == "beamng_random":
-    save_path = "../output/beamng/random_tests/physical_coverage/processed/{}".format(args.total_samples)
+    save_path = "../output/beamng/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 elif args.scenario == "beamng_generated":
-    save_path = "../output/beamng/generated_tests/tests_single/processed/{}/".format(args.total_samples)
+    save_path = "../output/beamng/generated_tests/tests_single/processed/{}/{}/".format(args.distribution, args.total_samples)
 elif args.scenario == "highway_random":
-    save_path = "../output/highway/random_tests/physical_coverage/processed/{}".format(args.total_samples)
+    save_path = "../output/highway/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 elif args.scenario == "highway_generated":
-    save_path = "../output/highway/generated_tests/tests_single/processed/{}/".format(args.total_samples)
+    save_path = "../output/highway/generated_tests/tests_single/processed/{}/{}/".format(args.distribution, args.total_samples)
 else:
     print("Error 4")
     exit()

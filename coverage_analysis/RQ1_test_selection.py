@@ -226,9 +226,10 @@ greedy_sample_size = 100
 # Get the input arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--number_of_tests',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--distribution',     type=str, default="",   help="linear/center_close/center_mid")
+parser.add_argument('--RRS_number',       type=int, default=3,    help="The number of beams you want to consider")
 parser.add_argument('--scenario',         type=str, default="",   help="beamng/highway")
 parser.add_argument('--cores',            type=int, default=4,    help="number of available cores")
-parser.add_argument('--RRS_number',       type=int, default=3,    help="The number of beams you want to consider")
 args = parser.parse_args()
 
 # Create the configuration classes
@@ -265,16 +266,20 @@ load_name += "_d" + str(new_max_distance)
 load_name += "_t" + str(args.number_of_tests)
 load_name += ".npy"
 
-# Get the file names
+# Checking the distribution
+if not (args.distribution == "linear" or args.distribution == "center_close" or args.distribution == "center_mid"):
+    print("ERROR: Unknown distribution ({})".format(args.distribution))
+    exit()
 
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.number_of_tests) + "/"
-print(base_path)
+# Get the file names
+base_path = '../../PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+print(base_path + "traces_*_b{}_*".format(args.RRS_number))
 trace_file = glob.glob(base_path + "traces_*_b{}_*".format(args.RRS_number))
 crash_file = glob.glob(base_path + "crash_*_b{}_*".format(args.RRS_number))
 stall_file = glob.glob(base_path + "stall_*_b{}_*".format(args.RRS_number))
 
 # Get the feasible vectors
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/'
+base_path = '../../PhysicalCoverageData/{}/feasibility/processed/{}/'.format(args.scenario, args.distribution)
 feasible_file = glob.glob(base_path + "*_b{}.npy".format(args.RRS_number))
 
 # Check we have files
@@ -292,7 +297,6 @@ feasible_file = feasible_file[0]
 # Get the test suite sizes
 test_suite_sizes = determine_test_suite_sizes(args.number_of_tests)
 print("Considered test suite sizes: {}".format(test_suite_sizes))
-
 
 # Load the traces
 global traces
@@ -351,6 +355,7 @@ if args.scenario == "beamng":
 plt.plot([], [] ,'--', color="black",label="Line of Best Fit")
 
 plt.legend(markerscale=5)
+plt.title(args.distribution)
 # plt.xticks(np.arange(0, np.max(random_test_suite_size) + 0.01,  args.number_of_tests/100))
 plt.yticks(np.arange(0, np.max(best_crash_count) + 0.01, increment))
 plt.ylabel("Unique Failures")

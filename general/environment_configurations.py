@@ -1,5 +1,3 @@
-import numpy as np
-
 class HighwayKinematics:
     def __init__(self):
         self.steering_angle  = 30 # Deg

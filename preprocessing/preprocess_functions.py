@@ -12,17 +12,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
-
 from general.failure_oracle import hash_crash
 from general.failure_oracle import hash_stall
-from general.environment_configurations import get_predfined_points
-from general.environment_configurations import get_angle_distribution
-from general.environment_configurations import get_sample_distribution
 
 from general.environment_configurations import RSRConfig
 from general.environment_configurations import HighwayKinematics
 
-def vector_conversion_distribution(vector, steering_angle, max_distance, total_lines, original_total_lines, scenario):
+def vector_conversion(vector, steering_angle, max_distance, total_lines, original_total_lines, distribution):
 
     # Fix the vector to have to correct max_distance
     vector = np.clip(vector, 0, max_distance)
@@ -54,7 +50,7 @@ def vector_conversion_distribution(vector, steering_angle, max_distance, total_l
     # Updates are here when selecting angles (Each beam represents a 2 degree beam)
     # Beam 0 starts at -30 degrees
     # Beam 30 ends at 30 degrees
-    angle_distribution = get_angle_distribution(scenario)
+    angle_distribution = distribution.get_angle_distribution()
 
     current_distribution = angle_distribution[total_lines]
     # Compute the indexes
@@ -64,15 +60,15 @@ def vector_conversion_distribution(vector, steering_angle, max_distance, total_l
     final_vector = steering_angle_corrected_vector[idx]
     return final_vector
 
-def centralBeamWithExponentialSampling(vector, scenario):
+def sample_vector(vector, distribution):
 
     # Get the vector length
     vec_len = len(vector)
     converted_vector = np.zeros(vec_len)
 
     # Get the predefined point distribution
-    predfined_point_distribution = get_predfined_points(scenario)
-    sample_distribution = get_sample_distribution(scenario)
+    predefined_point_distribution = distribution.get_predefined_points()
+    sample_distribution = distribution.get_sample_distribution()
 
     # Load the current distribution
     current_distribution = sample_distribution[vec_len]
@@ -80,7 +76,7 @@ def centralBeamWithExponentialSampling(vector, scenario):
     # Process the vector
     for i, v in enumerate(vector):
         num_samples = current_distribution[i]
-        predefined_points = predfined_point_distribution[num_samples]
+        predefined_points = predefined_point_distribution[num_samples]
         distance = np.absolute(predefined_points - v)
         index = np.argmin(distance)
         converted_vector[i] = predefined_points[index]
@@ -88,7 +84,7 @@ def centralBeamWithExponentialSampling(vector, scenario):
     # Print the converted vector
     return converted_vector  
 
-def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, max_possible_crashes, max_possible_stalls, base, scenario, ignore_crashes=False):
+def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_max_distance, new_total_lines, max_possible_crashes, max_possible_stalls, base, distribution, ignore_crashes=False):
     
     # Open the file
     f = open(file_name, "r")  
@@ -129,10 +125,10 @@ def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_m
             v = np.fromstring(vector_str, dtype=float, sep=',')
 
             # Seperating the vectors
-            vector = vector_conversion_distribution(vector, new_steering_angle, new_max_distance, new_total_lines, len(vector), scenario)
+            vector = vector_conversion(vector, new_steering_angle, new_max_distance, new_total_lines, len(vector), distribution)
             
             # Converting to correct granularity
-            vector = centralBeamWithExponentialSampling(vector, scenario)
+            vector = sample_vector(vector, distribution)
             test_vectors[current_vector] = vector
 
             debug_count += 1
@@ -259,7 +255,7 @@ def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_m
 
     return vehicle_count, collision_counter, test_vectors, simulation_time, crash_hashes, stall_hashes, ego_positions, ego_velocities, file_name
 
-def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, scenario):
+def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_lines, distribution):
     test_vectors    = []
     crash           = False
     vehicle_count   = -1
@@ -273,9 +269,9 @@ def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_li
             vector_str = line[line.find(": ")+3:-2]
             vector = np.fromstring(vector_str, dtype=float, sep=', ')
             # Seperating the vectors
-            vector = vector_conversion_distribution(vector, new_steering_angle, new_max_distance, new_total_lines, len(vector), scenario)
+            vector = vector_conversion(vector, new_steering_angle, new_max_distance, new_total_lines, len(vector), distribution)
             # Converting to correct granularity
-            vector = centralBeamWithExponentialSampling(vector, scenario)
+            vector = sample_vector(vector, distribution)
             test_vectors.append(np.array(vector))
             current_vector += 1
         # Look for crashes
@@ -286,13 +282,13 @@ def processFileFeasibility(f, new_steering_angle, new_max_distance, new_total_li
 
     return vehicle_count, crash, test_vectors
 
-def getFeasibleVectors(test_vectors, new_total_lines, scenario):
+def getFeasibleVectors(test_vectors, new_total_lines, distribution):
 
     threshold = 1e-6
 
     # Get the predefined points and sample distribution
-    predfined_point_distribution = get_predfined_points(scenario)
-    sample_distribution = get_sample_distribution(scenario)
+    predefined_point_distribution = distribution.get_predefined_points()
+    sample_distribution = distribution.get_sample_distribution()
 
     # Get the number of samples allowed for each reading
     number_samples_allowed = sample_distribution[new_total_lines]
@@ -304,7 +300,7 @@ def getFeasibleVectors(test_vectors, new_total_lines, scenario):
     # Compute all vectors
     possible_cell_values = []
     for i in range(len(test_vectors[0])):
-        sample_points_allowed = predfined_point_distribution[number_samples_allowed[i]]
+        sample_points_allowed = predefined_point_distribution[number_samples_allowed[i]]
         possible_cell_values.append(sample_points_allowed)
 
     # Create all possible variations of the array
@@ -321,7 +317,7 @@ def getFeasibleVectors(test_vectors, new_total_lines, scenario):
         # Loop through each of the individual readings (i index) )(r reading)
         for i, r in enumerate(v):
             # Determine the possible sample points
-            sample_points_allowed = predfined_point_distribution[number_samples_allowed[i]]
+            sample_points_allowed = predefined_point_distribution[number_samples_allowed[i]]
             # Only get sample points smaller than the current reading
             possible_values = sample_points_allowed[np.where(sample_points_allowed <= (r + threshold))]
             possible_cell_values.append(possible_values)

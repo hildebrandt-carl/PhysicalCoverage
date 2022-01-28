@@ -1,4 +1,5 @@
 import numpy as np
+import hashlib
 
 def round_to_base(x, base):
     return base * round(x/base)
@@ -14,7 +15,9 @@ def hash_crash(crash_ego_magnitude=None, crash_veh_magnitude=None, crash_inciden
     crash_veh_magnitude = round_to_base(crash_veh_magnitude, base=base)
     crash_incident_angle = round_to_base(crash_incident_angle, base=base)
 
-    return hash(tuple([crash_ego_magnitude, crash_veh_magnitude, crash_incident_angle]))
+    incident_string = str(tuple([crash_ego_magnitude, crash_veh_magnitude, crash_incident_angle]))
+    return hashlib.md5(incident_string.encode()).hexdigest()
+
 
 def hash_stall(angle_to_closest_obstacle=None, distance_to_closest_obstacle=None, base=1):
     # Check you got everything you needed
@@ -25,7 +28,8 @@ def hash_stall(angle_to_closest_obstacle=None, distance_to_closest_obstacle=None
     angle_to_closest_obstacle = round_to_base(angle_to_closest_obstacle, base=base)
     distance_to_closest_obstacle = round_to_base(distance_to_closest_obstacle, base=base)
 
-    return hash(tuple([angle_to_closest_obstacle, distance_to_closest_obstacle]))
+    stall_string = str(tuple([angle_to_closest_obstacle, distance_to_closest_obstacle]))
+    return hashlib.md5(stall_string.encode()).hexdigest()
 
 class FailureOracle:
     def __init__(self, scenario):

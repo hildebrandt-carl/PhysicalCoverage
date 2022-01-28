@@ -130,9 +130,10 @@ def random_test_suite():
 
 # Get the input arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--number_of_tests',    type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--scenario',           type=str, default="",   help="beamng/highway")
 parser.add_argument('--random_test_suites', type=int, default=10,   help="The number of random line samples used")
+parser.add_argument('--number_of_tests',    type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--distribution',       type=str, default="",   help="linear/center_close/center_mid")
+parser.add_argument('--scenario',           type=str, default="",   help="beamng/highway")
 parser.add_argument('--cores',              type=int, default=4,    help="number of available cores")
 args = parser.parse_args()
 
@@ -170,15 +171,19 @@ load_name += "_d" + str(new_max_distance)
 load_name += "_t" + str(args.number_of_tests)
 load_name += ".npy"
 
+# Checking the distribution
+if not (args.distribution == "linear" or args.distribution == "center_close" or args.distribution == "center_mid"):
+    print("ERROR: Unknown distribution ({})".format(args.distribution))
+    exit()
+
 # Get the file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.number_of_tests) + "/"
+base_path = '../../PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
 trace_file_names = glob.glob(base_path + "traces_*")
 crash_file_names = glob.glob(base_path + "crash_*")
 stall_file_names = glob.glob(base_path + "stall_*")
 
-
 # Get the feasible vectors
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/'
+base_path = '../../PhysicalCoverageData/{}/feasibility/processed/{}/'.format(args.scenario, args.distribution)
 feasible_file_names = glob.glob(base_path + "*.npy")
 
 # Get the RRS numbers
@@ -263,6 +268,7 @@ for i in range(len(RRS_numbers)):
     
 
 plt.grid(alpha=0.5)
+plt.title(args.distribution)
 plt.yticks(np.arange(0, 100.01, step=5))
 plt.xlabel("Number of tests")
 plt.ylabel("Coverage / Failure (%)")

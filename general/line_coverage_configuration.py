@@ -17,6 +17,7 @@ def get_code_coverage(filename):
     branch_data = {}
     current_key = None
     total_crashes = None
+    path_signature = None
 
     # Read the file
     for line in f: 
@@ -60,6 +61,9 @@ def get_code_coverage(filename):
             total_all_b = int(line[15:])
             assert(len(all_b) == total_all_b)
 
+        if "Path taken:" in line:
+            path_signature = int(line[12:])
+
         if "Total physical crashes:" in line:
             total_crashes = int(line[23:])
 
@@ -92,7 +96,7 @@ def get_code_coverage(filename):
             all_branches.append(branch)
 
     # Compile the results
-    results = [all_lines_covered, all_lines, all_branches_covered, all_branches, total_crashes]
+    results = [all_lines_covered, all_lines, all_branches_covered, all_branches, path_signature, total_crashes]
     return results
 
 def clean_branch_data(all_branches_set, branches_covered_set):

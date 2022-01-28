@@ -1,5 +1,6 @@
 import ast
 import glob
+import hashlib
 import argparse
 import multiprocessing
 
@@ -28,7 +29,8 @@ def compute_physical_coverage_hash(index):
     for t in trace:
         coverage_set.add(tuple(t))
 
-    coverage_hash = hash(tuple(sorted(list(coverage_set))))
+    coverage_set_string = str(tuple(sorted(list(coverage_set))))
+    coverage_hash = hashlib.md5(coverage_set_string.encode()).hexdigest()
 
     # Count the number of crashes
     for c in crash:
@@ -67,7 +69,8 @@ def compute_code_coverage_hash(index):
     all_lines_coverage = set(covered_l) - ignored_lines
 
     # Get the coverage hash
-    coverage_hash = hash(tuple(sorted(list(all_lines_coverage))))
+    all_lines_string = str(tuple(sorted(list(all_lines_coverage))))
+    coverage_hash = hashlib.md5(all_lines_string.encode()).hexdigest()
 
     return [coverage_hash, number_of_crashes]
 
