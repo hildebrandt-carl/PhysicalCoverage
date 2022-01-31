@@ -3,6 +3,7 @@
 import os
 import ast
 import glob
+import time
 import copy
 import hashlib
 import argparse
@@ -13,210 +14,90 @@ import xml.etree.ElementTree as ET
 
 from tqdm import tqdm
 
+def is_float(input):
+    try:
+        num_int = int(input)
+        return True
+    except ValueError:
+        return False
 
 def intraprocedural_path_coverage(path_taken):
-    # These functions are declared when processing the AI file in beamng
-    start_end_branch_numbers = {}
-    start_end_branch_numbers["stateChanged"]        = [0, 1]
-    start_end_branch_numbers["setSpeedMode"]        = [2, 3]
-    start_end_branch_numbers["driveToTarget"]       = [4, 41]
-    start_end_branch_numbers["aiPosOnPlan"]         = [42, 53]
-    start_end_branch_numbers["calculateTarget"]     = [54, 65]
-    start_end_branch_numbers["pathExtend"]          = [66, 67]
-    start_end_branch_numbers["inCurvature"]         = [68, 73]
-    start_end_branch_numbers["getPathLen"]          = [74, 75]
-    start_end_branch_numbers["waypointInPath"]      = [76, 79]
-    start_end_branch_numbers["getPlanLen"]          = [80, 81]
-    start_end_branch_numbers["buildNextRoute"]      = [82, 113]
-    start_end_branch_numbers["mergePathPrefix"]     = [114, 123]
-    start_end_branch_numbers["planAhead"]           = [124, 205]
-    start_end_branch_numbers["chasePlan"]           = [206, 239]
-    start_end_branch_numbers["updateGFX"]           = [240, 387]
-    start_end_branch_numbers["setAvoidCars"]        = [388, 389]
-    start_end_branch_numbers["driveInLane"]         = [390, 391]
-    start_end_branch_numbers["setMode"]             = [392, 405]
-    start_end_branch_numbers["reset"]               = [406, 407]
 
-    print(path_taken[:200])
-
-    # Create the dictionary to hold all paths
-    function_starts = []
-    function_ends   = []
-    function_names  = []
-    i_paths_taken = {}
-    for key in start_end_branch_numbers:
-        # Create the set of intraprocedural paths taken
-        i_paths_taken[key] = set()
-        # Save the start and end branches for easy lookup
-        function_starts.append(get_true_branch_number(start_end_branch_numbers[key][0]))
-        function_ends.append(get_true_branch_number(start_end_branch_numbers[key][1]))
-        function_names.append(key)
-
-    # Make sure nothing broke
-    assert(len(function_starts) == len(start_end_branch_numbers))
-    assert(len(function_ends) == len(start_end_branch_numbers))
-    assert(len(function_names) == len(start_end_branch_numbers))
+    # For the paths
+    intraprocedural_path    = {}
 
     # Process the path
     function_stack          = []
-    current_function        = None
-    start_recording_path    = False
-    intraprocedural_path    = []
-    counter = -100
-    for b in path_taken:
+    for j, b in enumerate(path_taken):
 
-        # Get the true branch for comparing against start and end
-        branch = get_true_branch_number(b)
-        branch_number = b
-
+        # Compute the print tabs
         print_tabs = ""
-        for i in range(len(function_stack)-1):
+        for i in range(len(function_stack)):
             print_tabs += "  "
 
-        # Check if this is the start or end of a function
-        if branch in function_starts:
-            # Get the function name
-            index = function_starts.index(branch)
-            f_name = function_names[index]
+        # Check if its a string
+        if is_float(b) == False:
 
-            print("{}{} start".format(print_tabs, f_name))
-            
-            # Append this function to the stack and the current path to a stack
-            function_stack.append(([], f_name))
+            # Check if this is the start or end of a function
+            if "enter_" in b:
+                # Get the function name
+                f_name = b[6:]
+                # print("{}{} start".format(print_tabs, f_name))
+                # Append this function to the stack and the current path to a stack
+                function_stack.append(([], f_name))
+            elif "exit_" in b:
+                # Pop the stack
+                print_tabs = print_tabs[:-2]
+                i_path, f_name = function_stack.pop()
+                
+                # Insert this into the dictionary
+                if f_name in intraprocedural_path:
+                    intraprocedural_path[f_name].append(i_path)
+                else:
+                    intraprocedural_path[f_name] = [i_path]
 
-        print_tabs = ""
-        for i in range(len(function_stack)-1):
-            print_tabs += "  "
-
-        # Push the current branch to the most recent function in the stack
-        function_stack[-1][0].append(branch_number)
-        print("{}Stack size: {} - Processed: {}".format(print_tabs, len(function_stack), branch_number))
-
-        if branch in function_ends:
-            # Pop the stack
-            print_tabs = print_tabs[:-1]
-            i_path, f_name = function_stack.pop()
-            print("{}{} end - {}".format(print_tabs, f_name, i_path))
-
-        counter += 1
-        if counter > 0:
-            exit()
-        
-
-def get_true_branch_number(branch_number):
-    return branch_number if (branch_number % 2) == 0 else  branch_number - 1
-
-def clean_path(path_taken, first_branch, last_branch, file_name):
-    # Remove all 0's from the end of the array
-    first_zero = np.where(path_taken==0)[0][0]
-    path_taken = path_taken[:first_zero]
-
-    # Branches are numbered with true as even, and false as odd
-    # The same branches true and false path will only be 1 number away
-    # Thus to make sure we start on the same branch, we need to check it is either true or false
-    # e.g. if first_branch == 240... path_taken[0] = 240, or path_taken[1] = 241 is okay
-    current_first_branch = get_true_branch_number(path_taken[0])
-    current_last_branch = get_true_branch_number(path_taken[-1])
-
-    # Assert they start with the same branch as all others
-    assert first_branch == current_first_branch, "first: {} != {}".format(first_branch, current_first_branch)
-
-    # If they do not end of the same branch, search back through the file until they do
-    if last_branch != current_last_branch:
-        path_taken = np.array(path_taken)
-        # Find the last occurrence of the branch (either true of false)
-        p1 = np.argwhere(path_taken == last_branch)
-        p2 = np.argwhere(path_taken == (last_branch + 1))
-        if np.size(p1) != 0 and np.size(p2) != 0:
-            possible_indices = [p1.max(), p2.max()]
-            print("Successfully found new ending")
-        elif np.size(p1) != 0:
-            possible_indices = [p1.max(), 0]
-            print("Successfully found new ending")
-        elif np.size(p1) != 0:
-            possible_indices = [0, p2.max()]
-            print("Successfully found new ending")
+                # print("{}{} end - {}..{}".format(print_tabs, f_name, i_path[0:5], i_path[-5:-1]))
+            else:
+                print("Error: string not understood: {}".format(b))
+                exit()
+        # It must be a branch number
         else:
-            print("Error in ".format(file_name))
-            print("Error ({}): branch {} or {} can not be found anywhere in the path".format(file_name, last_branch, last_branch+1))
-            possible_indices = [np.size(path_taken)]
-        last_occurrence = max(possible_indices)
-        path_taken = list(path_taken[0:last_occurrence])
+            # Get the true branch for comparing against start and end
+            try:
+                branch_number = int(b)
+                branch = get_true_branch_number(branch_number)
+            
+                # Push the current branch to the most recent function in the stack
+                function_stack[-1][0].append(branch_number)
+                # print("{}Stack size: {} - Processed: {}".format(print_tabs, len(function_stack), branch_number))
+            except Exception as e:
+                print("----------------")
+                print(path_taken[j])
+                print("Error: {} - Path: {}".format(b, path_taken[j-5:j+5]))
+                exit()
 
-    # # Assert they end with the same branch as all others
-    # current_last_branch = path_taken[-1] if (path_taken[-1] % 2) == 0 else  path_taken[-1] - 1
-    # assert last_branch == current_last_branch, "last: {} != {}".format(last_branch, current_last_branch)
-    return path_taken
+    # Compute the true intraprocedural path
+    for key in intraprocedural_path:
+        path_set = set()
+        for path in intraprocedural_path[key]:
+            path_set.add(str(path))
+        intraprocedural_path[key] = path_set
 
-def most_common(lst):
-    return max(set(lst), key=lst.count)
+    # Convert to list
+    all_keys = sorted(list(intraprocedural_path.keys()))
+    final_intraprocedural_path = []
+    for key in all_keys:
+        final_intraprocedural_path.append(list(intraprocedural_path[key]))
 
-def identity_first_last_candidates(file_name):
-    # Get the path_taken
-    path_taken = None
-    
-    with open(file_name, "r") as f:
-        for line in f:
+    return final_intraprocedural_path
+        
+def get_true_branch_number(branch_number):
+    if branch_number <= 0:
+        return branch_number
+    else:
+        return branch_number if (branch_number % 2) == 0 else  branch_number - 1
 
-            if "Path Taken:" in line[0:12]:
-                path_taken = line[12:-1]
-                break
-
-    # Check if we couldnt find a path
-    if path_taken is None:
-        return None, None
-
-    # Get the path taken
-    path_taken = np.array(path_taken.split(", "), dtype=int)        
-    
-    # Remove all 0's from the end of the array
-    first_zero = np.where(path_taken==0)[0][0]
-    path_taken = path_taken[:first_zero]
-
-    # Branches are numbered with true as even, and false as odd
-    # The same branches true and false path will only be 1 number away
-    # Thus to make sure we start on the same branch, we need to check it is either true or false
-    # e.g. if first_branch == 240... path_taken[0] = 240, or path_taken[1] = 241 is okay
-    # Make sure we return even numbers
-    first_branch_candidate = get_true_branch_number(path_taken[0])
-    last_branch_candidate = get_true_branch_number(path_taken[-1])
-
-    return first_branch_candidate, last_branch_candidate
-
-def get_first_last_branch(file_name, total_cores):
-    total_processors = min(len(file_name), total_cores)
-    pool =  multiprocessing.Pool(processes=total_processors)
-
-    # Get the candidates for each file
-    jobs = []
-    for i in range(len(file_name)):
-        jobs.append(pool.apply_async(identity_first_last_candidates, args=([file_names[i]])))
-
-    # Get the results
-    possible_starting_branches = []
-    possible_ending_branches = []
-    for job in tqdm(jobs):
-        candidates = job.get()
-        possible_starting_branches.append(candidates[0])
-        possible_ending_branches.append(candidates[1])
-
-    # Get the first and last branch
-    first_branch = most_common(possible_starting_branches)
-    last_branch = most_common(possible_ending_branches)
-
-    # Close the pool
-    pool.close()
-
-    # Print out details
-    print("Start branch candidates: {}".format(possible_starting_branches))
-    print("Start branch selected candidate: {}".format(first_branch))
-    print("Last branch candidates: {}".format(possible_ending_branches))
-    print("Last branch selected candidate: {}".format(last_branch))
-
-    # Return the first and last branch
-    return first_branch, last_branch
-
-def compute_coverage_beamng(file_name, save_path, first_branch, last_branch):
+def compute_coverage_beamng(file_name, save_path):
 
     # Compute the save name
     save_name = file_name[file_name.rfind("/")+1:]
@@ -250,8 +131,15 @@ def compute_coverage_beamng(file_name, save_path, first_branch, last_branch):
                 path_taken          = line[12:-1]  
 
     # Get the path taken
-    path_taken = np.array(path_taken.split(", "), dtype=int)  
-    path_taken = clean_path(path_taken, first_branch, last_branch, file_name)
+    path_taken = path_taken.split(", ")
+    # Remove all 0's
+    index = -1
+    while path_taken[index] == '0':
+        index -= 1  
+    path_taken = path_taken[:index+1]
+
+    # The absolute path is the entire string
+    absolute_path_string = str(path_taken)
 
     # Compute intraprocedural path coverage
     i_path_taken = intraprocedural_path_coverage(path_taken)
@@ -271,7 +159,7 @@ def compute_coverage_beamng(file_name, save_path, first_branch, last_branch):
     coverage_data["ai.lua"] = [lines_covered, all_lines, branches_covered, all_branches, i_path_signature, absolute_path_signature]
     return [coverage_data, code_coverage_save_name, crash_count]
 
-def compute_coverage_highway(file_name, save_path, first_branch, last_branch):
+def compute_coverage_highway(file_name, save_path):
     global preprocessed_crash_arrays
     global preprocessed_file_arrays
 
@@ -448,11 +336,6 @@ print("----------------------------------")
 print("---------Processing files---------")
 print("----------------------------------")
 
-# Get the first and last branch number
-print("Identifying start and end branch candidates for path coverage")
-first_branch, last_branch = get_first_last_branch(file_names[0:1], args.cores)
-
-
 print("\n\nComputing line, branch and path coverage")
 total_processors = int(args.cores)
 pool =  multiprocessing.Pool(processes=total_processors)
@@ -461,9 +344,9 @@ pool =  multiprocessing.Pool(processes=total_processors)
 jobs = []
 for i in range(total_files):
     if "highway" in args.scenario:
-        jobs.append(pool.apply_async(compute_coverage_highway, args=([file_names[i], save_path, first_branch, last_branch])))
+        jobs.append(pool.apply_async(compute_coverage_highway, args=([file_names[i], save_path])))
     elif "beamng" in args.scenario:
-        jobs.append(pool.apply_async(compute_coverage_beamng, args=([file_names[i], save_path, first_branch, last_branch])))
+        jobs.append(pool.apply_async(compute_coverage_beamng, args=([file_names[i], save_path])))
 
 # Get the results
 results = []
@@ -493,7 +376,8 @@ for r in tqdm(results):
         all_lines           = coverage_data[key][1]
         branches_covered    = coverage_data[key][2]
         all_branches        = coverage_data[key][3]
-        path_signature      = coverage_data[key][4]
+        i_path_signature    = coverage_data[key][4]
+        a_path_signature    = coverage_data[key][5]
 
         # Save the data
         f.write("-----------------------------\n")
@@ -511,7 +395,8 @@ for r in tqdm(results):
         f.write("All branches: {}\n".format(sorted(list(all_branches))))
         f.write("Total branches: {}\n".format(len(list(all_branches))))
         f.write("-----------------------------\n")
-        f.write("Path signature: {}\n".format(path_signature))
+        f.write("Intraprocedural path signature: {}\n".format(i_path_signature))
+        f.write("Absolute path signature: {}\n".format(a_path_signature))
 
     # Save the total number of crashes
     f.write("-----------------------------\n")

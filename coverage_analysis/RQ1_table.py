@@ -49,7 +49,7 @@ def compute_RSR_details():
     pool.close()
 
     # Turn all the signatures into a list
-    all_signatures = np.zeros(total_number_of_tests)
+    all_signatures = np.zeros(total_number_of_tests, dtype=np.str)
     all_crash_detections = np.zeros(total_number_of_tests)
 
     # Go through each results
@@ -148,7 +148,7 @@ def compute_line_coverage_details():
     pool.close()
 
     # Turn all the signatures into a list
-    all_signatures = np.zeros(total_number_of_tests)
+    all_signatures = np.zeros(total_number_of_tests, dtype=np.str)
     all_crash_detections = np.zeros(total_number_of_tests)
 
     # Go through each results
@@ -245,7 +245,7 @@ def compute_branch_coverage_details(scenario):
     pool.close()
 
     # Turn all the signatures into a list
-    all_signatures = np.zeros(total_number_of_tests)
+    all_signatures = np.zeros(total_number_of_tests, dtype=np.str)
     all_crash_detections = np.zeros(total_number_of_tests)
 
     # Go through each results
@@ -314,7 +314,7 @@ def compute_branch_coverage_details(scenario):
 
     return [total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, percentage_of_inconsistency]
 
-def compute_path_coverage_details(scenario):
+def compute_path_coverage_details(scenario, absolute=True):
 
     if scenario == "highway":
         return [0, 0, 0, 0, 0, 0]
@@ -342,7 +342,7 @@ def compute_path_coverage_details(scenario):
     pool.close()
 
     # Turn all the signatures into a list
-    all_signatures = np.zeros(total_number_of_tests)
+    all_signatures = np.zeros(total_number_of_tests, dtype=np.str)
     all_crash_detections = np.zeros(total_number_of_tests)
 
     # Go through each results
@@ -352,10 +352,13 @@ def compute_path_coverage_details(scenario):
         r = results[i]
 
         # Get the signature and the results
-        signature, crash_detected = r
+        i_signature, a_signature, crash_detected = r
 
         # Collect all the signatures
-        all_signatures[i] = signature
+        if absolute:
+            all_signatures[i] = a_signature
+        else:
+            all_signatures[i] = i_signature
         all_crash_detections[i] = crash_detected
 
     # Print out the number of unique signatures
@@ -452,7 +455,7 @@ def compute_line_coverage_hash(index):
     # Get the coverage
     coverage_data = get_code_coverage(code_coverage_file)
     lines_covered = coverage_data[0]
-    number_of_crashes = coverage_data[5]
+    number_of_crashes = coverage_data[6]
 
     # Make sure converting to a set was done correctly
     lines_covered_set = set(lines_covered)
@@ -486,7 +489,7 @@ def compute_branch_coverage_hash(index, scenario):
     # Break the coverage up into its components
     branches_covered    = coverage_data[2]
     all_branches        = coverage_data[3]
-    number_of_crashes   = coverage_data[5]
+    number_of_crashes   = coverage_data[6]
 
     # Make sure converting to a set was done correctly
     all_branches_set = set(all_branches)
@@ -526,10 +529,11 @@ def get_path_coverage_hash(index, scenario):
     coverage_data = get_code_coverage(code_coverage_file)
 
     # Break the coverage up into its components
-    path_signature      = coverage_data[4]
-    number_of_crashes   = coverage_data[5]
+    i_path_signature      = coverage_data[4]
+    a_path_signature      = coverage_data[5]
+    number_of_crashes   = coverage_data[6]
 
-    return [path_signature, number_of_crashes]
+    return [i_path_signature, a_path_signature, number_of_crashes]
 
 
 parser = argparse.ArgumentParser()
@@ -623,9 +627,9 @@ print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
 t.add_row(["Branch Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
-# Compute the branch coverage details
-print("\nProcessing Path Coverage")
-results                         = compute_path_coverage_details(args.scenario)
+# Compute the intraprocedural Path coverage details
+print("\nProcessing Introprocedural Path Coverage")
+results                         = compute_path_coverage_details(args.scenario, absolute=False)
 total_signatures_count          = results[0]
 single_test_signatures_count    = results[1]
 multi_test_signatures_count     = results[2]
@@ -638,7 +642,25 @@ print("Total multi test signatures: {}".format(multi_test_signatures_count))
 print("Total consistent classes: {}".format(consistent_class_count))
 print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
-t.add_row(["Path Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+t.add_row(["Intraprocedural Path Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+
+
+# Compute the Absolute Path coverage details
+print("\nProcessing Absolute Path Coverage")
+results                         = compute_path_coverage_details(args.scenario, absolute=True)
+total_signatures_count          = results[0]
+single_test_signatures_count    = results[1]
+multi_test_signatures_count     = results[2]
+consistent_class_count          = results[3]
+inconsistent_class_count        = results[4]
+percentage_of_inconsistency     = results[5]
+print("Total signatures: {}".format(total_signatures_count))
+print("Total single test signatures: {}".format(single_test_signatures_count))
+print("Total multi test signatures: {}".format(multi_test_signatures_count))
+print("Total consistent classes: {}".format(consistent_class_count))
+print("Total inconsistent classes: {}".format(inconsistent_class_count))
+print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
+t.add_row(["Absolute Path Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
 # Loop through each of the files and compute both an RSR signature as well as determine if there was a crash
 for beam_number in beam_numbers:
