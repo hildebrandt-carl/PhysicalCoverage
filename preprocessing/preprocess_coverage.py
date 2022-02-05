@@ -83,11 +83,11 @@ def intraprocedural_path_coverage(path_taken):
             path_set.add(str(path))
         intraprocedural_path[key] = path_set
 
-    # Convert to list
+    # Convert to list (make sure that both the order of the functions, and the order of the paths are always sorted the same)
     all_keys = sorted(list(intraprocedural_path.keys()))
     final_intraprocedural_path = []
     for key in all_keys:
-        final_intraprocedural_path.append(list(intraprocedural_path[key]))
+        final_intraprocedural_path.append(sorted(list(intraprocedural_path[key])))
 
     return final_intraprocedural_path
         
@@ -146,7 +146,7 @@ def compute_coverage_beamng(file_name, save_path):
 
     # Get the intraprocedural path_signature
     i_path_string = ''.join([str(x) + "," for x in i_path_taken])
-    i_path_signature = hashlib.md5(absolute_path_string.encode()).hexdigest()
+    i_path_signature = hashlib.md5(i_path_string.encode()).hexdigest()
 
     # Get the absolute path_signature
     absolute_path_string = ''.join([str(x) + "," for x in path_taken])

@@ -94,8 +94,8 @@ def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_m
     simulation_time     = ""
     vehicle_count       = -1
     current_vector      = 0
-    crash_hashes     = np.full((1, max_possible_crashes), np.inf, dtype='float64')
-    stall_hashes     = np.full((1, max_possible_stalls), np.inf, dtype='float64')
+    crash_hashes        = np.full((1, max_possible_crashes), None, dtype='object')
+    stall_hashes        = np.full((1, max_possible_stalls), None, dtype='object')
 
     ego_velocities      = np.full((total_vectors, 3), np.inf, dtype='float64')
     ego_positions       = np.full((total_vectors, 3), np.inf, dtype='float64')

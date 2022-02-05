@@ -49,7 +49,7 @@ def compute_RSR_details():
     pool.close()
 
     # Turn all the signatures into a list
-    all_signatures = np.zeros(total_number_of_tests, dtype=np.str)
+    all_signatures = np.full(total_number_of_tests, None, dtype="object")
     all_crash_detections = np.zeros(total_number_of_tests)
 
     # Go through each results
@@ -148,7 +148,7 @@ def compute_line_coverage_details():
     pool.close()
 
     # Turn all the signatures into a list
-    all_signatures = np.zeros(total_number_of_tests, dtype=np.str)
+    all_signatures = np.full(total_number_of_tests, None, dtype="object")
     all_crash_detections = np.zeros(total_number_of_tests)
 
     # Go through each results
@@ -245,7 +245,7 @@ def compute_branch_coverage_details(scenario):
     pool.close()
 
     # Turn all the signatures into a list
-    all_signatures = np.zeros(total_number_of_tests, dtype=np.str)
+    all_signatures = np.full(total_number_of_tests, None, dtype="object")
     all_crash_detections = np.zeros(total_number_of_tests)
 
     # Go through each results
@@ -342,7 +342,7 @@ def compute_path_coverage_details(scenario, absolute=True):
     pool.close()
 
     # Turn all the signatures into a list
-    all_signatures = np.zeros(total_number_of_tests, dtype=np.str)
+    all_signatures = np.full(total_number_of_tests, None, dtype="object")
     all_crash_detections = np.zeros(total_number_of_tests)
 
     # Go through each results
@@ -438,7 +438,7 @@ def compute_trace_signature_and_crash(index):
     trace_hash = hashlib.md5(trace_string.encode()).hexdigest()
 
     # Check if this trace had a crash
-    crash_detected = not np.isinf(crash).all()
+    crash_detected = not (crash == None).all()
 
     return [trace_hash, crash_detected]
 
@@ -671,7 +671,7 @@ for beam_number in beam_numbers:
     global traces
     traces  = np.load(trace_file_names[beam_number-1])
     global crashes
-    crashes = np.load(crash_file_names[beam_number-1])
+    crashes = np.load(crash_file_names[beam_number-1], allow_pickle=True)
 
     # Compute the different metrics
     results                         = compute_RSR_details()
