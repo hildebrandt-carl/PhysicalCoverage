@@ -555,12 +555,12 @@ if not (args.distribution == "linear" or args.distribution == "center_close" or 
     exit()
 
 # Get the file names
-base_path = '../../PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
 trace_file_names = glob.glob(base_path + "traces_*.npy")
 crash_file_names = glob.glob(base_path + "crash_*.npy")
 
 # Get the code coverage
-base_path = '../../PhysicalCoverageData/{}/random_tests/code_coverage/processed/{}/'.format(args.scenario, args.number_of_tests)
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/random_tests/code_coverage/processed/{}/'.format(args.scenario, args.number_of_tests)
 global code_coverage_file_names
 code_coverage_file_names = glob.glob(base_path + "*/*.txt")
 

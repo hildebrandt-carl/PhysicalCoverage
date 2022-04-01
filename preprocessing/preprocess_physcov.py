@@ -100,13 +100,13 @@ print("----------------------------------")
 
 all_files = None
 if args.scenario == "beamng_random":
-    all_files = glob.glob("../../PhysicalCoverageData/beamng/random_tests/physical_coverage/raw/*/*.txt")
+    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/beamng/random_tests/physical_coverage/raw/*/*.txt")
 elif args.scenario == "beamng_generated":
-    all_files = glob.glob("../../PhysicalCoverageData/beamng/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
+    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/beamng/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
 elif args.scenario == "highway_random":
-    all_files = glob.glob("../../PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*/*.txt")
+    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*/*.txt")
 elif args.scenario == "highway_generated":
-    all_files = glob.glob("../../PhysicalCoverageData/highway/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
+    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
 else:
     print("Error: Scenario not known")
     exit()
@@ -125,9 +125,9 @@ if len(file_names) <= 0:
 # If you don't want all files, select a random portion of the files
 if (args.scenario == "highway_random") or (args.scenario == "beamng_random"): 
     if args.scenario == "highway_random":
-        folders = glob.glob("../../PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*")
+        folders = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*")
     elif args.scenario == "beamng_random":
-        folders = glob.glob("../../PhysicalCoverageData/beamng/random_tests/physical_coverage/raw/*")
+        folders = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/beamng/random_tests/physical_coverage/raw/*")
 
     files_per_folder = int(math.ceil(args.total_samples / len(folders)))
 

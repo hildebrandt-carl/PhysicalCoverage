@@ -118,7 +118,7 @@ load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the generated trace and crash file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/generated_tests/tests_single/processed/' + str(args.total_samples) + "/"
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/generated_tests/tests_single/processed/' + str(args.total_samples) + "/"
 generated_trace_file_names      = glob.glob(base_path + "traces_*.npy")
 generated_processed_file_names  = glob.glob(base_path + "processed_files_*.npy")
 
@@ -163,7 +163,7 @@ for i in range(len(beam_numbers)):
     generated_tests  = np.load(generated_processed_file)
 
     # Get all the test names for this beam number
-    base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/generated_tests/tests_single/tests/' + str(args.total_samples) + '/' + str(beam_number) + '_beams/'
+    base_path = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/generated_tests/tests_single/tests/' + str(args.total_samples) + '/' + str(beam_number) + '_beams/'
     global test_names
     test_names      = np.array(glob.glob(base_path + "*_index.npy"))
 

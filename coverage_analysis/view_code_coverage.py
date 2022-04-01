@@ -27,7 +27,7 @@ parser.add_argument('--cores',            type=int, default=4,    help="number o
 args = parser.parse_args()
 
 # Get the files
-file_path = "../../PhysicalCoverageData/{}/random_tests/code_coverage/processed/{}/*/*.txt".format(args.scenario, args.number_of_tests)
+file_path = "/media/carl/DataDrive/PhysicalCoverageData/{}/random_tests/code_coverage/processed/{}/*/*.txt".format(args.scenario, args.number_of_tests)
 files = glob.glob(file_path)
 random.shuffle(files)
 print("Processing: {} files".format(len(files)))

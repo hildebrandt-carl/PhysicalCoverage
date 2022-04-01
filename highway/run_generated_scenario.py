@@ -37,7 +37,7 @@ parser.add_argument('--no_plot',        action='store_true')
 args = parser.parse_args()
 
 # Get the full file path
-test_path = "../../PhysicalCoverageData/highway/generated_tests/tests_single/tests/{}/{}_beams/{}.npy".format(args.total_samples, args.total_beams, args.test_name)
+test_path = "/media/carl/DataDrive/PhysicalCoverageData/highway/generated_tests/tests_single/tests/{}/{}_beams/{}.npy".format(args.total_samples, args.total_beams, args.test_name)
 index_path = test_path[:test_path.rfind("_")] + "_index.npy"
 
 # Figure out how many beam this test was generated using

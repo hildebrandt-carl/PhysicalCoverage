@@ -54,8 +54,8 @@ print("-----------Loading Data-----------")
 print("----------------------------------")
 
 # Get the file names
-original_data_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
-generated_data_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/generated_tests/tests_single/processed/' + str(args.total_samples) + "/"
+original_data_path = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
+generated_data_path = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/generated_tests/tests_single/processed/' + str(args.total_samples) + "/"
 
 original_crash_files = glob.glob(original_data_path + "crash_*.npy")
 generated_crash_files = glob.glob(generated_data_path + "crash_*.npy")

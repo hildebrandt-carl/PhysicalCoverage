@@ -117,17 +117,17 @@ load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the feasible vectors
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/'
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/'
 feasible_file_names = glob.glob(base_path + "*.npy")
 
 # Get the random trace and crash file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
 random_trace_file_names = glob.glob(base_path + "traces_*.npy")
 random_crash_file_names = glob.glob(base_path + "crash_*.npy")
 random_time_file_names  = glob.glob(base_path + "time_*.npy")
 
 # Get the generated trace and crash file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/generated_tests/tests_single/processed/' + str(args.total_samples) + "/"
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/generated_tests/tests_single/processed/' + str(args.total_samples) + "/"
 generated_trace_file_names = glob.glob(base_path + "traces_*.npy")
 generated_crash_file_names = glob.glob(base_path + "crash_*.npy")
 generated_time_file_names  = glob.glob(base_path + "time_*.npy")

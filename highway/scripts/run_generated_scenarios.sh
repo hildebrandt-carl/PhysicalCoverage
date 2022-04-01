@@ -11,7 +11,7 @@ total_cores=50
 for totallines in "${beamcount[@]}"
 do
     # Find all the tests
-    tests=../../PhysicalCoverageData/highway/generated_tests/tests_single/tests/$1/${totallines}_beams/*_points.npy
+    tests=/media/carl/DataDrive/PhysicalCoverageData/highway/generated_tests/tests_single/tests/$1/${totallines}_beams/*_points.npy
 
     echo "Processing ${totallines} beams"
 

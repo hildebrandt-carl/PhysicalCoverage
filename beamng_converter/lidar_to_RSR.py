@@ -36,11 +36,11 @@ max_distance    = NG.max_velocity
 total_lines     = RSR.beam_count
 
 if args.scenario == "beamng_random":
-    raw_file_location       = "../../PhysicalCoverageData/beamng/random_tests/physical_coverage/lidar/"
+    raw_file_location       = "/media/carl/DataDrive/PhysicalCoverageData/beamng/random_tests/physical_coverage/lidar/"
     output_file_location    = "../output/beamng/random_tests/physical_coverage/raw/"
     file_names = glob.glob(raw_file_location + "/*/*.csv")
 elif args.scenario == "beamng_generated":
-    raw_file_location       = "../../PhysicalCoverageData/beamng/generated_tests/tests_single/lidar/{}/lidar_readings".format(args.number_of_tests)
+    raw_file_location       = "/media/carl/DataDrive/PhysicalCoverageData/beamng/generated_tests/tests_single/lidar/{}/lidar_readings".format(args.number_of_tests)
     output_file_location    = "../output/beamng/generated_tests/tests_single/raw/{}/".format(args.number_of_tests)
     file_names = glob.glob(raw_file_location + "/*/*.csv")
 else:

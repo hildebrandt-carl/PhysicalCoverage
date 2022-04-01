@@ -51,28 +51,28 @@ class linear_distribution():
         sample_distribution = None
         if "highway" in self.scenario:
             sample_distribution = {
-                1:  np.array([10]),
-                2:  np.array([9, 9]),
-                3:  np.array([8, 8, 8]),
-                4:  np.array([7, 7, 7, 7]),
-                5:  np.array([6, 6, 6, 6, 6]),
-                6:  np.array([5, 5, 5, 5, 5, 5]),
-                7:  np.array([5, 5, 5, 5, 5, 5, 5]),
-                8:  np.array([5, 5, 5, 5, 5, 5, 5, 5]),
-                9:  np.array([4, 4, 4, 4, 4, 4, 4, 4, 4]),
-                10: np.array([4, 4, 4, 4, 4, 4, 4, 4, 4, 4])}
+                1:  np.array([12]),
+                2:  np.array([5, 5]), 
+                3:  np.array([3, 4, 3]),
+                4:  np.array([2, 3, 3, 2]),
+                5:  np.array([2, 2, 2, 2, 2]),
+                6:  np.array([2, 2, 2, 2, 2, 2]),
+                7:  np.array([2, 2, 2, 2, 2, 2, 2]),
+                8:  np.array([2, 2, 2, 2, 2, 2, 2, 2]),
+                9:  np.array([2, 2, 2, 2, 2, 2, 2, 2, 2]),
+                10: np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])}
         elif "beamng" in self.scenario:
             sample_distribution = {
-                1:  np.array([10]),
-                2:  np.array([9, 9]),
-                3:  np.array([8, 8, 8]),
-                4:  np.array([7, 7, 7, 7]),
-                5:  np.array([6, 6, 6, 6, 6]),
-                6:  np.array([5, 5, 5, 5, 5, 5]),
-                7:  np.array([5, 5, 5, 5, 5, 5, 5]),
-                8:  np.array([5, 5, 5, 5, 5, 5, 5, 5]),
-                9:  np.array([4, 4, 4, 4, 4, 4, 4, 4, 4]),
-                10: np.array([4, 4, 4, 4, 4, 4, 4, 4, 4, 4])}
+                1:  np.array([12]),
+                2:  np.array([5, 5]), 
+                3:  np.array([3, 4, 3]),
+                4:  np.array([2, 3, 3, 2]),
+                5:  np.array([2, 2, 2, 2, 2]),
+                6:  np.array([2, 2, 2, 2, 2, 2]),
+                7:  np.array([2, 2, 2, 2, 2, 2, 2]),
+                8:  np.array([2, 2, 2, 2, 2, 2, 2, 2]),
+                9:  np.array([2, 2, 2, 2, 2, 2, 2, 2, 2]),
+                10: np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])}
 
         return sample_distribution
 
@@ -168,11 +168,11 @@ class center_close_distribution():
                 10: np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])}
         elif "beamng" in self.scenario:
             sample_distribution = {
-                1:  np.array([8]),
-                2:  np.array([3, 3]),
-                3:  np.array([2, 3, 2]),
-                4:  np.array([2, 2, 2, 2]),
-                5:  np.array([2, 2, 2, 2, 2]),
+                1:  np.array([10]),
+                2:  np.array([5, 5]), 
+                3:  np.array([3, 4, 3]),
+                4:  np.array([2, 4, 4, 2]),
+                5:  np.array([2, 2, 3, 2, 2]),
                 6:  np.array([2, 2, 2, 2, 2, 2]),
                 7:  np.array([2, 2, 2, 2, 2, 2, 2]),
                 8:  np.array([2, 2, 2, 2, 2, 2, 2, 2]),
@@ -261,29 +261,28 @@ class center_mid_distribution():
         sample_distribution = None
         if "highway" in self.scenario:
             sample_distribution = {
-                1:  np.array([15]),
-                2:  np.array([5, 5]),
-                3:  np.array([4, 5, 4]),
-                4:  np.array([4, 5, 5, 4]),
-                5:  np.array([3, 4, 5, 4, 3]),
-                6:  np.array([3, 3, 5, 5, 3, 3]),
-                7:  np.array([3, 3, 4, 5, 4, 3, 3]),
-                8:  np.array([2, 3, 3, 5, 5, 3, 3, 2]),
-                9:  np.array([2, 2, 3, 4, 5, 4, 3, 2, 2]),
-                10: np.array([2, 2, 3, 3, 4, 4, 3, 3, 2, 2])}
+                1:  np.array([12]),
+                2:  np.array([4, 4]), 
+                3:  np.array([2, 4, 2]),
+                4:  np.array([2, 2, 2, 2]),
+                5:  np.array([2, 2, 2, 2, 2]),
+                6:  np.array([2, 2, 2, 2, 2, 2]),
+                7:  np.array([2, 2, 2, 2, 2, 2, 2]),
+                8:  np.array([2, 2, 2, 2, 2, 2, 2, 2]),
+                9:  np.array([2, 2, 2, 2, 2, 2, 2, 2, 2]),
+                10: np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])}
         elif "beamng" in self.scenario:
             sample_distribution = {
-                1:  np.array([15]),
-                2:  np.array([5, 5]),
-                3:  np.array([4, 5, 4]),
-                4:  np.array([4, 5, 5, 4]),
-                5:  np.array([3, 4, 5, 4, 3]),
-                6:  np.array([3, 3, 5, 5, 3, 3]),
-                7:  np.array([3, 3, 4, 5, 4, 3, 3]),
-                8:  np.array([2, 3, 3, 5, 5, 3, 3, 2]),
-                9:  np.array([2, 2, 3, 4, 5, 4, 3, 2, 2]),
-                10: np.array([2, 2, 3, 3, 4, 4, 3, 3, 2, 2])}
-
+                1:  np.array([12]),
+                2:  np.array([4, 4]), 
+                3:  np.array([2, 4, 2]),
+                4:  np.array([2, 2, 2, 2]),
+                5:  np.array([2, 2, 2, 2, 2]),
+                6:  np.array([2, 2, 2, 2, 2, 2]),
+                7:  np.array([2, 2, 2, 2, 2, 2, 2]),
+                8:  np.array([2, 2, 2, 2, 2, 2, 2, 2]),
+                9:  np.array([2, 2, 2, 2, 2, 2, 2, 2, 2]),
+                10: np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])}
         return sample_distribution
 
     def get_angle_distribution(self):

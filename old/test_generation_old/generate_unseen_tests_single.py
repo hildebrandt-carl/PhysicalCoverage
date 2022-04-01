@@ -64,7 +64,7 @@ print("----------------------------------")
 print("-----------Loading Data-----------")
 print("----------------------------------")
 
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
 file_names = get_trace_files(base_path)
 
 print()
@@ -160,7 +160,7 @@ for key in keys:
     print("steering_angle: {}".format(steering_angle))
 
     # Load the feasible trajectories
-    fname = '../../PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/FeasibleVectors_b' + str(total_lines) + ".npy"
+    fname = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/FeasibleVectors_b' + str(total_lines) + ".npy"
     feasible_vectors = np.load(fname)
     feasible_vector_set = set()
     for v in feasible_vectors:

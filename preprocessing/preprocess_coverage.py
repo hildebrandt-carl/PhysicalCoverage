@@ -83,6 +83,22 @@ def intraprocedural_path_coverage(path_taken):
             path_set.add(str(path))
         intraprocedural_path[key] = path_set
 
+    # Show that its working (show functions we are instrumenting)
+    print("---------Instrumented Functions------------")
+    for key in intraprocedural_path:
+        print(key)
+    print("-------------------------------------------")
+
+    print("---------Paths Seen in Function------------")
+    print(intraprocedural_path["waypointInPath"])
+    print("-------------------------------------------")
+
+    print("---------------Hashed Paths----------------")
+    tmp = str(sorted(list(intraprocedural_path["waypointInPath"])))
+    print(hashlib.md5(tmp.encode()).hexdigest())
+    print("-------------------------------------------")
+         
+
     # Convert to list (make sure that both the order of the functions, and the order of the paths are always sorted the same)
     all_keys = sorted(list(intraprocedural_path.keys()))
     final_intraprocedural_path = []
@@ -246,13 +262,13 @@ print("----------------------------------")
 
 all_files = None
 if args.scenario == "beamng_random":
-    base = "../../PhysicalCoverageData/beamng/random_tests"
+    base = "/media/carl/DataDrive/PhysicalCoverageData/beamng/random_tests"
     all_files = glob.glob(base + "/code_coverage/raw/*/*.txt")
 elif args.scenario == "beamng_generated":
     print("To be implemented")
     exit()
 elif args.scenario == "highway_random":
-    base = "../../PhysicalCoverageData/highway/random_tests"
+    base = "/media/carl/DataDrive/PhysicalCoverageData/highway/random_tests"
     all_files = glob.glob(base + "/code_coverage/raw/*/*.xml")
     crash_info = glob.glob(base + "/physical_coverage/processed/center_close/{}/crash_hash*.npy".format(args.total_samples))
     file_info = glob.glob(base + "/physical_coverage/processed/center_close/{}/processed_files*.npy".format(args.total_samples))

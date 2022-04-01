@@ -305,16 +305,16 @@ load_name += "_t" + str(args.total_samples)
 load_name += ".npy"
 
 # Get the file names
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/random_tests/physical_coverage/processed/' + str(args.total_samples) + "/"
 trace_file_names = glob.glob(base_path + "traces_*")
 crash_file_names = glob.glob(base_path + "crash_*")
 
 # Get the feasible vectors
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/'
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/feasibility/processed/'
 feasible_file_names = glob.glob(base_path + "*.npy")
 
 # Get the code coverage
-base_path = '../../PhysicalCoverageData/' + str(args.scenario) +'/random_tests/code_coverage/raw/'
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/' + str(args.scenario) +'/random_tests/code_coverage/raw/'
 global code_coverage_file_names
 code_coverage_file_names = glob.glob(base_path + "*/*.txt")\
 

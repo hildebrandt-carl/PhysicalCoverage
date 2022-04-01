@@ -272,14 +272,14 @@ if not (args.distribution == "linear" or args.distribution == "center_close" or 
     exit()
 
 # Get the file names
-base_path = '../../PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
 print(base_path + "traces_*_b{}_*".format(args.RRS_number))
 trace_file = glob.glob(base_path + "traces_*_b{}_*".format(args.RRS_number))
 crash_file = glob.glob(base_path + "crash_*_b{}_*".format(args.RRS_number))
 stall_file = glob.glob(base_path + "stall_*_b{}_*".format(args.RRS_number))
 
 # Get the feasible vectors
-base_path = '../../PhysicalCoverageData/{}/feasibility/processed/{}/'.format(args.scenario, args.distribution)
+base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/feasibility/processed/{}/'.format(args.scenario, args.distribution)
 feasible_file = glob.glob(base_path + "*_b{}.npy".format(args.RRS_number))
 
 # Check we have files

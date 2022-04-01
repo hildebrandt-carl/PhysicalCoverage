@@ -160,7 +160,7 @@ pool =  multiprocessing.Pool(processes=total_processors)
 
 # Handle highway
 if args.scenario == "highway":
-    feasibility_file = glob.glob("../../PhysicalCoverageData/highway/feasibility/raw/feasible_vectors.txt")
+    feasibility_file = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/feasibility/raw/feasible_vectors.txt")
     assert(len(feasibility_file) == 1)
     print("file found: {}".format(feasibility_file[0]))
 
