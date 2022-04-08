@@ -12,6 +12,8 @@ import multiprocessing
 import numpy as np
 import xml.etree.ElementTree as ET
 
+from ordered_set import OrderedSet
+
 from tqdm import tqdm
 
 def is_float(input):
@@ -21,7 +23,7 @@ def is_float(input):
     except ValueError:
         return False
 
-def intraprocedural_path_coverage(path_taken):
+def intraprocedural_path_coverage(path_taken, loops_allowed=True):
 
     # For the paths
     intraprocedural_path    = {}
@@ -42,13 +44,16 @@ def intraprocedural_path_coverage(path_taken):
             if "enter_" in b:
                 # Get the function name
                 f_name = b[6:]
-                # print("{}{} start".format(print_tabs, f_name))
                 # Append this function to the stack and the current path to a stack
                 function_stack.append(([], f_name))
             elif "exit_" in b:
                 # Pop the stack
                 print_tabs = print_tabs[:-2]
                 i_path, f_name = function_stack.pop()
+
+                # Remove loops if loops are not allowed
+                if not loops_allowed:
+                    i_path = list(OrderedSet(i_path))
                 
                 # Insert this into the dictionary
                 if f_name in intraprocedural_path:
@@ -82,23 +87,7 @@ def intraprocedural_path_coverage(path_taken):
         for path in intraprocedural_path[key]:
             path_set.add(str(path))
         intraprocedural_path[key] = path_set
-
-    # Show that its working (show functions we are instrumenting)
-    print("---------Instrumented Functions------------")
-    for key in intraprocedural_path:
-        print(key)
-    print("-------------------------------------------")
-
-    print("---------Paths Seen in Function------------")
-    print(intraprocedural_path["waypointInPath"])
-    print("-------------------------------------------")
-
-    print("---------------Hashed Paths----------------")
-    tmp = str(sorted(list(intraprocedural_path["waypointInPath"])))
-    print(hashlib.md5(tmp.encode()).hexdigest())
-    print("-------------------------------------------")
-         
-
+       
     # Convert to list (make sure that both the order of the functions, and the order of the paths are always sorted the same)
     all_keys = sorted(list(intraprocedural_path.keys()))
     final_intraprocedural_path = []
@@ -149,30 +138,46 @@ def compute_coverage_beamng(file_name, save_path):
     # Get the path taken
     path_taken = path_taken.split(", ")
     # Remove all 0's
-    index = -1
-    while path_taken[index] == '0':
-        index -= 1  
-    path_taken = path_taken[:index+1]
+    index = 0
+    while (path_taken[index] != '0') and (index < len(path_taken) - 1):
+        index += 1  
+    path_taken = path_taken[:index]
 
-    # The absolute path is the entire string
-    absolute_path_string = str(path_taken)
+    # Make sure the last part of the path is "exit_isDriving"
+    if(path_taken[-1] == "exit_isDriving"):
 
-    # Compute intraprocedural path coverage
-    i_path_taken = intraprocedural_path_coverage(path_taken)
+        # Compute intraprocedural path coverage with loops
+        il_path_taken = intraprocedural_path_coverage(path_taken, loops_allowed=True)
 
-    # Get the intraprocedural path_signature
-    i_path_string = ''.join([str(x) + "," for x in i_path_taken])
-    i_path_signature = hashlib.md5(i_path_string.encode()).hexdigest()
+        # Get the intraprocedural path_signature
+        il_path_string = ''.join([str(x) + "," for x in il_path_taken])
+        il_path_signature = hashlib.md5(il_path_string.encode()).hexdigest()
+        # Memory cleanup
+        il_path_string = None
 
-    # Get the absolute path_signature
-    absolute_path_string = ''.join([str(x) + "," for x in path_taken])
-    absolute_path_signature = hashlib.md5(absolute_path_string.encode()).hexdigest()
+        # Compute intraprocedural path coverage with loops
+        in_path_taken = intraprocedural_path_coverage(path_taken, loops_allowed=False)
+
+        # Get the intraprocedural path_signature
+        in_path_string = ''.join([str(x) + "," for x in in_path_taken])
+        in_path_signature = hashlib.md5(in_path_string.encode()).hexdigest()
+        # Memory cleanup
+        in_path_string = None
+
+        # Get the absolute path_signature
+        absolute_path_string = ''.join([str(x) + "," for x in path_taken])
+        absolute_path_signature = hashlib.md5(absolute_path_string.encode()).hexdigest()
+    else:
+        # The path does not end with isDriving and thus we cant compute the absolute path signature.
+        il_path_signature = None
+        in_path_signature = None
+        absolute_path_signature = None
 
     # Convert the branch data to strings to match the highwayenv data
     branches_covered = [str(x) for x in branches_covered]
     all_branches = [str(x) for x in all_branches]
 
-    coverage_data["ai.lua"] = [lines_covered, all_lines, branches_covered, all_branches, i_path_signature, absolute_path_signature]
+    coverage_data["ai.lua"] = [lines_covered, all_lines, branches_covered, all_branches, in_path_signature, il_path_signature, absolute_path_signature]
     return [coverage_data, code_coverage_save_name, crash_count]
 
 def compute_coverage_highway(file_name, save_path):
@@ -228,7 +233,7 @@ def compute_coverage_highway(file_name, save_path):
                 all_branches.append(branch_number)
 
         # Save this information
-        coverage_data[current_class] = [lines_covered, all_lines, branches_covered, all_branches, None, None]
+        coverage_data[current_class] = [lines_covered, all_lines, branches_covered, all_branches, None, None, None]
     
     # Compute the save name
     external_vehicles_str = file_name[file_name.rfind("raw/")+4:file_name.rfind("/")]
@@ -245,8 +250,9 @@ def compute_coverage_highway(file_name, save_path):
         print("Error: The name we associate with crashes does not match the code coverage file")
         exit()
 
+    # This will throw an error we need a isNone function
     # Get the crash count    
-    crash_count = np.sum(~np.isinf(c_array[arr_index]))
+    crash_count = np.sum(~np.isnan(c_array[arr_index]))
 
     return [coverage_data, code_coverage_save_name, crash_count]
 
@@ -321,10 +327,6 @@ if "highway" in args.scenario:
         preprocessed_crash_arrays["{}_external_vehicles".format(i+1)] = copy.deepcopy(np.load(c_name))
         preprocessed_file_arrays["{}_external_vehicles".format(i+1)] = copy.deepcopy(np.load(f_name))
 
-print("----------------------------------")
-print("-----Creating Output Location-----")
-print("----------------------------------")
-
 all_files = None
 if args.scenario == "beamng_random":
     save_path = "../output/beamng/random_tests/code_coverage/processed/{}/".format(args.total_samples)
@@ -339,14 +341,6 @@ elif args.scenario == "highway_generated":
 else:
     print("Error: Scenario not known")
     exit()
-
-# Create the output directory if it doesn't exists
-for i in range(10):
-    new_path = save_path + "{}_external_vehicles/".format(i+1)
-    if not os.path.exists(new_path):
-        os.makedirs(new_path)
-
-print("Location created: {}".format(save_path))
 
 print("----------------------------------")
 print("---------Processing files---------")
@@ -376,6 +370,14 @@ print("----------------------------------")
 print("---------Saving the data----------")
 print("----------------------------------")
 
+# Create the output directory if it doesn't exists
+for i in range(10):
+    new_path = save_path + "{}_external_vehicles/".format(i+1)
+    if not os.path.exists(new_path):
+        os.makedirs(new_path)
+
+print("Location created: {}".format(save_path))
+
 for r in tqdm(results):
 
     # Get the coverage data and save name
@@ -388,12 +390,13 @@ for r in tqdm(results):
     for key in coverage_data:
 
         # Get the data
-        lines_covered       = coverage_data[key][0]
-        all_lines           = coverage_data[key][1]
-        branches_covered    = coverage_data[key][2]
-        all_branches        = coverage_data[key][3]
-        i_path_signature    = coverage_data[key][4]
-        a_path_signature    = coverage_data[key][5]
+        lines_covered        = coverage_data[key][0]
+        all_lines            = coverage_data[key][1]
+        branches_covered     = coverage_data[key][2]
+        all_branches         = coverage_data[key][3]
+        in_path_signature    = coverage_data[key][4]
+        il_path_signature    = coverage_data[key][5]
+        a_path_signature     = coverage_data[key][6]
 
         # Save the data
         f.write("-----------------------------\n")
@@ -411,7 +414,8 @@ for r in tqdm(results):
         f.write("All branches: {}\n".format(sorted(list(all_branches))))
         f.write("Total branches: {}\n".format(len(list(all_branches))))
         f.write("-----------------------------\n")
-        f.write("Intraprocedural path signature: {}\n".format(i_path_signature))
+        f.write("Intraprocedural path without loops signature: {}\n".format(in_path_signature))
+        f.write("Intraprocedural path with loops signature: {}\n".format(il_path_signature))
         f.write("Absolute path signature: {}\n".format(a_path_signature))
 
     # Save the total number of crashes

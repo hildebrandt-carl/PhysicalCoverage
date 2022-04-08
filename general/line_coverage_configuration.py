@@ -62,8 +62,11 @@ def get_code_coverage(filename):
             total_all_b = int(line[15:])
             assert(len(all_b) == total_all_b)
 
-        if "Intraprocedural path signature:" in line:
-            i_path_signature = str(line[32:])
+        if "Intraprocedural path without loops signature:" in line:
+            in_path_signature = str(line[45:])
+
+        if "Intraprocedural path with loops signature:" in line:
+            il_path_signature = str(line[42:])
 
         if "Absolute path signature:" in line:
             a_path_signature = str(line[25:])
@@ -100,7 +103,7 @@ def get_code_coverage(filename):
             all_branches.append(branch)
 
     # Compile the results
-    results = [all_lines_covered, all_lines, all_branches_covered, all_branches, i_path_signature, a_path_signature, total_crashes]
+    results = [all_lines_covered, all_lines, all_branches_covered, all_branches, in_path_signature, il_path_signature, a_path_signature, total_crashes]
     return results
 
 def clean_branch_data(all_branches_set, branches_covered_set):

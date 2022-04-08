@@ -89,7 +89,7 @@ def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_m
     # Open the file
     f = open(file_name, "r")  
     
-    test_vectors        = np.full((total_vectors, vector_size), np.inf, dtype='float64')
+    test_vectors        = np.full((total_vectors, vector_size), None, dtype='float64')
     collision_counter   = 0
     simulation_time     = ""
     vehicle_count       = -1
@@ -97,14 +97,14 @@ def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_m
     crash_hashes        = np.full((1, max_possible_crashes), None, dtype='object')
     stall_hashes        = np.full((1, max_possible_stalls), None, dtype='object')
 
-    ego_velocities      = np.full((total_vectors, 3), np.inf, dtype='float64')
-    ego_positions       = np.full((total_vectors, 3), np.inf, dtype='float64')
+    ego_velocities      = np.full((total_vectors, 3), None, dtype='float64')
+    ego_positions       = np.full((total_vectors, 3), None, dtype='float64')
 
     crash_incident_angles   = []
     crash_ego_magnitudes    = []
     crash_veh_magnitudes    = []
 
-    stall_information   = np.full((total_vectors, 3), np.inf, dtype='float64')
+    stall_information   = np.full((total_vectors, 3), None, dtype='float64')
     currently_stalling = False
     stall_location = None
     car_has_started_driving = False

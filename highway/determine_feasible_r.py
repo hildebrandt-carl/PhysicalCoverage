@@ -43,8 +43,8 @@ if not os.path.exists('../output/highway/feasibility/raw'):
     os.makedirs('../output/highway/feasibility/raw')
 
 # Declare how accurate you want it
-total_headings = 20
-total_positions = 20
+total_headings = 100
+total_positions = 100
 
 total_headings = max(3, total_headings)
 max_heading = HK.steering_angle # Degrees

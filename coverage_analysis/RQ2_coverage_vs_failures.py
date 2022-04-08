@@ -66,10 +66,14 @@ def compute_test_signature(index):
         if (np.isnan(scene).any() == False) and (np.isinf(scene).any() == False) and (np.less(scene, 0).any() == False):
             RRS_signature.add(tuple(s))
 
+
+
             # Give a warning if a vector is found that is not feasible
             if s not in feasible_RRS_set:
                 print("Warning: Infeasible vector found: {}".format(scene))
-    
+                for v in feasible_RRS_set:
+                    print(v)
+                    print("----------")
     # Return the RRS signature
     return RRS_signature
 
@@ -98,6 +102,73 @@ def generate_coverage_on_random_test_suites(num_cores, number_test_suites):
     pool.close()
 
     return coverage
+
+# Get the number of crashes on a number_test_suites random test suites (returns a numpy array of coverage (crashes vs test suite size)) 
+def compute_failures_on_random_test_suites(num_cores, number_test_suites):
+    global crashes
+    global stalls
+
+    # Sanity check
+    assert(len(crashes) == len(stalls))
+
+    # Create the output
+    failures = np.zeros((number_test_suites, len(crashes)))
+
+    # Create the pool for parallel processing
+    pool =  multiprocessing.Pool(processes=num_cores)
+    jobs = []
+
+    # Generate random test suites
+    for i in range(number_test_suites):
+        # Generate a random test suite
+        jobs.append(pool.apply_async(random_test_suite_failures))
+        
+    # Get the results:
+    for i, job in enumerate(tqdm(jobs)):
+        # Get the coverage
+        failures[i] = job.get()
+    # Close the pool
+    pool.close()
+
+    return failures
+
+# Computes the coverage on a random test suite
+def random_test_suite_failures():
+    global crashes
+    global stalls
+    global total_failures
+
+    # Create the output
+    output = np.zeros(len(crashes))
+
+    # Randomly generate the indices for this test suite
+    local_state = np.random.RandomState()
+    indices = local_state.choice(len(crashes), len(crashes), replace=False) 
+
+    # Used to hold the seen RRS
+    seen_failures = set()
+
+    # Go through each of the indices
+    for i, index in enumerate(indices):
+        
+        # Add each crash to the seen_failures set
+        for c in crashes[index]:
+            if c is not None:
+                seen_failures.add(c)
+            else:
+                break
+
+        # Add each crash to the seen_failures set
+        for s in stalls[index]:
+            if s is not None:
+                seen_failures.add(s)
+            else:
+                break
+
+        # Failure percentage over all tests
+        output[i] = (len(seen_failures) / total_failures) * 100
+
+    return output
 
 # Computes the coverage on a random test suite
 def random_test_suite():
@@ -227,7 +298,7 @@ for i in range(len(RRS_numbers)):
 
     # Load the feasibility file
     feasible_traces = np.load(feasibility_file)
-    
+
     # Create the feasible set
     global feasible_RRS_set
     feasible_RRS_set = set()
@@ -236,11 +307,7 @@ for i in range(len(RRS_numbers)):
 
     # Load the traces
     global traces
-    global stalls
-    global crashes
     traces = np.load(trace_file)
-    stalls = np.load(stall_file)
-    crashes = np.load(crash_file)
 
     # Do the preprocessing
     global test_signatures
@@ -261,16 +328,59 @@ for i in range(len(RRS_numbers)):
 
     # Plot the results
     plt.fill_between(x, lower_bound, upper_bound, alpha=0.2, color="C{}".format(i)) #this is the shaded error
-    plt.plot(x, average_coverage, c="C{}".format(i)) #this is the line itself
+    plt.plot(x, average_coverage, c="C{}".format(i), label="RRS{}".format(RRS_number)) #this is the line itself
 
-    # Create the legend
-    plt.plot([], c="C{}".format(i), label="RRS{}".format(RRS_number))
-    
 
-plt.grid(alpha=0.5)
+# Load the stall and crash file
+global stalls
+global crashes
+
+stalls = np.load(stall_file, allow_pickle=True)
+crashes = np.load(crash_file, allow_pickle=True)
+
+# Compute the total number of failures
+global total_failures
+total_failures = 0
+for stall in stalls:
+    for s in stall:
+        if s is not None:
+            total_failures += 1
+        else:
+            break
+for crash in crashes:
+    for c in crash:
+        if c is not None:
+            total_failures += 1
+        else:
+            break
+
+# Add crashes
+print("Computing failures")
+computed_failures = compute_failures_on_random_test_suites(num_cores=args.cores, 
+                                                           number_test_suites=args.random_test_suites)
+
+# Compute the results
+average_failures    = np.average(computed_failures, axis=0)
+upper_bound         = np.max(computed_failures, axis=0)
+lower_bound         = np.min(computed_failures, axis=0)
+x                   = np.arange(0, np.shape(computed_failures)[1])
+
+# Plot the results on a second axis
+ax1 = plt.gca()
+ax2 = ax1.twinx()
+
+# Plot the results
+ax2.fill_between(x, lower_bound, upper_bound, alpha=0.2, color="black") #this is the shaded error
+ax2.plot(x, average_failures, color="black", label="Failures", linestyle="--") #this is the line itself
+
 plt.title(args.distribution)
-plt.yticks(np.arange(0, 100.01, step=5))
-plt.xlabel("Number of tests")
-plt.ylabel("Coverage / Failure (%)")
-plt.legend()
+ax1.grid(alpha=0.5)
+ax1.set_yticks(np.arange(0, 100.01, step=5))
+ax1.set_xlabel("Number of tests")
+ax1.set_ylabel("Coverage (%)")
+ax2.set_ylabel("Unique Failures (%)")
+ax2.set_yticks(np.arange(0, 100.01, step=5))
+ax1.legend()
+ax2.legend(loc="lower center")
+
 plt.show()

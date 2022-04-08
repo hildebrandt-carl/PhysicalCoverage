@@ -57,18 +57,19 @@ def random_select(number_of_tests):
         # Go through the traces and compute coverage
         for v in vectors:
 
-            # Make sure that this is a scene (not a nan or inf or -1)
-            if (np.isnan(v).any() == False) and (np.isinf(v).any() == False) and (np.less(v, 0).any() == False):
-                seen_RSR_set.add(tuple(v))
+            # Make sure that this is a scene (not a nan or inf or -1 or None)
+            if v is not None:
+                if (np.isnan(v).any() == False) and (np.isinf(v).any() == False) and (np.less(v, 0).any() == False):
+                    seen_RSR_set.add(tuple(v))
 
         # Check if there was a crash and if there was count it
         for c in crash:
-            if ~np.isinf(c):
+            if c is not None:
                 seen_failure_set.add(c)
 
         # Check if there was a stall and if there was count it
         for s in stall:
-            if ~np.isinf(s):
+            if s is not None:
                 seen_failure_set.add(s)
 
     # Compute the coverage and the crash percentage
@@ -147,13 +148,13 @@ def greedy_select(test_suite_size, selection_type, greedy_sample_size):
         # Check for crashes in this trace
         crash = crashes[selected_index]
         for c in crash:
-            if ~np.isinf(c):
+            if c is not None:
                 seen_failure_set.add(c)
 
         # Check for stalls in this trace
         stall = stalls[selected_index]
         for s in stall:
-            if ~np.isinf(s):
+            if s is not None:
                 seen_failure_set.add(s)
 
     # Compute the coverage and the crash percentage
@@ -184,7 +185,7 @@ def greedy_selection(cores, test_suite_sizes, selection_type, greedy_sample_size
     results = np.transpose(results)
     greedy_coverage_percentages = results[0, :]
     greedy_crash_count          = results[1, :]
-    result_test_suite_size       = results[2, :]
+    result_test_suite_size      = results[2, :]
 
     return greedy_coverage_percentages, greedy_crash_count, result_test_suite_size
 
@@ -303,8 +304,8 @@ global traces
 global crashes
 global stalls
 traces  = np.load(trace_file)
-crashes = np.load(crash_file)
-stalls  = np.load(stall_file)
+crashes = np.load(crash_file, allow_pickle=True)
+stalls  = np.load(stall_file, allow_pickle=True)
 
 # Create the feasible set
 feasible_traces = np.load(feasible_file)
@@ -318,11 +319,11 @@ global unique_failure_set
 unique_failure_set = set()
 for crash in crashes:
     for c in crash:
-        if ~np.isinf(c):
+        if c is not None:
             unique_failure_set.add(c)
 for stall in stalls:
     for s in stall:
-        if ~np.isinf(s):
+        if s is not None:
             unique_failure_set.add(s)
 
 # Create the figure

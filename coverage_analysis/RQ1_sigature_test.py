@@ -314,7 +314,7 @@ def compute_branch_coverage_details(scenario):
 
     return [total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, percentage_of_inconsistency]
 
-def compute_path_coverage_details(scenario, absolute=True):
+def compute_path_coverage_details(scenario, absolute=True, loops_allowed=True):
 
     if scenario == "highway":
         return [0, 0, 0, 0, 0, 0]
@@ -352,13 +352,20 @@ def compute_path_coverage_details(scenario, absolute=True):
         r = results[i]
 
         # Get the signature and the results
-        i_signature, a_signature, crash_detected = r
+        in_signature, il_signature, a_signature, crash_detected = r
 
         # Collect all the signatures
-        if absolute:
+        if (loops_allowed == False) and (absolute == True):
+            print("ERROR: Cant have loops not allowed and absolute")
+            exit()
+        elif (loops_allowed == True) and (absolute == True):
             all_signatures[i] = a_signature
-        else:
-            all_signatures[i] = i_signature
+        elif (loops_allowed == True) and (absolute == False):
+            all_signatures[i] = il_signature
+        elif (loops_allowed == False) and (absolute == False):
+            all_signatures[i] = in_signature
+        
+        # Get the crash signatures
         all_crash_detections[i] = crash_detected
 
     # Print out the number of unique signatures
@@ -455,7 +462,7 @@ def compute_line_coverage_hash(index):
     # Get the coverage
     coverage_data = get_code_coverage(code_coverage_file)
     lines_covered = coverage_data[0]
-    number_of_crashes = coverage_data[6]
+    number_of_crashes = coverage_data[7]
 
     # Make sure converting to a set was done correctly
     lines_covered_set = set(lines_covered)
@@ -489,7 +496,7 @@ def compute_branch_coverage_hash(index, scenario):
     # Break the coverage up into its components
     branches_covered    = coverage_data[2]
     all_branches        = coverage_data[3]
-    number_of_crashes   = coverage_data[6]
+    number_of_crashes   = coverage_data[7]
 
     # Make sure converting to a set was done correctly
     all_branches_set = set(all_branches)
@@ -529,11 +536,12 @@ def get_path_coverage_hash(index, scenario):
     coverage_data = get_code_coverage(code_coverage_file)
 
     # Break the coverage up into its components
-    i_path_signature      = coverage_data[4]
-    a_path_signature      = coverage_data[5]
-    number_of_crashes   = coverage_data[6]
+    in_path_signature       = coverage_data[4]
+    il_path_signature       = coverage_data[5]
+    a_path_signature        = coverage_data[6]
+    number_of_crashes       = coverage_data[7]
 
-    return [i_path_signature, a_path_signature, number_of_crashes]
+    return [in_path_signature, il_path_signature, a_path_signature, number_of_crashes]
 
 
 parser = argparse.ArgumentParser()
@@ -628,8 +636,8 @@ print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsisten
 t.add_row(["Branch Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
 # Compute the intraprocedural Path coverage details
-print("\nProcessing Introprocedural Path Coverage")
-results                         = compute_path_coverage_details(args.scenario, absolute=False)
+print("\nProcessing Introprocedural Without Loops Path Coverage")
+results                         = compute_path_coverage_details(args.scenario, absolute=False, loops_allowed=False)
 total_signatures_count          = results[0]
 single_test_signatures_count    = results[1]
 multi_test_signatures_count     = results[2]
@@ -642,12 +650,27 @@ print("Total multi test signatures: {}".format(multi_test_signatures_count))
 print("Total consistent classes: {}".format(consistent_class_count))
 print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
-t.add_row(["Intraprocedural Path Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+t.add_row(["Intraprocedural Path Without Loops Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
+print("\nProcessing Introprocedural Path With Loops Coverage")
+results                         = compute_path_coverage_details(args.scenario, absolute=False, loops_allowed=True)
+total_signatures_count          = results[0]
+single_test_signatures_count    = results[1]
+multi_test_signatures_count     = results[2]
+consistent_class_count          = results[3]
+inconsistent_class_count        = results[4]
+percentage_of_inconsistency     = results[5]
+print("Total signatures: {}".format(total_signatures_count))
+print("Total single test signatures: {}".format(single_test_signatures_count))
+print("Total multi test signatures: {}".format(multi_test_signatures_count))
+print("Total consistent classes: {}".format(consistent_class_count))
+print("Total inconsistent classes: {}".format(inconsistent_class_count))
+print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
+t.add_row(["Intraprocedural Path with Loops Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
 # Compute the Absolute Path coverage details
 print("\nProcessing Absolute Path Coverage")
-results                         = compute_path_coverage_details(args.scenario, absolute=True)
+results                         = compute_path_coverage_details(args.scenario, absolute=True, loops_allowed=True)
 total_signatures_count          = results[0]
 single_test_signatures_count    = results[1]
 multi_test_signatures_count     = results[2]

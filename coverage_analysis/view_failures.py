@@ -56,14 +56,14 @@ stall_files = order_files_by_beam_number(stall_files, RRS_numbers)
 
 # Load the data
 crash_data = np.load(crash_files[0])
-stall_data = np.load(stall_files[0])
+stall_data = np.load(stall_files[0], allow_pickle=True)
 
 # All the data for all RSR should be exactly the same
 # Check that this is the case
 for i in range(len(crash_files)-1):
     # Load the other data
     c_data = np.load(crash_files[i])
-    s_data = np.load(stall_files[i])
+    s_data = np.load(stall_files[i], allow_pickle=True)
 
     # Check that they are the same
     assert(np.all(crash_data==c_data))
@@ -110,8 +110,9 @@ unique_failure_count = 0
 # Go through each of the tests
 for i in tqdm(range(crash_data.shape[0])):
 
-    contains_crash = ~(np.isinf(crash_data[i]).all())
-    contains_stall = ~(np.isinf(stall_data[i]).all())
+    # This will throw an error we need to check for None
+    contains_crash = ~(np.isnan(crash_data[i]).all())
+    contains_stall = ~(np.isnan(stall_data[i]).all())
 
     # Check if this trace had a crash or a stall
     if contains_crash and contains_stall:
@@ -139,7 +140,7 @@ for i in tqdm(range(crash_data.shape[0])):
         s = stall_data[i][j]
 
         # If it is a crash
-        if ~np.isinf(c):
+        if c is not None:
             # Add to the total crashes
             total_crash_count += 1
             total_failure_count += 1
@@ -153,7 +154,7 @@ for i in tqdm(range(crash_data.shape[0])):
                 unique_failure_count += 1
 
         # If it is a stall
-        if ~np.isinf(s):
+        if s is not None:
             # Add to the total crashes
             total_stall_count += 1
             total_failure_count += 1
