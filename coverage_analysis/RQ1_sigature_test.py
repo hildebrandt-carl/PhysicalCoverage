@@ -314,7 +314,7 @@ def compute_branch_coverage_details(scenario):
 
     return [total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, percentage_of_inconsistency]
 
-def compute_path_coverage_details(scenario, absolute=True, loops_allowed=True):
+def compute_path_coverage_details(scenario, absolute=True, prime=True):
 
     if scenario == "highway":
         return [0, 0, 0, 0, 0, 0]
@@ -352,18 +352,18 @@ def compute_path_coverage_details(scenario, absolute=True, loops_allowed=True):
         r = results[i]
 
         # Get the signature and the results
-        in_signature, il_signature, a_signature, crash_detected = r
+        intra_prime_path_signature, intra_path_signature, absolute_path_signature, crash_detected = r
 
         # Collect all the signatures
-        if (loops_allowed == False) and (absolute == True):
-            print("ERROR: Cant have loops not allowed and absolute")
+        if (absolute == True) and (prime == False):
+            all_signatures[i] = absolute_path_signature
+        elif (absolute == False) and (prime == False):
+            all_signatures[i] = intra_path_signature
+        elif (absolute == False) and (prime == True):
+            all_signatures[i] = intra_prime_path_signature
+        else:
+            print("Error: Unknown combination of prime and absolute")
             exit()
-        elif (loops_allowed == True) and (absolute == True):
-            all_signatures[i] = a_signature
-        elif (loops_allowed == True) and (absolute == False):
-            all_signatures[i] = il_signature
-        elif (loops_allowed == False) and (absolute == False):
-            all_signatures[i] = in_signature
         
         # Get the crash signatures
         all_crash_detections[i] = crash_detected
@@ -536,12 +536,12 @@ def get_path_coverage_hash(index, scenario):
     coverage_data = get_code_coverage(code_coverage_file)
 
     # Break the coverage up into its components
-    in_path_signature       = coverage_data[4]
-    il_path_signature       = coverage_data[5]
-    a_path_signature        = coverage_data[6]
-    number_of_crashes       = coverage_data[7]
+    intra_prime_path_signature  = coverage_data[4]
+    intra_path_signature        = coverage_data[5]
+    absolute_path_signature     = coverage_data[6]
+    number_of_crashes           = coverage_data[7]
 
-    return [in_path_signature, il_path_signature, a_path_signature, number_of_crashes]
+    return [intra_prime_path_signature, intra_path_signature, absolute_path_signature, number_of_crashes]
 
 
 parser = argparse.ArgumentParser()
@@ -636,8 +636,8 @@ print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsisten
 t.add_row(["Branch Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
 # Compute the intraprocedural Path coverage details
-print("\nProcessing Introprocedural Without Loops Path Coverage")
-results                         = compute_path_coverage_details(args.scenario, absolute=False, loops_allowed=False)
+print("\nProcessing Introprocedural Prime Path Coverage")
+results                         = compute_path_coverage_details(args.scenario, absolute=False, prime=True)
 total_signatures_count          = results[0]
 single_test_signatures_count    = results[1]
 multi_test_signatures_count     = results[2]
@@ -650,10 +650,10 @@ print("Total multi test signatures: {}".format(multi_test_signatures_count))
 print("Total consistent classes: {}".format(consistent_class_count))
 print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
-t.add_row(["Intraprocedural Path Without Loops Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+t.add_row(["Intraprocedural Prime Path Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
-print("\nProcessing Introprocedural Path With Loops Coverage")
-results                         = compute_path_coverage_details(args.scenario, absolute=False, loops_allowed=True)
+print("\nProcessing Introprocedural Path Coverage")
+results                         = compute_path_coverage_details(args.scenario, absolute=False, prime=False)
 total_signatures_count          = results[0]
 single_test_signatures_count    = results[1]
 multi_test_signatures_count     = results[2]
@@ -666,11 +666,11 @@ print("Total multi test signatures: {}".format(multi_test_signatures_count))
 print("Total consistent classes: {}".format(consistent_class_count))
 print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
-t.add_row(["Intraprocedural Path with Loops Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+t.add_row(["Intraprocedural Path Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
 # Compute the Absolute Path coverage details
 print("\nProcessing Absolute Path Coverage")
-results                         = compute_path_coverage_details(args.scenario, absolute=True, loops_allowed=True)
+results                         = compute_path_coverage_details(args.scenario, absolute=True, prime=False)
 total_signatures_count          = results[0]
 single_test_signatures_count    = results[1]
 multi_test_signatures_count     = results[2]

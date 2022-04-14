@@ -9,12 +9,70 @@ import hashlib
 import argparse
 import multiprocessing
 
+from ast import literal_eval
+
 import numpy as np
 import xml.etree.ElementTree as ET
 
 from ordered_set import OrderedSet
 
 from tqdm import tqdm
+
+def is_simple(A):
+    if len(A) == 1 or len(A) == 2:
+        return True
+
+    if len(A) == 3:
+        if (A[0] != A[1]) and (A[1] != A[2]):
+            return True
+        else:
+            return False
+
+    path = A
+    if A[0] == A[-1]:
+        path = A[1:-1]
+
+    p1 = list(OrderedSet(path)) 
+    p2 = path
+    return np.array_equal(p1, p2)
+
+def is_prime_path(A, B):
+    # Two pointers to traverse the arrays
+    i = 0; j = 0
+    # Traverse both arrays simultaneously
+    while (i < len(A) and j < len(B)):
+        # If element matches
+        # increment both pointers
+        if (A[i] == B[j]):
+            i += 1
+            j += 1
+            # If array B is completely
+            # traversed
+            if (j == len(A)):
+                return False
+        # If not,
+        # increment i and reset j
+        else:
+            i = i - j + 1
+            j = 0
+    return True
+
+def find_prime_paths(paths):
+    prime_paths = []
+    # Loop through the paths
+    for i, p1 in enumerate(paths):
+        is_prime = True
+        for j, p2 in enumerate(paths):
+            if i != j:
+                if not is_simple(p1):
+                    is_prime = False
+                    break
+                if not is_prime_path(p1, p2):
+                    is_prime = False
+                    break
+        if is_prime:
+            prime_paths.append(p1)
+    return prime_paths
 
 def is_float(input):
     try:
@@ -23,7 +81,7 @@ def is_float(input):
     except ValueError:
         return False
 
-def intraprocedural_path_coverage(path_taken, loops_allowed=True):
+def intraprocedural_path_coverage(path_taken, loops_allowed=True, prime_paths=False):
 
     # For the paths
     intraprocedural_path    = {}
@@ -53,7 +111,8 @@ def intraprocedural_path_coverage(path_taken, loops_allowed=True):
 
                 # Remove loops if loops are not allowed
                 if not loops_allowed:
-                    i_path = list(OrderedSet(i_path))
+                    # i_path = list(OrderedSet(i_path))
+                    i_path = sorted(list(set(i_path)))
                 
                 # Insert this into the dictionary
                 if f_name in intraprocedural_path:
@@ -87,7 +146,18 @@ def intraprocedural_path_coverage(path_taken, loops_allowed=True):
         for path in intraprocedural_path[key]:
             path_set.add(str(path))
         intraprocedural_path[key] = path_set
-       
+    
+    if prime_paths:
+        # Convert each of the intraprocedural paths to prime paths
+        for key in intraprocedural_path:
+            list_of_paths = []
+            for path in intraprocedural_path[key]:
+                list_of_paths.append(literal_eval(path))
+            prime_paths = find_prime_paths(list_of_paths)
+            intraprocedural_path[key] = []
+            for p in prime_paths:
+                intraprocedural_path[key].append(str(p))
+
     # Convert to list (make sure that both the order of the functions, and the order of the paths are always sorted the same)
     all_keys = sorted(list(intraprocedural_path.keys()))
     final_intraprocedural_path = []
@@ -147,37 +217,37 @@ def compute_coverage_beamng(file_name, save_path):
     if(path_taken[-1] == "exit_isDriving"):
 
         # Compute intraprocedural path coverage with loops
-        il_path_taken = intraprocedural_path_coverage(path_taken, loops_allowed=True)
+        intra_path_taken = intraprocedural_path_coverage(path_taken, loops_allowed=True, prime_paths=False)
 
         # Get the intraprocedural path_signature
-        il_path_string = ''.join([str(x) + "," for x in il_path_taken])
-        il_path_signature = hashlib.md5(il_path_string.encode()).hexdigest()
+        intra_path_string = ''.join([str(x) + "," for x in intra_path_taken])
+        intra_path_signature = hashlib.md5(intra_path_string.encode()).hexdigest()
         # Memory cleanup
-        il_path_string = None
+        intra_path_string = None
 
         # Compute intraprocedural path coverage with loops
-        in_path_taken = intraprocedural_path_coverage(path_taken, loops_allowed=False)
+        intra_prime_path_taken = intraprocedural_path_coverage(path_taken, loops_allowed=True, prime_paths=True)
 
         # Get the intraprocedural path_signature
-        in_path_string = ''.join([str(x) + "," for x in in_path_taken])
-        in_path_signature = hashlib.md5(in_path_string.encode()).hexdigest()
+        intra_prime_path_string = ''.join([str(x) + "," for x in intra_prime_path_taken])
+        intra_prime_path_signature = hashlib.md5(intra_prime_path_string.encode()).hexdigest()
         # Memory cleanup
-        in_path_string = None
+        intra_prime_path_string = None
 
         # Get the absolute path_signature
         absolute_path_string = ''.join([str(x) + "," for x in path_taken])
         absolute_path_signature = hashlib.md5(absolute_path_string.encode()).hexdigest()
     else:
         # The path does not end with isDriving and thus we cant compute the absolute path signature.
-        il_path_signature = None
-        in_path_signature = None
+        intra_path_signature = None
+        intra_prime_path_signature = None
         absolute_path_signature = None
 
     # Convert the branch data to strings to match the highwayenv data
     branches_covered = [str(x) for x in branches_covered]
     all_branches = [str(x) for x in all_branches]
 
-    coverage_data["ai.lua"] = [lines_covered, all_lines, branches_covered, all_branches, in_path_signature, il_path_signature, absolute_path_signature]
+    coverage_data["ai.lua"] = [lines_covered, all_lines, branches_covered, all_branches, intra_prime_path_signature, intra_path_signature, absolute_path_signature]
     return [coverage_data, code_coverage_save_name, crash_count]
 
 def compute_coverage_highway(file_name, save_path):
@@ -390,13 +460,13 @@ for r in tqdm(results):
     for key in coverage_data:
 
         # Get the data
-        lines_covered        = coverage_data[key][0]
-        all_lines            = coverage_data[key][1]
-        branches_covered     = coverage_data[key][2]
-        all_branches         = coverage_data[key][3]
-        in_path_signature    = coverage_data[key][4]
-        il_path_signature    = coverage_data[key][5]
-        a_path_signature     = coverage_data[key][6]
+        lines_covered                   = coverage_data[key][0]
+        all_lines                       = coverage_data[key][1]
+        branches_covered                = coverage_data[key][2]
+        all_branches                    = coverage_data[key][3]
+        intra_prime_path_signature      = coverage_data[key][4]
+        intra_path_signature            = coverage_data[key][5]
+        absolute_path_signature         = coverage_data[key][6]
 
         # Save the data
         f.write("-----------------------------\n")
@@ -414,9 +484,9 @@ for r in tqdm(results):
         f.write("All branches: {}\n".format(sorted(list(all_branches))))
         f.write("Total branches: {}\n".format(len(list(all_branches))))
         f.write("-----------------------------\n")
-        f.write("Intraprocedural path without loops signature: {}\n".format(in_path_signature))
-        f.write("Intraprocedural path with loops signature: {}\n".format(il_path_signature))
-        f.write("Absolute path signature: {}\n".format(a_path_signature))
+        f.write("Intraprocedural prime path signature: {}\n".format(intra_prime_path_signature))
+        f.write("Intraprocedural path signature: {}\n".format(intra_path_signature))
+        f.write("Absolute path signature: {}\n".format(absolute_path_signature))
 
     # Save the total number of crashes
     f.write("-----------------------------\n")
