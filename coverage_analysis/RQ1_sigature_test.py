@@ -573,6 +573,9 @@ global code_coverage_file_names
 code_coverage_file_names = glob.glob(base_path + "*/*.txt")
 
 # Make sure we have enough samples
+print("here")
+print(trace_file_names)
+print(base_path + "traces_*.npy")
 assert(len(trace_file_names) >= 1)
 assert(len(crash_file_names) >= 1)
 assert(len(code_coverage_file_names) >= 1)

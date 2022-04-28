@@ -242,6 +242,7 @@ def compute_coverage_beamng(file_name, save_path):
         intra_path_signature = None
         intra_prime_path_signature = None
         absolute_path_signature = None
+        print("Absolute Path Failure: " + str(file_name))
 
     # Convert the branch data to strings to match the highwayenv data
     branches_covered = [str(x) for x in branches_covered]
@@ -327,7 +328,7 @@ def compute_coverage_highway(file_name, save_path):
     return [coverage_data, code_coverage_save_name, crash_count]
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
+parser.add_argument('--scenario',       type=str, default="",   help="beamng_random/beamng_generated/highway_random/highway_generated")
 parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
 args = parser.parse_args()

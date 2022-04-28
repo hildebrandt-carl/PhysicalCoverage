@@ -102,7 +102,7 @@ all_files = None
 if args.scenario == "beamng_random":
     all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/beamng/random_tests/physical_coverage/raw/*/*.txt")
 elif args.scenario == "beamng_generated":
-    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/beamng/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
+    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/beamng/generated_tests/{}/physical_coverage/raw/{}_external_vehicles/*.txt".format(args.distribution, args.beam_count))
 elif args.scenario == "highway_random":
     all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*/*.txt")
 elif args.scenario == "highway_generated":
@@ -245,7 +245,7 @@ save_path = ""
 if args.scenario == "beamng_random":
     save_path = "../output/beamng/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 elif args.scenario == "beamng_generated":
-    save_path = "../output/beamng/generated_tests/tests_single/processed/{}/{}/".format(args.distribution, args.total_samples)
+    save_path = "../output/beamng/generated_tests/{}/physical_coverage/processed/{}/".format(args.distribution, args.total_samples)
 elif args.scenario == "highway_random":
     save_path = "../output/highway/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 elif args.scenario == "highway_generated":
