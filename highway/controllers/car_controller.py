@@ -156,3 +156,9 @@ class EgoController:
 
     def default_action(self):
         return action_enum.IDLE.value
+
+    def accelerate_action(self):
+        return action_enum.FASTER.value
+
+    def brake_action(self):
+        return action_enum.SLOWER.value
