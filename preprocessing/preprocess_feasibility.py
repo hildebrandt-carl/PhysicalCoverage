@@ -16,7 +16,7 @@ sys.path.append(base_directory)
 
 from tqdm import tqdm
 from tabulate import tabulate
-from general.environment_configurations import RSRConfig
+from general.environment_configurations import RRSConfig
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
@@ -113,9 +113,9 @@ args = parser.parse_args()
 # Create the configuration classes
 HK = HighwayKinematics()
 NG = BeamNGKinematics()
-RSR = RSRConfig()
+RRS = RRSConfig()
 
-# Save the kinematics and RSR parameters
+# Save the kinematics and RRS parameters
 if args.scenario == "highway":
     new_steering_angle  = HK.steering_angle
     new_max_distance    = HK.max_velocity

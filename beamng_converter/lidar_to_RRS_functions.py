@@ -128,7 +128,7 @@ def estimate_obstacles(ego_vehicle, current_lidar_data):
     for pi in range(len(current_lidar_data)):
         # Get the point
         p = current_lidar_data[pi]
-        s = 0.4
+        s = 0.2
         new_point = Polygon([(p[0]-s, p[1]-s),
                             (p[0]+s, p[1]-s),
                             (p[0]+s, p[1]+s),

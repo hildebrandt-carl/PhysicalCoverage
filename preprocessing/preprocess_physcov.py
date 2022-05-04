@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
-from general.environment_configurations import RSRConfig
+from general.environment_configurations import RRSConfig
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
@@ -44,11 +44,11 @@ args = parser.parse_args()
 # Create the configuration classes
 HK = HighwayKinematics()
 NG = BeamNGKinematics()
-RSR = RSRConfig(beam_count = args.beam_count)
+RRS = RRSConfig(beam_count = args.beam_count)
 FO = FailureOracle(scenario=args.scenario)
 
-# Save the kinematics and RSR parameters
-new_total_lines         = RSR.beam_count
+# Save the kinematics and RRS parameters
+new_total_lines         = RRS.beam_count
 
 if args.scenario == "highway_random":
     new_steering_angle  = HK.steering_angle
@@ -79,7 +79,7 @@ else:
 print("")
 print("----------------------------------")
 print("")
-print("Processing RSR{}\n".format(new_total_lines))
+print("Processing RRS{}\n".format(new_total_lines))
 
 # Get the total number of possible crashes per test
 max_crashes_per_test = FO.max_possible_crashes

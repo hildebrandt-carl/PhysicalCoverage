@@ -20,7 +20,7 @@ from math import pi, atan2, degrees
 
 from general.reachset import ReachableSet
 
-from general.environment_configurations import RSRConfig
+from general.environment_configurations import RRSConfig
 from general.environment_configurations import HighwayKinematics
 
 from general.highway_config import HighwayEnvironmentConfig
@@ -51,10 +51,10 @@ if args.total_beams != beams:
 
 # Get the different configurations
 HK = HighwayKinematics()
-RSR = RSRConfig(beam_count=beams)
+RRS = RRSConfig(beam_count=beams)
 
 # Variables - Used for generating the reach set
-total_lines     = RSR.beam_count
+total_lines     = RRS.beam_count
 steering_angle  = HK.steering_angle
 max_distance    = HK.max_velocity
 

@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
-from general.environment_configurations import RSRConfig
+from general.environment_configurations import RRSConfig
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
@@ -36,7 +36,7 @@ def random_select(number_of_tests):
     global traces
     global crashes
     global stalls
-    global feasible_RSR_set
+    global feasible_RRS_set
     global unique_failure_set
 
     # Generate the indices for the random tests cases
@@ -44,7 +44,7 @@ def random_select(number_of_tests):
     indices = local_state.choice(traces.shape[0], size=number_of_tests, replace=False)
 
     # Get the coverage and failure set
-    seen_RSR_set = set()
+    seen_RRS_set = set()
     seen_failure_set = set()
 
     # Go through each of the different tests
@@ -60,7 +60,7 @@ def random_select(number_of_tests):
             # Make sure that this is a scene (not a nan or inf or -1 or None)
             if v is not None:
                 if (np.isnan(v).any() == False) and (np.isinf(v).any() == False) and (np.less(v, 0).any() == False):
-                    seen_RSR_set.add(tuple(v))
+                    seen_RRS_set.add(tuple(v))
 
         # Check if there was a crash and if there was count it
         for c in crash:
@@ -73,26 +73,26 @@ def random_select(number_of_tests):
                 seen_failure_set.add(s)
 
     # Compute the coverage and the crash percentage
-    coverage_percentage = float(len(seen_RSR_set)) / len(feasible_RSR_set)
+    coverage_percentage = float(len(seen_RRS_set)) / len(feasible_RRS_set)
     failure_percentage =  float(len(seen_failure_set)) / len(unique_failure_set)
     failures_found = len(seen_failure_set)
 
     return [coverage_percentage, failures_found, number_of_tests]
 
-def coverage_computation(index, seen_RSR_set):
+def coverage_computation(index, seen_RRS_set):
     global traces
 
-    current_RSR = set()
+    current_RRS = set()
     # Get the coverage for that trace
     for v in traces[index]:
 
         # Make sure that this is a scene (not a nan or inf or -1)
         if (np.isnan(v).any() == False) and (np.isinf(v).any() == False) and (np.less(v, 0).any() == False):
-            current_RSR.add(tuple(v))
+            current_RRS.add(tuple(v))
 
     # Get the new coverage
-    coverage_set = (seen_RSR_set | current_RSR)
-    # coverage_percentage = float(len(coverage_set)) / len(feasible_RSR_set)
+    coverage_set = (seen_RRS_set | current_RRS)
+    # coverage_percentage = float(len(coverage_set)) / len(feasible_RRS_set)
     crash_count = len(coverage_set)
 
     return [coverage_set, crash_count, index]
@@ -102,14 +102,14 @@ def greedy_select(test_suite_size, selection_type, greedy_sample_size):
     global traces
     global crashes
     global stalls
-    global feasible_RSR_set
+    global feasible_RRS_set
     global unique_failure_set
 
     # Get all the available indices
     available_indices = set(np.arange(traces.shape[0]))
 
     # Get the coverage and crash set
-    seen_RSR_set = set()
+    seen_RRS_set = set()
     seen_failure_set = set()
 
     # For each of the tests in the test suite
@@ -121,7 +121,7 @@ def greedy_select(test_suite_size, selection_type, greedy_sample_size):
 
         results = []
         for index in randomly_selected_indices:
-            r = coverage_computation(index, seen_RSR_set)
+            r = coverage_computation(index, seen_RRS_set)
             results.append(r)
 
         # Turn the results into coverage and index
@@ -143,7 +143,7 @@ def greedy_select(test_suite_size, selection_type, greedy_sample_size):
 
         # Remove the index from available indices
         available_indices.remove(selected_index)
-        seen_RSR_set = selected_coverage_set
+        seen_RRS_set = selected_coverage_set
 
         # Check for crashes in this trace
         crash = crashes[selected_index]
@@ -158,7 +158,7 @@ def greedy_select(test_suite_size, selection_type, greedy_sample_size):
                 seen_failure_set.add(s)
 
     # Compute the coverage and the crash percentage
-    coverage_percentage = float(len(seen_RSR_set)) / len(feasible_RSR_set)
+    coverage_percentage = float(len(seen_RRS_set)) / len(feasible_RRS_set)
     # failure_percentage =  float(len(seenseen_failure_set_crash_set)) / len(unique_crashes_set)
     failure_count = len(seen_failure_set)
 
@@ -236,9 +236,9 @@ args = parser.parse_args()
 # Create the configuration classes
 HK = HighwayKinematics()
 NG = BeamNGKinematics()
-RSR = RSRConfig()
+RRS = RRSConfig()
 
-# Save the kinematics and RSR parameters
+# Save the kinematics and RRS parameters
 if args.scenario == "highway":
     new_steering_angle  = HK.steering_angle
     new_max_distance    = HK.max_velocity
@@ -309,10 +309,10 @@ stalls  = np.load(stall_file, allow_pickle=True)
 
 # Create the feasible set
 feasible_traces = np.load(feasible_file)
-global feasible_RSR_set
-feasible_RSR_set = set()
+global feasible_RRS_set
+feasible_RRS_set = set()
 for scene in feasible_traces:
-    feasible_RSR_set.add(tuple(scene))
+    feasible_RRS_set.add(tuple(scene))
 
 # Create the failure unique set
 global unique_failure_set

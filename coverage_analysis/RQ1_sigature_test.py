@@ -24,7 +24,7 @@ from general.line_coverage_configuration import get_code_coverage
 from general.line_coverage_configuration import get_ignored_lines
 from general.line_coverage_configuration import get_ignored_branches
 
-def compute_RSR_details():
+def compute_RRS_details():
     global traces
     global crashes
 
@@ -436,7 +436,7 @@ def compute_trace_signature_and_crash(index):
     trace_signature  = set()
     crash_detected   = False
 
-    # The signature for the trace is the set of all RSR signatures
+    # The signature for the trace is the set of all RRS signatures
     for sig in trace:
         trace_signature.add(tuple(sig))
 
@@ -688,10 +688,10 @@ print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
 t.add_row(["Absolute Path Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
 
-# Loop through each of the files and compute both an RSR signature as well as determine if there was a crash
+# Loop through each of the files and compute both an RRS signature as well as determine if there was a crash
 for beam_number in beam_numbers:
-    print("\nProcessing RSR{}".format(beam_number))
-    key = "RSR{}".format(beam_number)
+    print("\nProcessing RRS{}".format(beam_number))
+    key = "RRS{}".format(beam_number)
 
     # Get the trace and crash files
     global traces
@@ -700,7 +700,7 @@ for beam_number in beam_numbers:
     crashes = np.load(crash_file_names[beam_number-1], allow_pickle=True)
 
     # Compute the different metrics
-    results                         = compute_RSR_details()
+    results                         = compute_RRS_details()
     total_signatures_count          = results[0]
     single_test_signatures_count    = results[1]
     multi_test_signatures_count     = results[2]

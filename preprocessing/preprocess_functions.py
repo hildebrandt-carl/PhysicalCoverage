@@ -15,7 +15,7 @@ from tqdm import tqdm
 from general.failure_oracle import hash_crash
 from general.failure_oracle import hash_stall
 
-from general.environment_configurations import RSRConfig
+from general.environment_configurations import RRSConfig
 from general.environment_configurations import HighwayKinematics
 
 def vector_conversion(vector, steering_angle, max_distance, total_lines, original_total_lines, distribution):
@@ -393,12 +393,12 @@ def plot_debugging_centralized(original_vectors, new_vectors, new_steering_angle
         y = [line[0][1], line[1][1]]
         ax2.plot(x,y,c="green")
 
-    ax1.set_title("Original RSR 30")
+    ax1.set_title("Original RRS 30")
     ax1.set_xlim([-5,35])
     ax1.set_ylim([-20,20])
     ax2.set_xlim([-5,35])
     ax2.set_ylim([-20,20])
-    ax2.set_title("Original RSR 5")
+    ax2.set_title("Original RRS 5")
     plt.show()
 
 def plot_debugging(original_vectors, new_vectors, new_steering_angle):
@@ -442,10 +442,10 @@ def plot_debugging(original_vectors, new_vectors, new_steering_angle):
         y = [line[0][1], line[1][1]]
         ax2.plot(x,y,c="green")
 
-    ax1.set_title("Original RSR 30")
+    ax1.set_title("Original RRS 30")
     ax1.set_xlim([-5,35])
     ax1.set_ylim([-20,20])
     ax2.set_xlim([-5,35])
     ax2.set_ylim([-20,20])
-    ax2.set_title("Original RSR 5")
+    ax2.set_title("Original RRS 5")
     plt.show()

@@ -14,9 +14,9 @@ base_directory = str(path[:path.rfind("/beamng")])
 sys.path.append(base_directory)
 
 from tqdm import tqdm
-from lidar_to_RSR_functions import process_file
+from lidar_to_RRS_functions import process_file
 
-from general.environment_configurations import RSRConfig
+from general.environment_configurations import RRSConfig
 from general.environment_configurations import BeamNGKinematics
 
 parser = argparse.ArgumentParser()
@@ -28,12 +28,12 @@ args = parser.parse_args()
 
 # Create the configuration classes
 NG = BeamNGKinematics()
-RSR = RSRConfig(beam_count = 30)
+RRS = RRSConfig(beam_count = 30)
 
-# Save the kinematics and RSR parameters
+# Save the kinematics and RRS parameters
 steering_angle  = NG.steering_angle
 max_distance    = NG.max_velocity
-total_lines     = RSR.beam_count
+total_lines     = RRS.beam_count
 
 if args.scenario == "beamng_random":
     raw_file_location       = "/media/carl/DataDrive/PhysicalCoverageData/beamng/random_tests/physical_coverage/lidar/"

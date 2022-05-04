@@ -58,7 +58,7 @@ stall_files = order_files_by_beam_number(stall_files, RRS_numbers)
 crash_data = np.load(crash_files[0])
 stall_data = np.load(stall_files[0], allow_pickle=True)
 
-# All the data for all RSR should be exactly the same
+# All the data for all RRS should be exactly the same
 # Check that this is the case
 for i in range(len(crash_files)-1):
     # Load the other data

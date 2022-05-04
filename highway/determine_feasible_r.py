@@ -19,7 +19,7 @@ sys.path.append(base_directory)
 
 from highway_config import HighwayEnvironmentConfig
 from general.reachset import ReachableSet
-from general.environment_configurations import RSRConfig
+from general.environment_configurations import RRSConfig
 from general.environment_configurations import HighwayKinematics
 
 from controllers.tracker import Tracker
@@ -31,10 +31,10 @@ args = parser.parse_args()
 
 # Get the different configurations
 HK = HighwayKinematics()
-RSR = RSRConfig(beam_count=31)
+RRS = RRSConfig(beam_count=31)
 
 # Variables - Used for timing
-total_lines     = RSR.beam_count
+total_lines     = RRS.beam_count
 steering_angle  = HK.steering_angle
 max_distance    = HK.max_velocity
 

@@ -5,6 +5,8 @@ import math
 import numpy as np
 import argparse
 
+from tqdm import tqdm
+
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
@@ -17,7 +19,7 @@ from general.RRS_distributions import center_mid_distribution
 
 from general.file_functions import get_beam_number_from_file
 from general.file_functions import order_files_by_beam_number
-from general.environment_configurations import RSRConfig
+from general.environment_configurations import RRSConfig
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
@@ -33,9 +35,9 @@ args = parser.parse_args()
 # Create the configuration classes
 HK = HighwayKinematics()
 NG = BeamNGKinematics()
-RSR = RSRConfig()
+RRS = RRSConfig()
 
-# Save the kinematics and RSR parameters
+# Save the kinematics and RRS parameters
 if args.scenario == "highway":
     new_steering_angle  = HK.steering_angle
     new_max_distance    = HK.max_velocity
@@ -101,10 +103,17 @@ for i, _ in enumerate(RRS_numbers):
     seen_traces = set()
     feasible_traces = set()
 
-    for t in feasible:
+    print("Computing the feasible set of RRS:")
+
+    for index in tqdm(range(len(feasible))):
+        # Get the feasible RRS
+        t = feasible[index]
         feasible_traces.add(tuple(t))
 
-    for test in trace:
+    print("Computing all RRS seen during random test generation:")
+    for index in tqdm(range(len(trace))):
+        # Get the test data
+        test = trace[index]
         for t in test:
             if not np.isnan(t).any():
                 seen_traces.add(tuple(t))

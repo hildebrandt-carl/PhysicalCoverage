@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 from general.file_functions import get_beam_number_from_file
 from general.file_functions import order_files_by_beam_number
-from general.environment_configurations import RSRConfig
+from general.environment_configurations import RRSConfig
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
@@ -35,7 +35,7 @@ def create_list_of_test_signatures(num_cores):
     # Used to hold the RRS signature for each test
     signatures = []
 
-    # Get the RSR set for each of the different tests
+    # Get the RRS set for each of the different tests
     for i, _ in enumerate(traces):
         # Compute the signatures for each trace
         jobs.append(pool.apply_async(compute_test_signature, args=([i])))
@@ -57,7 +57,7 @@ def compute_test_signature(index):
     # Create the RRS signature
     RRS_signature = set()   
 
-    # Go through each scene and add it to the RSR set
+    # Go through each scene and add it to the RRS set
     for scene in traces[index]:
         # Get the current scene
         s = tuple(scene)
@@ -211,9 +211,9 @@ args = parser.parse_args()
 # Create the configuration classes
 HK = HighwayKinematics()
 NG = BeamNGKinematics()
-RSR = RSRConfig()
+RRS = RRSConfig()
 
-# Save the kinematics and RSR parameters
+# Save the kinematics and RRS parameters
 if args.scenario == "highway":
     new_steering_angle  = HK.steering_angle
     new_max_distance    = HK.max_velocity
