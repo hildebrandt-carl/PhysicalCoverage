@@ -106,7 +106,7 @@ elif args.scenario == "beamng_generated":
 elif args.scenario == "highway_random":
     all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*/*.txt")
 elif args.scenario == "highway_generated":
-    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/generated_tests/tests_single/raw/{}/{}_external_vehicles/*.txt".format(args.total_samples, new_total_lines))
+    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/generated_tests/{}/physical_coverage/raw/{}_external_vehicles/*.txt".format(args.distribution, args.beam_count))
 else:
     print("Error: Scenario not known")
     exit()
@@ -249,7 +249,7 @@ elif args.scenario == "beamng_generated":
 elif args.scenario == "highway_random":
     save_path = "../output/highway/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 elif args.scenario == "highway_generated":
-    save_path = "../output/highway/generated_tests/tests_single/processed/{}/{}/".format(args.distribution, args.total_samples)
+    save_path = "../output/highway/generated_tests/{}/physical_coverage/processed/{}/".format(args.distribution, args.total_samples)
 else:
     print("Error 4")
     exit()

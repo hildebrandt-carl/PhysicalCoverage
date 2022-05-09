@@ -70,16 +70,16 @@ def compute_test_signature(index, random=True):
 
         # Make sure that this is a scene (not a nan or inf or -1)
         if (np.isnan(scene).any() == False) and (np.isinf(scene).any() == False) and (np.less(scene, 0).any() == False):
-            RRS_signature.add(tuple(s))
-
-
-
+            
             # Give a warning if a vector is found that is not feasible
             if s not in feasible_RRS_set:
                 print("Warning: Infeasible vector found: {}".format(scene))
                 for v in feasible_RRS_set:
                     print(v)
                     print("----------")
+            else:
+                RRS_signature.add(tuple(s))
+                
     # Return the RRS signature
     return RRS_signature
 
