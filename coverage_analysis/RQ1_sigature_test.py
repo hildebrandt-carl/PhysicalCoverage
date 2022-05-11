@@ -463,6 +463,7 @@ def compute_line_coverage_hash(index):
     coverage_data = get_code_coverage(code_coverage_file)
     lines_covered = coverage_data[0]
     number_of_crashes = coverage_data[7]
+    print
 
     # Make sure converting to a set was done correctly
     lines_covered_set = set(lines_covered)
@@ -573,9 +574,6 @@ global code_coverage_file_names
 code_coverage_file_names = glob.glob(base_path + "*/*.txt")
 
 # Make sure we have enough samples
-print("here")
-print(trace_file_names)
-print(base_path + "traces_*.npy")
 assert(len(trace_file_names) >= 1)
 assert(len(crash_file_names) >= 1)
 assert(len(code_coverage_file_names) >= 1)
@@ -604,6 +602,9 @@ crash_file_names = order_files_by_beam_number(crash_file_names, beam_numbers)
 t = PrettyTable()
 t.field_names = ["Coverage Type", "Total Signatures" , "Single Test Signatures", "Multitest Signatures", "Consistent Multitest Signatures", "Inconsistent Multitest Signatures", "Percentage Inconsistent"]
 
+# Create a list to hold the latex
+latex_list = []
+
 # Compute the line coverage details
 print("\nProcessing Line Coverage")
 results                         = compute_line_coverage_details()
@@ -620,6 +621,7 @@ print("Total consistent classes: {}".format(consistent_class_count))
 print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
 t.add_row(["Line Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+latex_list.append([total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, percentage_of_inconsistency])
 
 # Compute the branch coverage details
 print("\nProcessing Branch Coverage")
@@ -637,6 +639,7 @@ print("Total consistent classes: {}".format(consistent_class_count))
 print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
 t.add_row(["Branch Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+latex_list.append([total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, percentage_of_inconsistency])
 
 # Compute the intraprocedural Path coverage details
 print("\nProcessing Introprocedural Prime Path Coverage")
@@ -654,6 +657,7 @@ print("Total consistent classes: {}".format(consistent_class_count))
 print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
 t.add_row(["Intraprocedural Prime Path Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+latex_list.append([total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, percentage_of_inconsistency])
 
 print("\nProcessing Introprocedural Path Coverage")
 results                         = compute_path_coverage_details(args.scenario, absolute=False, prime=False)
@@ -670,6 +674,7 @@ print("Total consistent classes: {}".format(consistent_class_count))
 print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
 t.add_row(["Intraprocedural Path Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+latex_list.append([total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, percentage_of_inconsistency])
 
 # Compute the Absolute Path coverage details
 print("\nProcessing Absolute Path Coverage")
@@ -687,6 +692,9 @@ print("Total consistent classes: {}".format(consistent_class_count))
 print("Total inconsistent classes: {}".format(inconsistent_class_count))
 print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
 t.add_row(["Absolute Path Coverage", total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+latex_list.append([total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, percentage_of_inconsistency])
+
+
 
 # Loop through each of the files and compute both an RRS signature as well as determine if there was a crash
 for beam_number in beam_numbers:
@@ -714,6 +722,7 @@ for beam_number in beam_numbers:
     print("Total inconsistent classes: {}".format(inconsistent_class_count))
     print("Percentage of inconsistent classes: {}%".format(percentage_of_inconsistency))
     t.add_row([key, total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, "{}%".format(percentage_of_inconsistency)])
+    latex_list.append([total_signatures_count, single_test_signatures_count, multi_test_signatures_count, consistent_class_count, inconsistent_class_count, percentage_of_inconsistency])
 
 # Display the table
 print("")
@@ -722,3 +731,13 @@ print("Number of tests: {}".format(args.number_of_tests))
 print("Distribution: {}".format(args.distribution))
 print("")
 print(t)
+
+
+
+print("\n\nLatex\n")
+for line in latex_list:
+    print_line = ""
+    for item in line[:-1]:
+        print_line += "& {} ".format(item)
+    print_line += "& {}\\%".format(line[-1])
+    print(print_line)

@@ -157,9 +157,23 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
 
     output_success = True
 
+    # Check if this file has data
+    try:
+        with open(file_name, "r") as fp:
+            len_of_file = len(fp.readlines())
+    except Exception as e:
+        logging.exception(e)
+        print("Error in file: {}".format(file_name))
+        output_success = False  
+        
+    # If the file is empty
+    if len_of_file <= 1:
+        output_success = False  
+        return output_success
+
     try:
         # Open the file and count vectors
-        input_file = open(file_name, "r")
+        input_file = open(file_name, "r")       
         
         # Get the time
         start_time = datetime.now()
@@ -189,6 +203,9 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
                 continue
 
             # Read in the data
+            # TODO my generated tests for now print it as a numpy array we need to not have it save like that for example
+            # TODO 9921875, 10.679703712463379, 0.8139291405677795],0,0,8,7.9708,[2.67828e+01 1.09170e+00 1.00000e-04
+            line = line[:line.rfind(",[")]
             read_data = ast.literal_eval(line)
 
             # Get the data
@@ -201,8 +218,10 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
             data["damgage"]              = read_data[5]
             data["total_accidents"]      = read_data[6]
             data["veh_count"]            = read_data[7]
-            data["traffic_vehicle_dist"] = read_data[8]
-            data["traffic_vehicle_vel"]  = read_data[9]
+            data["traffic_vehicle_dist"] = 100
+            data["traffic_vehicle_vel"]  = [99, 99, 99]
+            # data["traffic_vehicle_dist"] = read_data[8]
+            # data["traffic_vehicle_vel"]  = read_data[9]
             data['origin']               = [0, 0, 0]
             data["ego_orientation"]      = [1, 0, 0]
 

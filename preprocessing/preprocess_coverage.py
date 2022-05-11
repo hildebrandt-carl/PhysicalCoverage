@@ -321,9 +321,10 @@ def compute_coverage_highway(file_name, save_path):
         print("Error: The name we associate with crashes does not match the code coverage file")
         exit()
 
-    # This will throw an error we need a isNone function
     # Get the crash count    
-    crash_count = np.sum(~np.isnan(c_array[arr_index]))
+    crash_data = c_array[arr_index][0]
+    only_crashes = crash_data[crash_data != np.array(None)]
+    crash_count = len(only_crashes)
 
     return [coverage_data, code_coverage_save_name, crash_count]
 
@@ -395,7 +396,7 @@ if "highway" in args.scenario:
         f_index = [idx for idx, s in enumerate(file_info) if '_b{}_'.format(i+1) in s][0]
         c_name = crash_info[c_index]
         f_name = file_info[f_index]
-        preprocessed_crash_arrays["{}_external_vehicles".format(i+1)] = copy.deepcopy(np.load(c_name))
+        preprocessed_crash_arrays["{}_external_vehicles".format(i+1)] = copy.deepcopy(np.load(c_name, allow_pickle=True))
         preprocessed_file_arrays["{}_external_vehicles".format(i+1)] = copy.deepcopy(np.load(f_name))
 
 all_files = None

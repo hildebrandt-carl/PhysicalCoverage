@@ -19,6 +19,9 @@ def get_code_coverage(filename):
     total_crashes = None
     i_path_signature = None
     a_path_signature = None
+    intra_prime_path_signature = None
+    intra_path_signature = None
+    absolute_path_signature = None
 
     # Read the file
     for line in f: 
