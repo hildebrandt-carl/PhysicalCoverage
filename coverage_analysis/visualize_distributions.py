@@ -123,7 +123,7 @@ angle_distribution  = distribution.get_angle_distribution()
 all_points = []
 
 # Looping in RRS
-for RRS in range(1,10):
+for RRS in range(1,11):
 
     plt.figure(RRS, figsize=(4,3))
 

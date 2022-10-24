@@ -343,7 +343,7 @@ stall_file_names                = order_files_by_beam_number(stall_file_names, R
 feasible_file_names             = order_files_by_beam_number(feasible_file_names, RRS_numbers)
 
 # Create the output figure
-plt.figure(1)
+plt.figure(1, figsize=(10,5))
 
 # For each of the different beams
 for i in range(len(RRS_numbers)):
@@ -466,7 +466,7 @@ ax1.set_xlabel("Number of tests")
 ax1.set_ylabel("Coverage (%)")
 ax2.set_ylabel("Unique Failures (%)")
 ax2.set_yticks(np.arange(0, 100.01, step=5))
-ax1.legend()
-ax2.legend(loc="lower center")
+ax1.legend(loc="lower center", ncol=4)
+ax2.legend(loc="lower right")
 
 plt.show()
