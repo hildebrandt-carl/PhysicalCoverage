@@ -105,9 +105,10 @@ def highway_handler(file_name, new_steering_angle, new_max_distance, RRS_number,
     return True
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--distribution',   type=str, default="",    help="linear/center_close/center_mid")
-parser.add_argument('--scenario',       type=str, default="",    help="beamng/highway")
-parser.add_argument('--cores',          type=int, default=4,     help="number of available cores")
+parser.add_argument('--data_path',      type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--distribution',   type=str, default="",                                               help="linear/center_close/center_mid")
+parser.add_argument('--scenario',       type=str, default="",                                               help="beamng/highway")
+parser.add_argument('--cores',          type=int, default=4,                                                help="number of available cores")
 args = parser.parse_args()
 
 # Create the configuration classes
@@ -160,7 +161,7 @@ pool =  multiprocessing.Pool(processes=total_processors)
 
 # Handle highway
 if args.scenario == "highway":
-    feasibility_file = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/feasibility/raw/feasible_vectors.txt")
+    feasibility_file = glob.glob("{}/highway/feasibility/raw/feasible_vectors.txt".format(args.data_path))
     assert(len(feasibility_file) == 1)
     print("file found: {}".format(feasibility_file[0]))
 

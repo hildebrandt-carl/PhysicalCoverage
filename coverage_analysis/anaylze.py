@@ -10,6 +10,10 @@ import numpy as np
 from general.file_functions import get_beam_number_from_file
 from general.file_functions import order_files_by_beam_number
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--data_path',          type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
+args = parser.parse_args()
+
 results = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/beamng/generated_tests/center_close/physical_coverage/processed/10000/traces_*.npy")
 
 RRS_numbers = get_beam_number_from_file(results)

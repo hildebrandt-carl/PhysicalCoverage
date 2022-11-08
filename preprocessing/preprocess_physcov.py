@@ -34,11 +34,12 @@ from preprocess_functions import countVectorsInFile
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--beam_count',     type=int, default=4,    help="The number of beams used to vectorize the reachable set")
-parser.add_argument('--total_samples',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--distribution',   type=str, default="",   help="linear/center_close/center_mid")
-parser.add_argument('--scenario',       type=str, default="",   help="beamng/highway")
-parser.add_argument('--cores',          type=int, default=4,    help="number of available cores")
+parser.add_argument('--data_path',      type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--beam_count',     type=int, default=4,                                                help="The number of beams used to vectorize the reachable set")
+parser.add_argument('--total_samples',  type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--distribution',   type=str, default="",                                               help="linear/center_close/center_mid")
+parser.add_argument('--scenario',       type=str, default="",                                               help="beamng/highway")
+parser.add_argument('--cores',          type=int, default=4,                                                help="number of available cores")
 args = parser.parse_args()
 
 # Create the configuration classes
@@ -100,13 +101,13 @@ print("----------------------------------")
 
 all_files = None
 if args.scenario == "beamng_random":
-    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/beamng/random_tests/physical_coverage/raw/*/*.txt")
+    all_files = glob.glob("{}/beamng/random_tests/physical_coverage/raw/*/*.txt".format(args.data_path))
 elif args.scenario == "beamng_generated":
-    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/beamng/generated_tests/{}/physical_coverage/raw/{}_external_vehicles/*.txt".format(args.distribution, args.beam_count))
+    all_files = glob.glob("{}/beamng/generated_tests/{}/physical_coverage/raw/{}_external_vehicles/*.txt".format(args.data_path, args.distribution, args.beam_count))
 elif args.scenario == "highway_random":
-    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*/*.txt")
+    all_files = glob.glob("{}/highway/random_tests/physical_coverage/raw/*/*.txt".format(args.data_path))
 elif args.scenario == "highway_generated":
-    all_files = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/generated_tests/{}/physical_coverage/raw/{}_external_vehicles/*.txt".format(args.distribution, args.beam_count))
+    all_files = glob.glob("{}/highway/generated_tests/{}/physical_coverage/raw/{}_external_vehicles/*.txt".format(args.data_path, args.distribution, args.beam_count))
 else:
     print("Error: Scenario not known")
     exit()
@@ -125,9 +126,9 @@ if len(file_names) <= 0:
 # If you don't want all files, select a random portion of the files
 if (args.scenario == "highway_random") or (args.scenario == "beamng_random"): 
     if args.scenario == "highway_random":
-        folders = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/highway/random_tests/physical_coverage/raw/*")
+        folders = glob.glob("{}/highway/random_tests/physical_coverage/raw/*".format(args.data_path))
     elif args.scenario == "beamng_random":
-        folders = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/beamng/random_tests/physical_coverage/raw/*")
+        folders = glob.glob("{}/beamng/random_tests/physical_coverage/raw/*".format(args.data_path))
 
     files_per_folder = int(math.ceil(args.total_samples / len(folders)))
 

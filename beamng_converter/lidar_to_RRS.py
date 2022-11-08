@@ -20,9 +20,10 @@ from general.environment_configurations import RRSConfig
 from general.environment_configurations import BeamNGKinematics
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--cores',            type=int, default=120,  help="number of available cores")
-parser.add_argument('--scenario',         type=str, default="",   help="beamng_random/beamng_generated")
-parser.add_argument('--distribution',     type=str, default="",   help="Only used when using beamng_generated (linear/center_close/center_mid)")
+parser.add_argument('--data_path',     type=str, default="/media/carl/DataDrive/PhysicalCoverageData",  help="The location and name of the datafolder")
+parser.add_argument('--cores',         type=int, default=4,                                             help="number of available cores")
+parser.add_argument('--scenario',      type=str, default="",                                            help="beamng_random/beamng_generated")
+parser.add_argument('--distribution',  type=str, default="",                                            help="Only used when using beamng_generated (linear/center_close/center_mid)")
 parser.add_argument('--plot',             action='store_true')
 args = parser.parse_args()
 
@@ -36,11 +37,11 @@ max_distance    = NG.max_velocity
 total_lines     = RRS.beam_count
 
 if args.scenario == "beamng_random":
-    raw_file_location       = "/media/carl/DataDrive/PhysicalCoverageData/beamng/random_tests/physical_coverage/lidar/"
+    raw_file_location       = "{}/beamng/random_tests/physical_coverage/lidar/".format(args.data_path)
     output_file_location    = "../output/beamng/random_tests/physical_coverage/raw/"
     file_names = glob.glob(raw_file_location + "/*/*.csv")
 elif args.scenario == "beamng_generated":
-    raw_file_location       = "/media/carl/DataDrive/PhysicalCoverageData/beamng/generated_tests/{}/physical_coverage/lidar/".format(args.distribution)
+    raw_file_location       = "{}/beamng/generated_tests/{}/physical_coverage/lidar/".format(args.data_path, args.distribution)
     output_file_location    = "../output/beamng/generated_tests/{}/physical_coverage/raw/".format(args.distribution)
     file_names = glob.glob(raw_file_location + "/*/*.csv")
 else:

@@ -22,10 +22,11 @@ def unison_shuffled_copies(a, b):
     return a[p], b[p]
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--number_of_tests', type=int, default=1,  help="The number of tests used while computing coverage")
-parser.add_argument('--distribution',    type=str, default="",   help="linear/center_close/center_mid")
-parser.add_argument('--scenario',        type=str, default="", help="beamng/highway")
-parser.add_argument('--ordered',         action='store_true')
+parser.add_argument('--data_path',          type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--number_of_tests',    type=int, default=1,                                                help="The number of tests used while computing coverage")
+parser.add_argument('--distribution',       type=str, default="",                                               help="linear/center_close/center_mid")
+parser.add_argument('--scenario',           type=str, default="",                                               help="beamng/highway")
+parser.add_argument('--ordered',            action='store_true')
 args = parser.parse_args()
 
 # Checking the distribution

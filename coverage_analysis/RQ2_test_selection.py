@@ -226,11 +226,12 @@ greedy_sample_size = 100
 
 # Get the input arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--number_of_tests',  type=int, default=-1,   help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--distribution',     type=str, default="",   help="linear/center_close/center_mid")
-parser.add_argument('--RRS_number',       type=int, default=3,    help="The number of beams you want to consider")
-parser.add_argument('--scenario',         type=str, default="",   help="beamng/highway")
-parser.add_argument('--cores',            type=int, default=4,    help="number of available cores")
+parser.add_argument('--data_path',          type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--number_of_tests',    type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--distribution',       type=str, default="",                                               help="linear/center_close/center_mid")
+parser.add_argument('--RRS_number',         type=int, default=3,                                                help="The number of beams you want to consider")
+parser.add_argument('--scenario',           type=str, default="",                                               help="beamng/highway")
+parser.add_argument('--cores',              type=int, default=4,                                                help="number of available cores")
 args = parser.parse_args()
 
 # Create the configuration classes
@@ -273,14 +274,14 @@ if not (args.distribution == "linear" or args.distribution == "center_close" or 
     exit()
 
 # Get the file names
-base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+base_path = '{}/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.data_path, args.scenario, args.distribution, args.number_of_tests)
 print(base_path + "traces_*_b{}_*".format(args.RRS_number))
 trace_file = glob.glob(base_path + "traces_*_b{}_*".format(args.RRS_number))
 crash_file = glob.glob(base_path + "crash_*_b{}_*".format(args.RRS_number))
 stall_file = glob.glob(base_path + "stall_*_b{}_*".format(args.RRS_number))
 
 # Get the feasible vectors
-base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/feasibility/processed/{}/'.format(args.scenario, args.distribution)
+base_path = '{}/{}/feasibility/processed/{}/'.format(args.data_path, args.scenario, args.distribution)
 feasible_file = glob.glob(base_path + "*_b{}.npy".format(args.RRS_number))
 
 # Check we have files
@@ -338,13 +339,13 @@ plt.plot(x_line, y_line, '--', color="C0")
 
 print("Generating best case greedy tests")
 best_coverage_percentages, best_crash_count, best_test_suite_size = greedy_selection(args.cores, test_suite_sizes, "max", greedy_sample_size)
-plt.scatter(best_test_suite_size, best_crash_count, c="C1", marker="o", s=6, label="Greedy Best")
+plt.scatter(best_test_suite_size, best_crash_count, c="C1", marker="o", s=6, label="Maximize PhysCov")
 x_line, y_line = line_of_best_fit(best_test_suite_size, best_crash_count)
 plt.plot(x_line, y_line, '--', color="C1")
 
 print("Generating worst case greedy tests")
 worst_coverage_percentages, worst_crash_count, worst_test_suite_size = greedy_selection(args.cores, test_suite_sizes, "min", greedy_sample_size)
-plt.scatter(worst_test_suite_size, worst_crash_count, c="C2", marker="^", s=7, label="Greedy Worst")
+plt.scatter(worst_test_suite_size, worst_crash_count, c="C2", marker="^", s=7, label="Minimize PhysCov")
 x_line, y_line = line_of_best_fit(worst_test_suite_size, worst_crash_count)
 plt.plot(x_line, y_line, '--', color="C2")
 
