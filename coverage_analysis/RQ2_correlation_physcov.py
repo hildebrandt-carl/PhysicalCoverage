@@ -96,12 +96,13 @@ def random_select(number_of_tests):
 
 # Get the input arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',          type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
-parser.add_argument('--number_of_test_suites', type=int, default=10,                                               help="The number of random test suites created")
-parser.add_argument('--number_of_tests',       type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--distribution',          type=str, default="",                                               help="linear/center_close/center_mid")
-parser.add_argument('--scenario',              type=str, default="",                                               help="beamng/highway")
-parser.add_argument('--cores',                 type=int, default=4,                                                help="number of available cores")
+parser.add_argument('--data_path',             type=str, default="/media/carl/DataDrive/PhysicalCoverageData",  help="The location and name of the datafolder")
+parser.add_argument('--number_of_test_suites', type=int, default=10,                                            help="The number of random test suites created")
+parser.add_argument('--number_of_tests',       type=int, default=-1,                                            help="-1 all samples, otherwise randomly selected x samples")
+parser.add_argument('--distribution',          type=str, default="",                                            help="linear/center_close/center_mid")
+parser.add_argument('--scenario',              type=str, default="",                                            help="beamng/highway")
+parser.add_argument('--cores',                 type=int, default=4,                                             help="number of available cores")
+parser.add_argument('--RRS',                   type=int, default=10,                                            help="Which RRS number you want to compute a correlation for")
 args = parser.parse_args()
 
 # Create the configuration classes
@@ -169,7 +170,7 @@ stall_file_names = order_files_by_beam_number(stall_file_names, RRS_numbers)
 feasible_file_names = order_files_by_beam_number(feasible_file_names, RRS_numbers)
 
 # Assume we are only doing RRS 10
-i = 9
+i = args.RRS - 1
 
 # Get the beam number and files we are currently considering
 RRS_number = RRS_numbers[i]

@@ -553,8 +553,7 @@ for i in range(len(RRS_numbers)):
 
     # Plot the results
     plt.fill_between(x, lower_bound, upper_bound, alpha=0.2, color="C{}".format(i)) #this is the shaded error
-    plt.plot(x, average_coverage, c="C{}".format(i), label="$\Psi$ - {}".format(RRS_number)) #this is the line itself
-
+    plt.plot(x, average_coverage, c="C{}".format(i), label="$\Psi_{" + str(RRS_number) + "}$") #this is the line itself
 
 # Load the stall and crash file
 global stalls
@@ -605,7 +604,7 @@ ax1.set_xlabel("Number of tests")
 ax1.set_ylabel("Coverage (%)")
 ax2.set_ylabel("Failures (%)")
 ax2.set_yticks(np.arange(0, 100.01, step=5))
-# ax1.legend(ncol=6)
+ax1.legend(ncol=6)
 ax2.legend(loc="lower center", ncol=3)
 
 plt.show()

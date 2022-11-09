@@ -3,7 +3,7 @@ import glob
 import shutil
 import numpy as np
 
-number_samples = 10
+number_samples = 100
  
 # Check if the artifact already exists
 path = '/home/carl/Desktop/PhysicalCoverageDataSubSet'
