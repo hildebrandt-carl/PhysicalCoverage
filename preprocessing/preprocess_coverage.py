@@ -329,7 +329,7 @@ def compute_coverage_highway(file_name, save_path):
     return [coverage_data, code_coverage_save_name, crash_count]
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',      type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--data_path',      type=str, default="/mnt/extradrive3/PhysicalCoverageData",     help="The location and name of the datafolder")
 parser.add_argument('--scenario',       type=str, default="",                                               help="beamng_random/beamng_generated/highway_random/highway_generated")
 parser.add_argument('--total_samples',  type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--cores',          type=int, default=4,                                                help="number of available cores")

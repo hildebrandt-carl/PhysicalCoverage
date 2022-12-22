@@ -226,7 +226,7 @@ greedy_sample_size = 100
 
 # Get the input arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',          type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",     help="The location and name of the datafolder")
 parser.add_argument('--number_of_tests',    type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--distribution',       type=str, default="",                                               help="linear/center_close/center_mid")
 parser.add_argument('--RRS_number',         type=int, default=3,                                                help="The number of beams you want to consider")

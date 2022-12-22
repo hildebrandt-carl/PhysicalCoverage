@@ -263,7 +263,7 @@ def generated_test_suite(num_cores):
 
 # Get the input arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',          type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",     help="The location and name of the datafolder")
 parser.add_argument('--random_test_suites', type=int, default=10,                                               help="The number of random line samples used")
 parser.add_argument('--number_of_tests',    type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--distribution',       type=str, default="",                                               help="linear/center_close/center_mid")
@@ -311,17 +311,17 @@ if not (args.distribution == "linear" or args.distribution == "center_close" or 
     exit()
 
 # Get the file names
-base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+base_path = '/mnt/extradrive3/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
 random_trace_file_names = glob.glob(base_path + "traces_*")
 crash_file_names        = glob.glob(base_path + "crash_*")
 stall_file_names        = glob.glob(base_path + "stall_*")
 
 # Get the feasible vectors
-base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/feasibility/processed/{}/'.format(args.scenario, args.distribution)
+base_path = '/mnt/extradrive3/PhysicalCoverageData/{}/feasibility/processed/{}/'.format(args.scenario, args.distribution)
 feasible_file_names = glob.glob(base_path + "*.npy")
 
 # Get the generated test file names
-base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/generated_tests/{}/physical_coverage/processed/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+base_path = '/mnt/extradrive3/PhysicalCoverageData/{}/generated_tests/{}/physical_coverage/processed/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
 generated_trace_file_names = glob.glob(base_path + "traces_*")
 
 # Get the RRS numbers

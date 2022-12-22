@@ -11,10 +11,10 @@ from general.file_functions import get_beam_number_from_file
 from general.file_functions import order_files_by_beam_number
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',          type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",     help="The location and name of the datafolder")
 args = parser.parse_args()
 
-results = glob.glob("/media/carl/DataDrive/PhysicalCoverageData/beamng/generated_tests/center_close/physical_coverage/processed/10000/traces_*.npy")
+results = glob.glob("/mnt/extradrive3/PhysicalCoverageData/beamng/generated_tests/center_close/physical_coverage/processed/10000/traces_*.npy")
 
 RRS_numbers = get_beam_number_from_file(results)
 RRS_numbers = sorted(RRS_numbers)
@@ -32,7 +32,7 @@ for trace_file, RRS in zip(trace_files, RRS_numbers):
 
     # Get all test from this RRS number
     for i in range(np.shape(t)[0]):
-        test_name = "/media/carl/DataDrive/PhysicalCoverageData/beamng/generated_tests/center_close/tests/{}_external_vehicles/test_{}.txt".format(RRS, i)
+        test_name = "/mnt/extradrive3/PhysicalCoverageData/beamng/generated_tests/center_close/tests/{}_external_vehicles/test_{}.txt".format(RRS, i)
         expected_positions = []
         test = open(test_name, 'r')
         first_line = True

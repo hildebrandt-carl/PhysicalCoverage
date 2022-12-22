@@ -34,7 +34,7 @@ from preprocess_functions import countVectorsInFile
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',      type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--data_path',      type=str, default="/mnt/extradrive3/PhysicalCoverageData",     help="The location and name of the datafolder")
 parser.add_argument('--beam_count',     type=int, default=4,                                                help="The number of beams used to vectorize the reachable set")
 parser.add_argument('--total_samples',  type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--distribution',   type=str, default="",                                               help="linear/center_close/center_mid")

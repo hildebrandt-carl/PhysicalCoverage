@@ -546,7 +546,7 @@ def get_path_coverage_hash(index, scenario):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',       type=str, default="/media/carl/DataDrive/PhysicalCoverageData",    help="The location and name of the datafolder")
+parser.add_argument('--data_path',       type=str, default="/mnt/extradrive3/PhysicalCoverageData",    help="The location and name of the datafolder")
 parser.add_argument('--number_of_tests', type=int, default=-1,                                              help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--distribution',    type=str, default="",                                              help="linear/center_close/center_mid")
 parser.add_argument('--scenario',        type=str, default="",                                              help="beamng/highway")
@@ -565,12 +565,12 @@ if not (args.distribution == "linear" or args.distribution == "center_close" or 
     exit()
 
 # Get the file names
-base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+base_path = '/mnt/extradrive3/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
 trace_file_names = glob.glob(base_path + "traces_*.npy")
 crash_file_names = glob.glob(base_path + "crash_*.npy")
 
 # Get the code coverage
-base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/random_tests/code_coverage/processed/{}/'.format(args.scenario, args.number_of_tests)
+base_path = '/mnt/extradrive3/PhysicalCoverageData/{}/random_tests/code_coverage/processed/{}/'.format(args.scenario, args.number_of_tests)
 global code_coverage_file_names
 code_coverage_file_names = glob.glob(base_path + "*/*.txt")
 

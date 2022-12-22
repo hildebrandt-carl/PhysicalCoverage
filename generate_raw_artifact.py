@@ -48,13 +48,13 @@ for i in range(10):
 
 # Find the feasible tests
 print("Copying over feasible tests")
-shutil.copytree('/media/carl/DataDrive/PhysicalCoverageData/highway/feasibility/raw','/home/carl/Desktop/PhysicalCoverageDataSubSet/highway/feasibility/raw')
+shutil.copytree('/mnt/extradrive3/PhysicalCoverageData/highway/feasibility/raw','/home/carl/Desktop/PhysicalCoverageDataSubSet/highway/feasibility/raw')
 
 # Find all the raw code coverage tests
-beamng_code_coverage = '/media/carl/DataDrive/PhysicalCoverageData/beamng/random_tests/code_coverage/raw'
-highway_code_coverage = '/media/carl/DataDrive/PhysicalCoverageData/highway/random_tests/code_coverage/raw'
-beamng_physical_coverage = '/media/carl/DataDrive/PhysicalCoverageData/beamng/random_tests/physical_coverage/lidar'
-highway_physical_coverage = '/media/carl/DataDrive/PhysicalCoverageData/highway/random_tests/physical_coverage/raw'
+beamng_code_coverage = '/mnt/extradrive3/PhysicalCoverageData/beamng/random_tests/code_coverage/raw'
+highway_code_coverage = '/mnt/extradrive3/PhysicalCoverageData/highway/random_tests/code_coverage/raw'
+beamng_physical_coverage = '/mnt/extradrive3/PhysicalCoverageData/beamng/random_tests/physical_coverage/lidar'
+highway_physical_coverage = '/mnt/extradrive3/PhysicalCoverageData/highway/random_tests/physical_coverage/raw'
 
 print("Copying raw files")
 for i in range(10):

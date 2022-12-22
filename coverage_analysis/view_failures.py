@@ -22,7 +22,7 @@ def unison_shuffled_copies(a, b):
     return a[p], b[p]
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',          type=str, default="/media/carl/DataDrive/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",     help="The location and name of the datafolder")
 parser.add_argument('--number_of_tests',    type=int, default=1,                                                help="The number of tests used while computing coverage")
 parser.add_argument('--distribution',       type=str, default="",                                               help="linear/center_close/center_mid")
 parser.add_argument('--scenario',           type=str, default="",                                               help="beamng/highway")
@@ -35,7 +35,7 @@ if not (args.distribution == "linear" or args.distribution == "center_close" or 
     exit()
 
 # Get the file names
-base_path = '/media/carl/DataDrive/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+base_path = '/mnt/extradrive3/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
 crash_files = glob.glob(base_path + "crash_*")
 stall_files = glob.glob(base_path + "stall_*")
 

@@ -39,7 +39,7 @@ parser.add_argument('--plotting_enabled',           action='store_true',        
 args = parser.parse_args()
 
 # Get the full file path
-test_file = "/media/carl/DataDrive/PhysicalCoverageData/highway/generated_tests/{}/tests/{}_external_vehicles/{}.txt".format(args.distribution, args.number_traffic_vehicles, args.test_name)
+test_file = "/mnt/extradrive3/PhysicalCoverageData/highway/generated_tests/{}/tests/{}_external_vehicles/{}.txt".format(args.distribution, args.number_traffic_vehicles, args.test_name)
 
 # The RRS is equal to the number of traffic vehicles
 RRS_number = args.number_traffic_vehicles

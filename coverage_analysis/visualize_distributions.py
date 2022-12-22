@@ -76,7 +76,7 @@ def rotate(origin, point, angle):
     return qx, qy
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',       type=str, default="/media/carl/DataDrive/PhysicalCoverageData",    help="The location and name of the datafolder")
+parser.add_argument('--data_path',       type=str, default="/mnt/extradrive3/PhysicalCoverageData",    help="The location and name of the datafolder")
 parser.add_argument('--scenario',        type=str, default="",                                              help="beamng/highway")
 parser.add_argument('--distribution',    type=str, default="",                                              help="linear/center_close/center_mid")
 args = parser.parse_args()

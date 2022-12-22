@@ -11,7 +11,7 @@ total_cores=50
 for RRS in "${RRS_Number[@]}"
 do
     # Find all the tests
-    tests=/media/carl/DataDrive/PhysicalCoverageData/highway/generated_tests/$1/tests/${RRS}_external_vehicles/*.txt
+    tests=/mnt/extradrive3/PhysicalCoverageData/highway/generated_tests/$1/tests/${RRS}_external_vehicles/*.txt
 
     echo "Processing RRS ${RRS}"
 
