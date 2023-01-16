@@ -358,7 +358,6 @@ def random_test_suite():
 
     # Compute the denominator for the coverage
     denominator = len(feasible_RRS_set)
-    print(denominator)
 
     # Create the output
     output = np.zeros(len(test_signatures))

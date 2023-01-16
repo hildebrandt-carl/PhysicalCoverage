@@ -1,3 +1,5 @@
+import numpy as np
+
 def get_beam_number_from_file(files):
     beam_numbers = []
     for f in files:
@@ -37,3 +39,7 @@ def get_filename_prefix(filename):
         print("Error! File not known.")
         exit()
 
+def unison_shuffled_copies(a, b):
+    assert len(a) == len(b)
+    p = np.random.permutation(len(a))
+    return a[p], b[p]
