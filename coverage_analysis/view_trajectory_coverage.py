@@ -20,7 +20,6 @@ from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
 
-
 # Get the input arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",          help="The location and name of the datafolder")
@@ -159,5 +158,8 @@ print(final_coverage)
 # Create the output figure
 plt.figure(1, figsize=(10,5))
 plt.plot(final_coverage)
+
+plt.figure(2, figsize=(10,5))
+plt.imshow(coverage_array.transpose(), cmap='hot')
 
 plt.show()
