@@ -13,7 +13,6 @@ sys.path.append(base_directory)
 import numpy as np
 
 from tqdm import tqdm
-from random import sample
 from collections import Counter
 from prettytable import PrettyTable
 
@@ -93,13 +92,13 @@ def compute_RRS_details():
         # Get all the crash data for a specific signature
         single_class_crash_data = all_crash_detections[interested_indices]
 
-        # Check if all the data is consisten
+        # Check if all the data is consistent
         consistent = np.all(single_class_crash_data == single_class_crash_data[0])
         consistent_class[count_index] = bool(consistent)
         count_index += 1
 
     # Final signatures holds the list of all signatures
-    # Count of signatures holds the list intergers representing how many times each signature was seen
+    # Count of signatures holds the list integers representing how many times each signature was seen
 
     # Get the total signatures
     total_signatures_count = len(final_signatures)

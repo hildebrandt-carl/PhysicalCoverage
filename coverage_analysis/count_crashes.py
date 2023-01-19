@@ -1,8 +1,6 @@
 import sys
 import glob
-import hashlib
 import argparse
-import multiprocessing
 
 from pathlib import Path
 current_file = Path(__file__)
@@ -13,16 +11,9 @@ sys.path.append(base_directory)
 import numpy as np
 
 from tqdm import tqdm
-from random import sample
-from collections import Counter
-from prettytable import PrettyTable
 
 from general.file_functions import get_beam_number_from_file
 from general.file_functions import order_files_by_beam_number
-from general.line_coverage_configuration import clean_branch_data
-from general.line_coverage_configuration import get_code_coverage
-from general.line_coverage_configuration import get_ignored_lines
-from general.line_coverage_configuration import get_ignored_branches
 
 
 parser = argparse.ArgumentParser()

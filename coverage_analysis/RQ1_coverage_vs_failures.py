@@ -1,12 +1,7 @@
-import os
 import sys
-import ast
 import glob
-import hashlib
 import argparse
 import multiprocessing
-
-from time import sleep
 
 from pathlib import Path
 current_file = Path(__file__)
@@ -24,7 +19,6 @@ from general.file_functions import order_files_by_beam_number
 from general.environment_configurations import RRSConfig
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
-from general.line_coverage_configuration import clean_branch_data
 from general.line_coverage_configuration import get_code_coverage
 from general.line_coverage_configuration import get_ignored_lines
 from general.line_coverage_configuration import get_ignored_branches
@@ -36,7 +30,7 @@ def preprocessing_code_coverage_on_random_test_suite(num_cores):
     global code_coverage_denomiator
     global branch_coverage_denominator
 
-    # Get the denominoators
+    # Get the denominators
     coverage_data = get_code_coverage(code_coverage_file_names[0])
     all_lines           = coverage_data[1]
     all_branches        = coverage_data[3]
