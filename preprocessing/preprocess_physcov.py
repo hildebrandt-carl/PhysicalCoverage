@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from general.environment_configurations import RRSConfig
+from general.environment_configurations import WaymoKinematics
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
@@ -34,23 +35,23 @@ from preprocess_functions import countVectorsInFile
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',      type=str, default="/mnt/extradrive3/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--data_path',      type=str, default="/mnt/extradrive3/PhysicalCoverageData",          help="The location and name of the datafolder")
 parser.add_argument('--beam_count',     type=int, default=4,                                                help="The number of beams used to vectorize the reachable set")
 parser.add_argument('--total_samples',  type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--distribution',   type=str, default="",                                               help="linear/center_close/center_mid")
-parser.add_argument('--scenario',       type=str, default="",                                               help="beamng/highway")
+parser.add_argument('--scenario',       type=str, default="",                                               help="beamng/highway/waymo")
 parser.add_argument('--cores',          type=int, default=4,                                                help="number of available cores")
 args = parser.parse_args()
 
 # Create the configuration classes
 HK = HighwayKinematics()
-NG = BeamNGKinematics()
+BK = BeamNGKinematics()
+WK = WaymoKinematics()
 RRS = RRSConfig(beam_count = args.beam_count)
 FO = FailureOracle(scenario=args.scenario)
 
 # Save the kinematics and RRS parameters
 new_total_lines         = RRS.beam_count
-
 if args.scenario == "highway_random":
     new_steering_angle  = HK.steering_angle
     new_max_distance    = HK.max_velocity
@@ -58,11 +59,14 @@ elif args.scenario == "highway_generated":
     new_steering_angle  = HK.steering_angle
     new_max_distance    = HK.max_velocity
 elif args.scenario == "beamng_random":
-    new_steering_angle  = NG.steering_angle
-    new_max_distance    = NG.max_velocity
+    new_steering_angle  = BK.steering_angle
+    new_max_distance    = BK.max_velocity
 elif args.scenario == "beamng_generated":
-    new_steering_angle  = NG.steering_angle
-    new_max_distance    = NG.max_velocity
+    new_steering_angle  = BK.steering_angle
+    new_max_distance    = BK.max_velocity
+elif args.scenario == "waymo_random":
+    new_steering_angle  = WK.steering_angle
+    new_max_distance    = WK.max_velocity
 else:
     print("ERROR: Unknown scenario ({})".format(args.scenario))
     exit()
@@ -108,6 +112,9 @@ elif args.scenario == "highway_random":
     all_files = glob.glob("{}/highway/random_tests/physical_coverage/raw/*/*.txt".format(args.data_path))
 elif args.scenario == "highway_generated":
     all_files = glob.glob("{}/highway/generated_tests/{}/physical_coverage/raw/{}_external_vehicles/*.txt".format(args.data_path, args.distribution, args.beam_count))
+elif args.scenario == "waymo_random":
+    print("{}/waymo/random_tests/physical_coverage/raw/*/*.txt".format(args.data_path))
+    all_files = glob.glob("{}/waymo/random_tests/physical_coverage/raw/*.txt".format(args.data_path))
 else:
     print("Error: Scenario not known")
     exit()
@@ -251,6 +258,8 @@ elif args.scenario == "highway_random":
     save_path = "../output/highway/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 elif args.scenario == "highway_generated":
     save_path = "../output/highway/generated_tests/{}/physical_coverage/processed/{}/".format(args.distribution, args.total_samples)
+elif args.scenario == "waymo_random":
+    save_path = "../output/waymo/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 else:
     print("Error 4")
     exit()

@@ -18,7 +18,7 @@ scenario.make(bng)
 bng.load_scenario(scenario)
 bng.start_scenario()
 
-my_file = open("right.txt","w+")
+my_file = open("left.txt","w+")
 time.sleep(20)
 print("Starting in 3")
 time.sleep(1)

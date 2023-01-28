@@ -8,6 +8,11 @@ class BeamNGKinematics:
         self.steering_angle  = 33 # Deg
         self.max_velocity    = 35 # m/s
 
+class WaymoKinematics:
+    def __init__(self):
+        self.steering_angle  = 33 # Deg
+        self.max_velocity    = 35 # m/s
+
 class RRSConfig:
     def __init__(self, beam_count = 3):
         self.beam_count     = beam_count

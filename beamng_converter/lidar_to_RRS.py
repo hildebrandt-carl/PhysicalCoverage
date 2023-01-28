@@ -28,12 +28,12 @@ parser.add_argument('--plot',             action='store_true')
 args = parser.parse_args()
 
 # Create the configuration classes
-NG = BeamNGKinematics()
+BK = BeamNGKinematics()
 RRS = RRSConfig(beam_count = 30)
 
 # Save the kinematics and RRS parameters
-steering_angle  = NG.steering_angle
-max_distance    = NG.max_velocity
+steering_angle  = BK.steering_angle
+max_distance    = BK.max_velocity
 total_lines     = RRS.beam_count
 
 if args.scenario == "beamng_random":

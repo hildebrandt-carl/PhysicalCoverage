@@ -17,6 +17,7 @@ sys.path.append(base_directory)
 from tqdm import tqdm
 from tabulate import tabulate
 from general.environment_configurations import RRSConfig
+from general.environment_configurations import WaymoKinematics
 from general.environment_configurations import BeamNGKinematics
 from general.environment_configurations import HighwayKinematics
 
@@ -26,6 +27,43 @@ from general.RRS_distributions import center_mid_distribution
 
 from preprocess_functions import processFileFeasibility
 from preprocess_functions import getFeasibleVectors
+
+def waymo_handler(new_steering_angle, new_max_distance, RRS_number, distribution):
+
+    # Get the new_total_lines
+    new_total_lines = int(RRS_number)
+
+    # All vectors are possible in beamng
+    test_vectors = [np.full(new_total_lines, new_max_distance)]
+    
+    # Create the set of feasible vectors
+    feasible_vectors = set()
+
+    # Get all the vectors and all feasible vectors
+    all_vectors, feasible_vectors = getFeasibleVectors(test_vectors, new_total_lines, distribution)
+
+    total_feasible_vectors = np.shape(feasible_vectors)[0]
+    total_all_vectors = np.shape(all_vectors)[0]
+    per = round((total_feasible_vectors/total_all_vectors) * 100, 4)
+
+    print("----------------------------------")
+    print("------RRS Number {} Complete------".format(new_total_lines))
+    print("----------------------------------")
+    print("Determining Percentage Feasible")
+    print("Total feasible vectors: {}".format(total_feasible_vectors))
+    print("Total possible vectors: {}".format(total_all_vectors))
+    print("Percentage of feasible space {}% ".format(per))
+
+    save_path = '../output/waymo/feasibility/processed/{}/'.format(args.distribution)
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+
+    save_location = save_path + "FeasibleVectors_b{}.npy".format(new_total_lines)
+    print("Saving to: {}".format(save_location))
+    print("\n\n")
+    np.save(save_location, feasible_vectors)
+    
+    return True
 
 def beamng_handler(new_steering_angle, new_max_distance, RRS_number, distribution):
 
@@ -46,7 +84,7 @@ def beamng_handler(new_steering_angle, new_max_distance, RRS_number, distributio
     per = round((total_feasible_vectors/total_all_vectors) * 100, 4)
 
     print("----------------------------------")
-    print("-----Beam Number {} Complete------".format(new_total_lines))
+    print("------RRS Number {} Complete------".format(new_total_lines))
     print("----------------------------------")
     print("Determining Percentage Feasible")
     print("Total feasible vectors: {}".format(total_feasible_vectors))
@@ -85,7 +123,7 @@ def highway_handler(file_name, new_steering_angle, new_max_distance, RRS_number,
     per = round((total_feasible_vectors/total_all_vectors) * 100, 4)
 
     print("----------------------------------")
-    print("-----Beam Number {} Complete------".format(new_total_lines))
+    print("------RRS Number {} Complete------".format(new_total_lines))
     print("----------------------------------")
     print("File name: {}".format(file_name))
     print("Determining Percentage Feasible")
@@ -113,7 +151,8 @@ args = parser.parse_args()
 
 # Create the configuration classes
 HK = HighwayKinematics()
-NG = BeamNGKinematics()
+BK = BeamNGKinematics()
+WK = WaymoKinematics()
 RRS = RRSConfig()
 
 # Save the kinematics and RRS parameters
@@ -121,8 +160,11 @@ if args.scenario == "highway":
     new_steering_angle  = HK.steering_angle
     new_max_distance    = HK.max_velocity
 elif args.scenario == "beamng":
-    new_steering_angle  = NG.steering_angle
-    new_max_distance    = NG.max_velocity
+    new_steering_angle  = BK.steering_angle
+    new_max_distance    = BK.max_velocity
+elif args.scenario == "waymo":
+    new_steering_angle  = WK.steering_angle
+    new_max_distance    = WK.max_velocity
 else:
     print("ERROR: Unknown scenario")
     exit()
@@ -176,6 +218,14 @@ if args.scenario == "beamng":
     jobs = []
     for RRS_number in range(1,11):
         jobs.append(pool.apply_async(beamng_handler, args=([new_steering_angle, new_max_distance, RRS_number, distribution])))
+
+
+# Handle waymo
+if args.scenario == "waymo":
+    # Call our function for each beam
+    jobs = []
+    for RRS_number in range(1,11):
+        jobs.append(pool.apply_async(waymo_handler, args=([new_steering_angle, new_max_distance, RRS_number, distribution])))
 
 
 # Get the results

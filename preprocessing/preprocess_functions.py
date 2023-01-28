@@ -116,7 +116,11 @@ def processFile(file_name, total_vectors, vector_size, new_steering_angle, new_m
 
         # Get the number of external vehicles
         if "External Vehicles: " in line:
-            vehicle_count = int(line[line.find(": ")+2:])
+            line = line.strip()
+            if line[line.find(": ")+2:] == "na":
+                vehicle_count = -1
+            else:
+                vehicle_count = int(line[line.find(": ")+2:])
 
         # Get each of the vectors
         if "Vector: " in line:

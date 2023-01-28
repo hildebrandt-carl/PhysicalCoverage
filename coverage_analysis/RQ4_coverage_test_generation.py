@@ -273,7 +273,7 @@ args = parser.parse_args()
 
 # Create the configuration classes
 HK = HighwayKinematics()
-NG = BeamNGKinematics()
+BK = BeamNGKinematics()
 RRS = RRSConfig()
 
 # Save the kinematics and RRS parameters
@@ -281,8 +281,8 @@ if args.scenario == "highway":
     new_steering_angle  = HK.steering_angle
     new_max_distance    = HK.max_velocity
 elif args.scenario == "beamng":
-    new_steering_angle  = NG.steering_angle
-    new_max_distance    = NG.max_velocity
+    new_steering_angle  = BK.steering_angle
+    new_max_distance    = BK.max_velocity
 else:
     print("ERROR: Unknown scenario")
     exit()
