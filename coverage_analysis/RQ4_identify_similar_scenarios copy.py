@@ -3,7 +3,7 @@ import glob
 import random
 import hashlib
 import argparse
-import itertools
+
 
 import multiprocessing
 
@@ -34,23 +34,6 @@ from matplotlib_venn import venn3, venn3_circles
 
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
-
-
-def compare_3_way(i1, i2, i3):
-    # Compute the number of duplicates over the middle
-    test_a = random_traces_hashes[i1]
-    test_b = random_traces_hashes[i2]
-    test_c = random_traces_hashes[i3]
-    abc = number_of_duplicates(test_a, test_b, test_c)
-
-    ab = number_of_duplicates(test_a, test_b) - abc
-    ac = number_of_duplicates(test_a, test_c) - abc
-    bc = number_of_duplicates(test_b, test_c) - abc
-
-    total_duplicates = (3 * (abc)) + (2 * (ab + ac + bc))
-
-    return total_duplicates, i1, i2, i3
-
 
 def number_of_duplicates(list_a, list_b, list_c=None):
     # Get all the keys and a count of them
@@ -196,8 +179,7 @@ for RRS_index in range(len(RRS_numbers)):
     global random_traces
     random_traces = np.load(random_trace_file)
 
-    # Holds the trace as a set of hashes  
-    global random_traces_hashes
+    # Holds the trace as a set of hashes    
     random_traces_hashes = []
 
     print("\n")
@@ -242,13 +224,103 @@ for RRS_index in range(len(RRS_numbers)):
     plt.figure("RRS {}".format(RRS_number))
     plt.imshow(comparison_map)
 
+
+    print("\n")
+    print("--------Similarities in scenarios---------")
+
+    highway_list = [0, 1, 3, 35, 69, 83, 94, 96, 110, 120, 128, 132, 157, 159, 163, 195, 197, 203, 266, 271]
+
+    # Create the subplot
+    fig, axs = plt.subplots(4, 5)
+
+    # Plot the pictures
+    for index in range(5):
+        scenario1 = highway_list[index]
+        scenario2 = highway_list[index + 5]
+        scenario3 = highway_list[index + 10]
+        scenario4 = highway_list[index + 15]
+
+        img_location1 = "{}/waymo/random_tests/physical_coverage/additional_data/scenario{:03d}/camera_data/camera00100.png".format(args.data_path, scenario1)
+        img_location2 = "{}/waymo/random_tests/physical_coverage/additional_data/scenario{:03d}/camera_data/camera00100.png".format(args.data_path, scenario2)
+        img_location3 = "{}/waymo/random_tests/physical_coverage/additional_data/scenario{:03d}/camera_data/camera00100.png".format(args.data_path, scenario3)
+        img_location4 = "{}/waymo/random_tests/physical_coverage/additional_data/scenario{:03d}/camera_data/camera00100.png".format(args.data_path, scenario4)
+
+        img1 = mpimg.imread(img_location1)
+        img2 = mpimg.imread(img_location2)
+        img3 = mpimg.imread(img_location3)
+        img4 = mpimg.imread(img_location4)
+
+        axs[0,index].imshow(img1)
+        axs[0,index].axis('off')
+
+        axs[1,index].imshow(img2)
+        axs[1,index].axis('off')
+
+        axs[2,index].imshow(img3)
+        axs[2,index].axis('off')
+
+        axs[3,index].imshow(img4)
+        axs[3,index].axis('off')
+
+        plt.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
+
+
+    # Holds the similarity count
+    similarity_count_highway = []
+
+    # Initialize the common keys as the first trace
+    common_keys = random_traces_hashes[highway_list[0]]
+
+    # Compute the similarity
+    for index in tqdm(highway_list):
+
+        # Get the index
+        trace = random_traces_hashes[index]
+
+        # Get the similarities
+        duplicate_count, common_keys = number_of_duplicates_with_common_list(trace, common_keys)
+
+        # Keep track of how similar everything is
+        similarity_count_highway.append(duplicate_count)
+
+
+    # Create a list of random indices
+    # Set the seed
+    random.seed(10)
+    random_list = random.sample(range(500), 20)
+
+    # Holds the similarity count
+    similarity_count_random = []
+
+    # Initialize the common keys as the first trace
+    common_keys = random_traces_hashes[random_list[0]]
+
+    # Compute the similarity
+    for index in tqdm(random_list):
+
+        # Get the index
+        trace = random_traces_hashes[index]
+
+        # Get the similarities
+        duplicate_count, common_keys = number_of_duplicates_with_common_list(trace, common_keys)
+
+        # Keep track of how similar everything is
+        similarity_count_random.append(duplicate_count)
+
+
+    plt.figure("Similarity RRS {}".format(RRS_number))
+    plt.plot(similarity_count_highway, c="C0")
+    plt.plot(similarity_count_random, c="C1")
+    plt.xlabel("Number of scenarios")
+    plt.ylabel("Number of common RRS")
+
+
     print("\n")
     print("---------------Venn Diagram---------------")
 
     print("Comparing highway scenarios")
     # highway
     highway_scenarios = [0, 1, 3, 35, 69, 83, 94, 96, 110, 120, 128, 132, 157, 159, 163, 195, 197, 203, 266, 271]
-    highway_scenarios = [132, 157, 197]
 
     test_a = random_traces_hashes[highway_scenarios[0]]
     test_b = random_traces_hashes[highway_scenarios[1]]
@@ -270,7 +342,7 @@ for RRS_index in range(len(RRS_numbers)):
     print("Comparing random scenarios")
     # Set the seed
     random.seed(10)
-    random_scenarios = random.sample(range(len(random_traces_hashes)), 3)
+    random_scenarios = random.sample(range(500), 3)
 
     test_a = random_traces_hashes[random_scenarios[0]]
     test_b = random_traces_hashes[random_scenarios[1]]
@@ -290,143 +362,100 @@ for RRS_index in range(len(RRS_numbers)):
     plt.title("Random Scenarios RRS Similarities")
 
     print("\n")
-    print("---------Find best/worst 3 way-----------")
+    print("--------------------TSNE-------------------")
 
-    # Create all permutations of the test indices
-    indices = np.arange(len(random_traces_hashes))
-    perms = itertools.combinations(indices, r=3)
+    labels = []
+    filename = '/mnt/extradrive3/PhysicalCoverageData/waymo/random_tests/physical_coverage/labels.txt'
+    with open(filename) as file:
+        for line in file:
+            labels.append(int(line.rstrip()))
+    labels = np.array(labels)
 
-    total_processors = int(120)
-    pool =  multiprocessing.Pool(processes=total_processors)
+    # Set the data
+    x = comparison_map
+    y = labels
 
-    # Call our function total_test_suites times
-    jobs = []
-    for p in tqdm(perms):
-        jobs.append(pool.apply_async(compare_3_way, args=([p[0], p[1], p[2]])))
+    print("Dimenstion before tSNE-2D: {}".format(np.shape(x)))
+    tsne = make_pipeline(StandardScaler(), TSNE(n_components=2, init='pca', random_state=0))
+    tsne.fit(x, y)
+    x_tsne_2d = tsne.fit_transform(x)
+    print('Dimensions after tSNE-2D: {}'.format(x_tsne_2d.shape))
 
-    # Get the results
-    results = []
-    for job in tqdm(jobs):
-        results.append(job.get())
 
-    # Close the pool
-    pool.close()
 
-    # Look at the results
-    best_indices = np.full((5,3), -1)
-    worst_indices = np.full((5,3), -1)
-    max_duplicates = np.full(5, -np.inf)
-    min_duplicates = np.full(5, np.inf)
+    group1 = []
+    group2 = []
+    group3 = []
+    selected_colors = []
+    for data_index, data in enumerate(zip(x_tsne_2d[:, 0], x_tsne_2d[:, 1])):
+        x_data, y_data = data
+        if y_data > 100:
+            group1.append(data_index)
+            selected_colors.append(1)
+        elif y_data > 32:
+            group2.append(data_index)
+            selected_colors.append(2)
+        elif (x_data < -35) and (y_data < -10):
+            group3.append(data_index)
+            selected_colors.append(3)
+        else:
+            selected_colors.append(0)
 
-    for r in results:
-        num_dups = r[0]
-        if num_dups > max_duplicates[0]:
-            # Adding
-            max_duplicates      = np.roll(max_duplicates, -1)
-            best_indices        = np.roll(best_indices, -1, axis=0)
-            max_duplicates[-1]  = num_dups
-            best_indices[-1]    = np.array([r[1], r[2], r[3]])
-            # Sorting
-            sort_indices        = np.argsort(max_duplicates)
-            max_duplicates      = max_duplicates[sort_indices]
-            best_indices        = best_indices[sort_indices]
-        if num_dups < min_duplicates[-1]:
-            # Adding
-            min_duplicates      = np.roll(min_duplicates, 1)
-            worst_indices       = np.roll(worst_indices, 1, axis=0)
-            min_duplicates[0]  = num_dups
-            worst_indices[0]   = np.array([r[1], r[2], r[3]])
-            # Sorting
-            sort_indices        = np.argsort(min_duplicates)
-            min_duplicates      = min_duplicates[sort_indices]
-            worst_indices       = worst_indices[sort_indices]
+    print("here!!!!!")
+    print("Selected color shape")
+    print(np.shape(selected_colors))
+    print("y shape")
+    print(np.shape(y))
+    print("Selected colors")
+    print(selected_colors)
+    print("y")
+    print(y)
+    print("---------")
 
-    
-    print("Best number of duplicates: {}".format(max_duplicates))
-    print("Best Indices:\n{}\n\n".format(best_indices))
+    print("Group 1: C1")
+    print(group1)
+    print("Group 2: C2")
+    print(group2)
+    print("Group 3: C3")
+    print(group3)
 
-    print("Worst number of duplicates: {}".format(min_duplicates))
-    print("Worst Indices:\n{}\n\n".format(worst_indices))
+    plt.figure("tSNE-2D RSS {}".format(RRS_number))
+    plt.title('tSNE-2D')
+    plt.scatter(x_tsne_2d[:, 0], x_tsne_2d[:, 1], c=y, s=30, cmap='Set1')
 
-    for i in range(len(best_indices)):
+    plt.figure("tSNE-2D no color RSS {}".format(RRS_number))
+    plt.title('tSNE-2D no labels')
+    plt.scatter(x_tsne_2d[:, 0], x_tsne_2d[:, 1], c="C0", s=30, cmap='Set1')
 
-        bi = best_indices[i]
+    plt.figure("tSNE-2D with grouping RRS {}".format(RRS_number))
+    plt.title('tSNE-2D no labels')
+    plt.scatter(x_tsne_2d[:, 0], x_tsne_2d[:, 1], c=np.array(selected_colors), s=30, cmap='Set1')
 
-        test_a = random_traces_hashes[bi[0]]
-        test_b = random_traces_hashes[bi[1]]
-        test_c = random_traces_hashes[bi[2]]
-        abc = number_of_duplicates(test_a, test_b, test_c)
+    print("\n")
+    print("-------Finding best K for KMeans----------")
+    # Finding best k
+    sse = {}
+    for k in tqdm(range(1, 25)):
+        kmeans = KMeans(n_clusters=k, max_iter=1000, n_init='auto')
+        clusters = kmeans.fit_predict(comparison_map)
+        sse[k] = kmeans.inertia_ # Inertia: Sum of distances of samples to their closest cluster center
+    plt.figure("RRS {} best k".format(RRS_number))
+    plt.plot(list(sse.keys()), list(sse.values()))
+    plt.xlabel("Number of cluster")
+    plt.ylabel("SSE")
 
-        ab = number_of_duplicates(test_a, test_b) - abc
-        ac = number_of_duplicates(test_a, test_c) - abc
-        bc = number_of_duplicates(test_b, test_c) - abc
+    print("\n")
+    print("--------------Applying KMeans-------------")
 
-        a = len(test_a) - abc - ab - ac
-        b = len(test_b) - abc - ab - bc
-        c = len(test_c) - abc - ac - bc
+    kmeans = KMeans(n_clusters=5, random_state=0, n_init='auto')
+    clusters = kmeans.fit_predict(comparison_map)
+    # Get the closest points to each cluster
+    closest_n = 5
+    distances = pairwise_distances(kmeans.cluster_centers_, comparison_map, metric='euclidean')
+    ind = [np.argpartition(i, closest_n)[:closest_n] for i in distances]
 
-        plt.figure("{}th Best - RRS {}".format(len(best_indices) - i, RRS_number))
-        v = venn3(subsets=(a,b,ab,c,ac,bc,abc))
-        plt.title("{}th Best RRS Similarities".format(len(best_indices) - i))
+    for cluster_id in range(np.shape(ind)[0]):
+        print("Closest indices to cluster {}: {}".format(cluster_id, ind[cluster_id].tolist()))
 
-    for i in range(len(best_indices)):
-
-        wi = worst_indices[i]
-
-        test_a = random_traces_hashes[wi[0]]
-        test_b = random_traces_hashes[wi[1]]
-        test_c = random_traces_hashes[wi[2]]
-        abc = number_of_duplicates(test_a, test_b, test_c)
-
-        ab = number_of_duplicates(test_a, test_b) - abc
-        ac = number_of_duplicates(test_a, test_c) - abc
-        bc = number_of_duplicates(test_b, test_c) - abc
-
-        a = len(test_a) - abc - ab - ac
-        b = len(test_b) - abc - ab - bc
-        c = len(test_c) - abc - ac - bc
-
-        plt.figure("{}th Worst - RRS {}".format(i + 1, RRS_number))
-        v = venn3(subsets=(a,b,ab,c,ac,bc,abc))
-        plt.title("{}th Worst RRS Similarities".format(i + 1))
 
 plt.show()
-
-
-# Without the funny metric
-
-# Best number of duplicates: [197. 197. 197. 197. 198.]
-# Best Indices:
-# [[ 11, 87, 158]
-#  [ 11, 87, 187]
-#  [ 11, 87, 338]
-#  [ 11, 158, 187]
-#  [ 11, 87, 281]]
-
-
-# Worst number of duplicates: [0. 0. 0. 0. 0.]
-# Worst Indices:
-# [[ 0, 1, 61]
-#  [ 0, 1, 56]
-#  [ 0, 1, 41]
-#  [ 0, 1, 30]
-#  [ 0, 1, 12]]
-
-# Adding funny metric
-
-# Best number of duplicates: [594. 594. 594. 595. 596.]
-# Best Indices:
-# [[ 11  87 281]
-#  [ 11  87 488]
-#  [ 87 281 488]
-#  [ 11 206 281]
-#  [ 11 281 488]]
-
-
-# Worst number of duplicates: [0. 0. 0. 0. 0.]
-# Worst Indices:
-# [[  0  12 144]
-#  [  0  12 133]
-#  [  0  12  96]
-#  [  0  12  84]
-#  [  0  12  61]]

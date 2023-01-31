@@ -32,7 +32,7 @@ def preprocessing_code_coverage_on_random_test_suite(num_cores):
     global lines_covered_per_test
     global branches_covered_per_test
     global code_coverage_file_names
-    global code_coverage_denomiator
+    global code_coverage_denominator
     global branch_coverage_denominator
 
     # Get the denominators
@@ -55,7 +55,7 @@ def preprocessing_code_coverage_on_random_test_suite(num_cores):
     # print("all_branches_set: {}".format(all_branches_set))
 
     # Get the denominator
-    code_coverage_denomiator    = len(all_lines_set)
+    code_coverage_denominator    = len(all_lines_set)
     branch_coverage_denominator = len(all_branches_set) 
 
     # This computes the line and branch numbers per file and stores them in the arrays
@@ -173,7 +173,7 @@ def get_line_branch_coverage(index):
 def random_test_suite_code_coverage():
     global lines_covered_per_test
     global branches_covered_per_test
-    global code_coverage_denomiator
+    global code_coverage_denominator
     global branch_coverage_denominator
 
     # Create the output
@@ -200,7 +200,7 @@ def random_test_suite_code_coverage():
         current_branch_coverage = current_branch_coverage | branch_coverage_set
 
         # Compute coverage
-        code_coverage_output[i]     = (float(len(current_code_coverage)) / code_coverage_denomiator) * 100
+        code_coverage_output[i]     = (float(len(current_code_coverage)) / code_coverage_denominator) * 100
         branch_coverage_output[i]   = (float(len(current_branch_coverage)) / branch_coverage_denominator) * 100
 
     return code_coverage_output, branch_coverage_output
@@ -446,10 +446,10 @@ global branches_covered_per_test
 lines_covered_per_test      = np.full(args.number_of_tests, None, dtype="object")
 branches_covered_per_test   = np.full(args.number_of_tests, None, dtype="object")
 
-# Holds the denomiator for the code and branch coverage
-global code_coverage_denomiator
+# Holds the denominator for the code and branch coverage
+global code_coverage_denominator
 global branch_coverage_denominator
-code_coverage_denomiator = 0
+code_coverage_denominator = 0
 branch_coverage_denominator = 0
 
 # Select args.number_of_tests total code coverage files
@@ -481,7 +481,7 @@ stall_file_names = order_files_by_beam_number(stall_file_names, RRS_numbers)
 feasible_file_names = order_files_by_beam_number(feasible_file_names, RRS_numbers)
 
 # Create the output figure
-plt.figure(1)
+plt.figure(1, figsize=(8,5))
 
 print("Done")
 
@@ -606,10 +606,10 @@ improved_lower_bound_coverage   = np.min(improved_coverage_percentage, axis=0)
 # Create the coverage plot
 x = np.arange(0, len(naive_average_coverage))
 # Plot the results
-plt.fill_between(x, naive_lower_bound_coverage, naive_upper_bound_coverage, alpha=0.2, color="black") #this is the shaded error
+plt.fill_between(x, naive_lower_bound_coverage, naive_upper_bound_coverage, alpha=0.2, color="C0") #this is the shaded error
 plt.plot(x, naive_average_coverage, c="C0", label="Naive Traj Cov", linestyle="dashed") #this is the line itself
 if args.scenario == "beamng":
-    plt.fill_between(x, improved_lower_bound_coverage, improved_upper_bound_coverage, alpha=0.2, color="black") #this is the shaded error
+    plt.fill_between(x, improved_lower_bound_coverage, improved_upper_bound_coverage, alpha=0.2, color="C0") #this is the shaded error
     plt.plot(x, improved_average_coverage, c="C0", label="Improved Traj Cov", linestyle="dotted") #this is the line itself
 
 print("Done")
@@ -621,9 +621,17 @@ print("Done")
 print("----------------------------------")
 print("----Computing PhysCov Coverage----")
 print("----------------------------------")
+# Used to control the colors
+color_counter = 1
 
 # For each of the different RRS_numbers
 for i in range(len(RRS_numbers)):
+
+    # Only do odd numbers
+    if i % 2 != 0:
+        continue
+
+    # Processing RRS
     print("Processing RRS: {}".format(RRS_numbers[i]))
 
     # Get the beam number and files we are currently considering
@@ -673,11 +681,9 @@ for i in range(len(RRS_numbers)):
     x = np.arange(0, np.shape(computed_coverage)[1])
 
     # Plot the results
-    plt.fill_between(x, lower_bound, upper_bound, alpha=0.2, color="C{}".format(i)) #this is the shaded error
-    plt.plot(x, average_coverage, c="C{}".format(i), label="$\Psi_{" + str(RRS_number) + "}$") #this is the line itself
-
-
-
+    plt.fill_between(x, lower_bound, upper_bound, alpha=0.2, color="C{}".format(color_counter)) #this is the shaded error
+    plt.plot(x, average_coverage, c="C{}".format(color_counter), label="$\Psi_{" + str(RRS_number) + "}$") #this is the line itself
+    color_counter += 1
 
 ##################################################################################################################
 ##########################################Generate Failure Data###################################################
@@ -737,7 +743,8 @@ ax1.set_xlabel("Number of tests")
 ax1.set_ylabel("Coverage (%)")
 ax2.set_ylabel("Failures (%)")
 ax2.set_yticks(np.arange(0, 100.01, step=5))
-ax1.legend(ncol=6)
-ax2.legend(loc="lower center", ncol=3)
+# ax1.legend(ncol=3)
+# ax2.legend(loc="lower center", ncol=3)
 
+plt.tight_layout()
 plt.show()
