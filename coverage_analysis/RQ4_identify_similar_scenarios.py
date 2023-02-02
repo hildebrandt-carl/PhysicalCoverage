@@ -1,5 +1,6 @@
 import sys
 import glob
+import math
 import random
 import hashlib
 import argparse
@@ -108,12 +109,42 @@ def number_of_duplicates_with_common_list(list_a, list_b):
     return num_of_duplicates, common_list
 
 
+def plot_venn(indices, fig_name, fig_title):
+    
+    print("Selected scenarios: {}".format(indices))
+
+    test_a = random_traces_hashes[indices[0]]
+    test_b = random_traces_hashes[indices[1]]
+    test_c = random_traces_hashes[indices[2]]
+    abc = number_of_duplicates(test_a, test_b, test_c)
+
+    ab = number_of_duplicates(test_a, test_b) - abc
+    ac = number_of_duplicates(test_a, test_c) - abc
+    bc = number_of_duplicates(test_b, test_c) - abc
+
+    a = len(test_a) - abc - ab - ac
+    b = len(test_b) - abc - ab - bc
+    c = len(test_c) - abc - ac - bc
+
+    plt.figure("{}".format(fig_name))
+    v = venn3(subsets=(a,b,ab,c,ac,bc,abc))
+    plt.title("{}".format(fig_title))
+
+    for text in v.set_labels:
+        text.set_fontsize(20)
+    for x in range(len(v.subset_labels)):
+        if v.subset_labels[x] is not None:
+            v.subset_labels[x].set_fontsize(20)
+
+    return
+
 # Get the input arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",          help="The location and name of the datafolder")
 parser.add_argument('--number_of_tests',    type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--distribution',       type=str, default="",                                               help="linear/center_close/center_mid")
 parser.add_argument('--scenario',           type=str, default="",                                               help="waymo")
+parser.add_argument('--cores',              type=int, default=4,                                                help="number of available cores")
 args = parser.parse_args()
 
 # Create the configuration classes
@@ -169,7 +200,6 @@ RRS_numbers = sorted(RRS_numbers)
 # Sort the data based on the beam number
 random_trace_file_names         = order_files_by_beam_number(random_trace_file_names, RRS_numbers)
 
-
 # For each of the different beams
 for RRS_index in range(len(RRS_numbers)):
 
@@ -220,91 +250,40 @@ for RRS_index in range(len(RRS_numbers)):
 
 
     print("\n")
-    print("---------Creating Comparison Map----------")
+    print("-------Same vs Distinct Scenarios---------")
 
-    comparison_map = np.zeros((np.shape(random_traces)[0], np.shape(random_traces)[0]))
-
-    # For each of the tests
-    for a in tqdm(range(np.shape(random_traces)[0])):
-        for b in range(np.shape(random_traces)[0]):
-            
-            # Get test A ad B
-            test_a = random_traces_hashes[a]
-            test_b = random_traces_hashes[b]
-
-            # Count duplicates
-            dup_count = number_of_duplicates(test_a, test_b)
-
-            # Save to a comparison map
-            comparison_map[a, b] = dup_count
-
-    # Plot the map
-    plt.figure("RRS {}".format(RRS_number))
-    plt.imshow(comparison_map)
-
-    print("\n")
-    print("---------------Venn Diagram---------------")
-
-    print("Comparing highway scenarios")
-    # highway
-    highway_scenarios = [0, 1, 3, 35, 69, 83, 94, 96, 110, 120, 128, 132, 157, 159, 163, 195, 197, 203, 266, 271]
+    print("Comparing 3 highway scenarios highway")
     highway_scenarios = [132, 157, 197]
+    plot_venn(highway_scenarios, "RRS {} - Same Scenarios Venn".format(RRS_number), "Same Scenarios")
 
-    test_a = random_traces_hashes[highway_scenarios[0]]
-    test_b = random_traces_hashes[highway_scenarios[1]]
-    test_c = random_traces_hashes[highway_scenarios[2]]
-    abc = number_of_duplicates(test_a, test_b, test_c)
+    print("Comparing 3 highway scenarios highway")
+    random_scenarios = [203, 420, 141]
+    plot_venn(random_scenarios, "RRS {} - Distinct Scenarios Venn".format(RRS_number), "Distinct Scenarios")
 
-    ab = number_of_duplicates(test_a, test_b) - abc
-    ac = number_of_duplicates(test_a, test_c) - abc
-    bc = number_of_duplicates(test_b, test_c) - abc
-
-    a = len(test_a) - abc - ab - ac
-    b = len(test_b) - abc - ab - bc
-    c = len(test_c) - abc - ac - bc
-
-    plt.figure("RRS {} Highway Ven".format(RRS_number))
-    v = venn3(subsets=(a,b,ab,c,ac,bc,abc))
-    plt.title("Highway Scenarios RRS Similarities")
-
-    print("Comparing random scenarios")
-    # Set the seed
-    random.seed(10)
-    random_scenarios = random.sample(range(len(random_traces_hashes)), 3)
-
-    test_a = random_traces_hashes[random_scenarios[0]]
-    test_b = random_traces_hashes[random_scenarios[1]]
-    test_c = random_traces_hashes[random_scenarios[2]]
-    abc = number_of_duplicates(test_a, test_b, test_c)
-
-    ab = number_of_duplicates(test_a, test_b) - abc
-    ac = number_of_duplicates(test_a, test_c) - abc
-    bc = number_of_duplicates(test_b, test_c) - abc
-
-    a = len(test_a) - abc - ab - ac
-    b = len(test_b) - abc - ab - bc
-    c = len(test_c) - abc - ac - bc
-
-    plt.figure("RRS {} Random Ven".format(RRS_number))
-    v = venn3(subsets=(a,b,ab,c,ac,bc,abc))
-    plt.title("Random Scenarios RRS Similarities")
+    print("Done")
 
     print("\n")
-    print("---------Find best/worst 3 way-----------")
+    print("----------Same vs Distinct RRS------------")
 
     # Create all permutations of the test indices
-    indices = np.arange(len(random_traces_hashes))
+    total_traces = len(random_traces_hashes)
+    indices = np.arange(total_traces)
     perms = itertools.combinations(indices, r=3)
 
-    total_processors = int(120)
+    total_processors = int(args.cores)
     pool =  multiprocessing.Pool(processes=total_processors)
 
+    number_combinations = math.comb(total_traces, 3)
+    print("Computing all combinations. {} choose 3: {}".format(total_traces, number_combinations))
+
     # Call our function total_test_suites times
+    print("Creating all the combination calculations")
     jobs = []
-    for p in tqdm(perms):
+    for p in tqdm(perms, total=number_combinations):
         jobs.append(pool.apply_async(compare_3_way, args=([p[0], p[1], p[2]])))
 
     # Get the results
+    print("Getting results")
     results = []
     for job in tqdm(jobs):
         results.append(job.get())
@@ -313,120 +292,48 @@ for RRS_index in range(len(RRS_numbers)):
     pool.close()
 
     # Look at the results
-    best_indices = np.full((5,3), -1)
-    worst_indices = np.full((5,3), -1)
+    most_similar_indices = np.full((5,3), -1)
+    least_similar_indices = np.full((5,3), -1)
     max_duplicates = np.full(5, -np.inf)
     min_duplicates = np.full(5, np.inf)
 
+    print("Finding similar and distinct")
     for r in results:
         num_dups = r[0]
         if num_dups > max_duplicates[0]:
             # Adding
-            max_duplicates      = np.roll(max_duplicates, -1)
-            best_indices        = np.roll(best_indices, -1, axis=0)
-            max_duplicates[-1]  = num_dups
-            best_indices[-1]    = np.array([r[1], r[2], r[3]])
+            max_duplicates              = np.roll(max_duplicates, -1)
+            most_similar_indices        = np.roll(most_similar_indices, -1, axis=0)
+            max_duplicates[-1]          = num_dups
+            most_similar_indices[-1]    = np.array([r[1], r[2], r[3]])
             # Sorting
-            sort_indices        = np.argsort(max_duplicates)
-            max_duplicates      = max_duplicates[sort_indices]
-            best_indices        = best_indices[sort_indices]
+            sort_indices                = np.argsort(max_duplicates)
+            max_duplicates              = max_duplicates[sort_indices]
+            most_similar_indices        = most_similar_indices[sort_indices]
         if num_dups < min_duplicates[-1]:
             # Adding
-            min_duplicates      = np.roll(min_duplicates, 1)
-            worst_indices       = np.roll(worst_indices, 1, axis=0)
-            min_duplicates[0]  = num_dups
-            worst_indices[0]   = np.array([r[1], r[2], r[3]])
+            min_duplicates              = np.roll(min_duplicates, 1)
+            least_similar_indices       = np.roll(least_similar_indices, 1, axis=0)
+            min_duplicates[0]           = num_dups
+            least_similar_indices[0]    = np.array([r[1], r[2], r[3]])
             # Sorting
-            sort_indices        = np.argsort(min_duplicates)
-            min_duplicates      = min_duplicates[sort_indices]
-            worst_indices       = worst_indices[sort_indices]
+            sort_indices                = np.argsort(min_duplicates)
+            min_duplicates              = min_duplicates[sort_indices]
+            least_similar_indices       = least_similar_indices[sort_indices]
 
-    
-    print("Best number of duplicates: {}".format(max_duplicates))
-    print("Best Indices:\n{}\n\n".format(best_indices))
+    print("Most similarities: {}".format(max_duplicates))
+    print("Indices:\n{}\n\n".format(most_similar_indices))
 
-    print("Worst number of duplicates: {}".format(min_duplicates))
-    print("Worst Indices:\n{}\n\n".format(worst_indices))
+    print("Least similarities: {}".format(min_duplicates))
+    print("Indices:\n{}\n\n".format(least_similar_indices))
 
-    for i in range(len(best_indices)):
+    print("Comparing Similar RRS")
+    highway_scenarios = most_similar_indices[0]
+    plot_venn(highway_scenarios, "RRS {} - Same RRS Venn".format(RRS_number), "Same RRS")
 
-        bi = best_indices[i]
+    print("Comparing Distinct RRS")
+    random_scenarios = least_similar_indices[0]
+    plot_venn(random_scenarios, "RRS {} - Distinct RRS Venn".format(RRS_number), "Distinct RRS")
 
-        test_a = random_traces_hashes[bi[0]]
-        test_b = random_traces_hashes[bi[1]]
-        test_c = random_traces_hashes[bi[2]]
-        abc = number_of_duplicates(test_a, test_b, test_c)
-
-        ab = number_of_duplicates(test_a, test_b) - abc
-        ac = number_of_duplicates(test_a, test_c) - abc
-        bc = number_of_duplicates(test_b, test_c) - abc
-
-        a = len(test_a) - abc - ab - ac
-        b = len(test_b) - abc - ab - bc
-        c = len(test_c) - abc - ac - bc
-
-        plt.figure("{}th Best - RRS {}".format(len(best_indices) - i, RRS_number))
-        v = venn3(subsets=(a,b,ab,c,ac,bc,abc))
-        plt.title("{}th Best RRS Similarities".format(len(best_indices) - i))
-
-    for i in range(len(best_indices)):
-
-        wi = worst_indices[i]
-
-        test_a = random_traces_hashes[wi[0]]
-        test_b = random_traces_hashes[wi[1]]
-        test_c = random_traces_hashes[wi[2]]
-        abc = number_of_duplicates(test_a, test_b, test_c)
-
-        ab = number_of_duplicates(test_a, test_b) - abc
-        ac = number_of_duplicates(test_a, test_c) - abc
-        bc = number_of_duplicates(test_b, test_c) - abc
-
-        a = len(test_a) - abc - ab - ac
-        b = len(test_b) - abc - ab - bc
-        c = len(test_c) - abc - ac - bc
-
-        plt.figure("{}th Worst - RRS {}".format(i + 1, RRS_number))
-        v = venn3(subsets=(a,b,ab,c,ac,bc,abc))
-        plt.title("{}th Worst RRS Similarities".format(i + 1))
-
+    print("Done")
 plt.show()
-
-
-# Without the funny metric
-
-# Best number of duplicates: [197. 197. 197. 197. 198.]
-# Best Indices:
-# [[ 11, 87, 158]
-#  [ 11, 87, 187]
-#  [ 11, 87, 338]
-#  [ 11, 158, 187]
-#  [ 11, 87, 281]]
-
-
-# Worst number of duplicates: [0. 0. 0. 0. 0.]
-# Worst Indices:
-# [[ 0, 1, 61]
-#  [ 0, 1, 56]
-#  [ 0, 1, 41]
-#  [ 0, 1, 30]
-#  [ 0, 1, 12]]
-
-# Adding funny metric
-
-# Best number of duplicates: [594. 594. 594. 595. 596.]
-# Best Indices:
-# [[ 11  87 281]
-#  [ 11  87 488]
-#  [ 87 281 488]
-#  [ 11 206 281]
-#  [ 11 281 488]]
-
-
-# Worst number of duplicates: [0. 0. 0. 0. 0.]
-# Worst Indices:
-# [[  0  12 144]
-#  [  0  12 133]
-#  [  0  12  96]
-#  [  0  12  84]
-#  [  0  12  61]]
