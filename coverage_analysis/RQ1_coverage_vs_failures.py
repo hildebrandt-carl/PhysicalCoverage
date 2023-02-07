@@ -627,10 +627,6 @@ color_counter = 1
 # For each of the different RRS_numbers
 for i in range(len(RRS_numbers)):
 
-    # Only do odd numbers
-    if i % 2 != 0:
-        continue
-
     # Processing RRS
     print("Processing RRS: {}".format(RRS_numbers[i]))
 
@@ -743,8 +739,8 @@ ax1.set_xlabel("Number of tests")
 ax1.set_ylabel("Coverage (%)")
 ax2.set_ylabel("Failures (%)")
 ax2.set_yticks(np.arange(0, 100.01, step=5))
-# ax1.legend(ncol=3)
-# ax2.legend(loc="lower center", ncol=3)
+# ax1.legend(ncol=5)
+# ax2.legend(loc="lower center", ncol=5)
 
 plt.tight_layout()
 plt.show()

@@ -28,6 +28,7 @@ for index in args.index.split(', '):
 
     # Create the subplot
     fig, axs = plt.subplots(2, 5, figsize=(19, 4))
+    fig.canvas.manager.set_window_title('Camera from Index: {}'.format(index)) 
 
     # Select pictures from a wide range of views
     selected_pictures =  np.linspace(0, len(all_pictures)-1, 10, dtype=int)
@@ -43,7 +44,6 @@ for index in args.index.split(', '):
             axs[1, j-5].imshow(img)
             axs[1, j-5].axis('off')
         
-        plt.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
-
+        plt.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)    
 
 plt.show()
