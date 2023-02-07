@@ -25,7 +25,7 @@ def convert_file_to_raw_vector(filename, total_lines, steering_angle, max_distan
     scenario_name = filename[filename.rfind("/")+1:filename.rfind(".")]
 
     # Create the additional info save folder
-    additional_info_save_folder = '../output/additional_data/{}'.format(scenario_name)
+    additional_info_save_folder = '../../output/additional_data/{}'.format(scenario_name)
     if not os.path.exists("{}".format(additional_info_save_folder)):
         os.makedirs("{}".format(additional_info_save_folder))
 
@@ -39,7 +39,7 @@ def convert_file_to_raw_vector(filename, total_lines, steering_angle, max_distan
         os.makedirs("{}/point_cloud_data/RRS".format(additional_info_save_folder))
 
     # Create the output data
-    save_folder = "../output/waymo/random_tests/physical_coverage/raw/"
+    save_folder = "../../output/waymo/random_tests/physical_coverage/raw/"
     if not os.path.exists("{}".format(save_folder)):
         os.makedirs("{}".format(save_folder))
 

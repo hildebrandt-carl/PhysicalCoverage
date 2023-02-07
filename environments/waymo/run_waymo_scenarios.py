@@ -43,8 +43,8 @@ if len(all_files) <= 0:
     exit()
 
 # Create the output directory if it doesn't exists
-if not os.path.exists('../output/'):
-    os.makedirs('../output/')
+if not os.path.exists('../../output/'):
+    os.makedirs('../../output/')
 
 # Create a list of processors
 total_processors = int(args.cores)

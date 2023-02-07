@@ -251,15 +251,15 @@ save_name += ".npy"
    
 save_path = ""
 if args.scenario == "beamng_random":
-    save_path = "../output/beamng/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
+    save_path = "../../output/beamng/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 elif args.scenario == "beamng_generated":
-    save_path = "../output/beamng/generated_tests/{}/physical_coverage/processed/{}/".format(args.distribution, args.total_samples)
+    save_path = "../../output/beamng/generated_tests/{}/physical_coverage/processed/{}/".format(args.distribution, args.total_samples)
 elif args.scenario == "highway_random":
-    save_path = "../output/highway/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
+    save_path = "../../output/highway/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 elif args.scenario == "highway_generated":
-    save_path = "../output/highway/generated_tests/{}/physical_coverage/processed/{}/".format(args.distribution, args.total_samples)
+    save_path = "../../output/highway/generated_tests/{}/physical_coverage/processed/{}/".format(args.distribution, args.total_samples)
 elif args.scenario == "waymo_random":
-    save_path = "../output/waymo/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
+    save_path = "../../output/waymo/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 else:
     print("Error 4")
     exit()

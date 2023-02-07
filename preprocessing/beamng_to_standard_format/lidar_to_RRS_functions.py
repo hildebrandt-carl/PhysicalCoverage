@@ -357,7 +357,7 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
 
                 # plot the graph
                 plt.pause(0.1)
-                plt.savefig('../output/file' + str(file_number) + 'frame' + str(frame_counter) + '.png')
+                plt.savefig('../../output/file' + str(file_number) + 'frame' + str(frame_counter) + '.png')
 
                 # Plot the environment figures
                 plt = create_lidar_plot(environment_data, "Environment Zoomed", [-15, 45], [-30, 30], 3)

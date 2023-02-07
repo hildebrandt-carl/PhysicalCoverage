@@ -402,12 +402,12 @@ if "highway" in args.scenario:
 
 all_files = None
 if args.scenario == "beamng_random":
-    save_path = "../output/beamng/random_tests/code_coverage/processed/{}/".format(args.total_samples)
+    save_path = "../../output/beamng/random_tests/code_coverage/processed/{}/".format(args.total_samples)
 elif args.scenario == "beamng_generated":
     print("To be implemented")
     exit()
 elif args.scenario == "highway_random":
-    save_path = "../output/highway/random_tests/code_coverage/processed/{}/".format(args.total_samples)
+    save_path = "../../output/highway/random_tests/code_coverage/processed/{}/".format(args.total_samples)
 elif args.scenario == "highway_generated":
     print("To be implemented")
     exit()

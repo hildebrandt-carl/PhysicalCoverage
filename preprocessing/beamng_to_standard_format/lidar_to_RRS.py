@@ -38,11 +38,11 @@ total_lines     = RRS.beam_count
 
 if args.scenario == "beamng_random":
     raw_file_location       = "{}/beamng/random_tests/physical_coverage/lidar/".format(args.data_path)
-    output_file_location    = "../output/beamng/random_tests/physical_coverage/raw/"
+    output_file_location    = "../../../output/beamng/random_tests/physical_coverage/raw/"
     file_names = glob.glob(raw_file_location + "/*/*.csv")
 elif args.scenario == "beamng_generated":
     raw_file_location       = "{}/beamng/generated_tests/{}/physical_coverage/lidar/".format(args.data_path, args.distribution)
-    output_file_location    = "../output/beamng/generated_tests/{}/physical_coverage/raw/".format(args.distribution)
+    output_file_location    = "../../../output/beamng/generated_tests/{}/physical_coverage/raw/".format(args.distribution)
     file_names = glob.glob(raw_file_location + "/*/*.csv")
 else:
     print("Error: Unknown Scenario")

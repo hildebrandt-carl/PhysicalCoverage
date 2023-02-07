@@ -39,8 +39,8 @@ steering_angle  = HK.steering_angle
 max_distance    = HK.max_velocity
 
 # Create the output directory if it doesn't exists
-if not os.path.exists('../output/highway/feasibility/raw'):
-    os.makedirs('../output/highway/feasibility/raw')
+if not os.path.exists('../../output/highway/feasibility/raw'):
+    os.makedirs('../../output/highway/feasibility/raw')
 
 # Declare how accurate you want it
 total_headings = 100
@@ -53,7 +53,7 @@ max_heading = HK.steering_angle # Degrees
 environment_vehicles = 0
 
 # Save the output file
-text_file = open("../output/highway/feasibility/raw/feasible_vectors.txt", "w")
+text_file = open("../../output/highway/feasibility/raw/feasible_vectors.txt", "w")
 text_file.write("Name: %s\n" % "Feasible vector generation")
 e = datetime.datetime.now()
 text_file.write("Date: %s/%s/%s\n" % (e.day, e.month, e.year))

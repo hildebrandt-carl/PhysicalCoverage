@@ -47,8 +47,8 @@ max_distance    = HK.max_velocity
 obstacle_size = 1
 
 # Create the output directory if it doesn't exists
-physical_coverage_path = '../output/random_tests/physical_coverage/raw/{}_external_vehicles'.format(args.environment_vehicles)
-code_coverage_path = '../output/random_tests/code_coverage/raw/{}_external_vehicles'.format(args.environment_vehicles)
+physical_coverage_path = '../../output/random_tests/physical_coverage/raw/{}_external_vehicles'.format(args.environment_vehicles)
+code_coverage_path = '../../output/random_tests/code_coverage/raw/{}_external_vehicles'.format(args.environment_vehicles)
 if not os.path.exists(physical_coverage_path):
     os.makedirs(physical_coverage_path)
 if not os.path.exists(code_coverage_path):
