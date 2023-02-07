@@ -1,0 +1,71 @@
+import os
+import sys
+import mmap
+import random
+import argparse
+
+from time import sleep
+
+import numpy as np
+
+from beamngpy import BeamNGpy
+from beamngpy import Scenario
+from beamngpy import Vehicle
+from beamngpy import set_up_simple_logging
+
+def main():
+
+    # Get the user defined arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, default=64256, help="The port used to connect.")
+    parser.add_argument('--workspace', type=str, default="BeamNGWorkspace", help="The name of the workspace folder")
+    args = parser.parse_args()
+
+    # Get BeamNG's location and workspace
+    current_user = os.environ.get("USERNAME")
+    bng_loc = 'C:\\Users\\{}\\Documents\\Beamng\\BeamNG.tech.v0.23.5.1'.format(current_user)
+    bng_usr = 'C:\\Users\\{}\\Documents\\Beamng\\{}'.format(current_user, args.workspace) 
+
+    # Setup logging and random seed
+    random.seed(1703)
+    set_up_simple_logging()
+
+    # Start BeamNG
+    beamng = BeamNGpy('localhost', args.port, home=bng_loc, user=bng_usr)
+    bng = beamng.open(launch=True)
+
+    # Create the scenario
+    scenario = Scenario('west_coast_usa', 'lidar_demo', description='Spanning the map with a lidar sensor')
+
+    # Create the vehicle and attach a sensor
+    vehicle = Vehicle('ego_vehicle', model='etk800', licence='RED', color='Red')
+
+    # Add the vehicle to the scenario
+    scenario.add_vehicle(vehicle, pos=(-717.121, 101, 118.675), rot=None, rot_quat=(0, 0, 0.3826834, 0.9238795))
+
+    # Create the scenario in BeamNG
+    scenario.make(bng)
+    try:
+
+        # Set simulator to be deterministic
+        bng.set_deterministic() 
+        # With 60hz temporal resolution
+        bng.set_steps_per_second(60)  
+        # Load the simulator
+        bng.load_scenario(scenario)
+        # Hide the HUD and start
+        bng.hide_hud()
+        bng.start_scenario()
+
+        # Do this for 60 seconds
+        count = 0
+        print('Driving around for 60 seconds...')
+        while count < 60:
+            sleep(1)
+
+    finally:
+        # Close BeamNG
+        bng.close()
+
+if __name__ == '__main__':
+    main()
