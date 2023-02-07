@@ -16,12 +16,12 @@ from math import pi, atan2, degrees
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/highway")])
+base_directory = str(path[:path.rfind("/environments/highway")])
 sys.path.append(base_directory)
 
-from general.reachset import ReachableSet
-from general.environment_configurations import RRSConfig
-from general.environment_configurations import HighwayKinematics
+from utils.reachset import ReachableSet
+from utils.environment_configurations import RRSConfig
+from utils.environment_configurations import HighwayKinematics
 
 from highway_config import HighwayEnvironmentConfig
 

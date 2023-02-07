@@ -1,5 +1,15 @@
 # PhysicalCoverage_BeamNG
 
+THe only portion of this software which will not run on the above is the . BeamNG requires a windows computer to operate. The BeamNG software was tested on:
+
+__BeamNG Computer 3:__
+* Operating System: Windows 11
+* CPU:
+* CPU Cores:
+* RAM: 32 GB
+
+
+
 Installing
 
 First download beamng research version v1.7.0.1

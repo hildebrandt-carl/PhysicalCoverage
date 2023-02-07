@@ -6,7 +6,7 @@
 
 
 
-# Creating the Artifcat
+# Creating the Artifact
 This stage describes how we can create the artifact
 
 First you need to run the command:
