@@ -12,11 +12,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
-from general.failure_oracle import hash_crash
-from general.failure_oracle import hash_stall
+from utils.failure_oracle import hash_crash
+from utils.failure_oracle import hash_stall
 
-from general.environment_configurations import RRSConfig
-from general.environment_configurations import HighwayKinematics
+from utils.environment_configurations import RRSConfig
+from utils.environment_configurations import HighwayKinematics
 
 def vector_conversion(vector, steering_angle, max_distance, total_lines, original_total_lines, distribution):
 

@@ -82,7 +82,7 @@ for i in range(10):
     assert(len(beamng_pc_files) > 1)
     assert(len(highway_pc_files) > 1)
 
-    # Generate random indicies
+    # Generate random indices
     local_state     = np.random.RandomState()
     highway_indices = local_state.choice(len(highway_pc_files), number_samples, replace=False) 
     beamng_indices  = local_state.choice(len(beamng_pc_files), number_samples, replace=False) 

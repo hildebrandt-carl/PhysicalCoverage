@@ -16,14 +16,14 @@ sys.path.append(base_directory)
 
 from tqdm import tqdm
 from tabulate import tabulate
-from general.environment_configurations import RRSConfig
-from general.environment_configurations import WaymoKinematics
-from general.environment_configurations import BeamNGKinematics
-from general.environment_configurations import HighwayKinematics
+from utils.environment_configurations import RRSConfig
+from utils.environment_configurations import WaymoKinematics
+from utils.environment_configurations import BeamNGKinematics
+from utils.environment_configurations import HighwayKinematics
 
-from general.RRS_distributions import linear_distribution
-from general.RRS_distributions import center_close_distribution
-from general.RRS_distributions import center_mid_distribution
+from utils.RRS_distributions import linear_distribution
+from utils.RRS_distributions import center_close_distribution
+from utils.RRS_distributions import center_mid_distribution
 
 from preprocess_functions import processFileFeasibility
 from preprocess_functions import getFeasibleVectors
@@ -54,7 +54,7 @@ def waymo_handler(new_steering_angle, new_max_distance, RRS_number, distribution
     print("Total possible vectors: {}".format(total_all_vectors))
     print("Percentage of feasible space {}% ".format(per))
 
-    save_path = '../../output/waymo/feasibility/processed/{}/'.format(args.distribution)
+    save_path = '../output/waymo/feasibility/processed/{}/'.format(args.distribution)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
@@ -91,7 +91,7 @@ def beamng_handler(new_steering_angle, new_max_distance, RRS_number, distributio
     print("Total possible vectors: {}".format(total_all_vectors))
     print("Percentage of feasible space {}% ".format(per))
 
-    save_path = '../../output/beamng/feasibility/processed/{}/'.format(args.distribution)
+    save_path = '../output/beamng/feasibility/processed/{}/'.format(args.distribution)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
@@ -131,7 +131,7 @@ def highway_handler(file_name, new_steering_angle, new_max_distance, RRS_number,
     print("Total possible vectors: {}".format(total_all_vectors))
     print("Percentage of feasible space {}% ".format(per))
 
-    save_path = '../../output/highway/feasibility/processed/{}/'.format(args.distribution)
+    save_path = '../output/highway/feasibility/processed/{}/'.format(args.distribution)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 

@@ -19,16 +19,16 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
-from general.environment_configurations import RRSConfig
-from general.environment_configurations import WaymoKinematics
-from general.environment_configurations import BeamNGKinematics
-from general.environment_configurations import HighwayKinematics
+from utils.environment_configurations import RRSConfig
+from utils.environment_configurations import WaymoKinematics
+from utils.environment_configurations import BeamNGKinematics
+from utils.environment_configurations import HighwayKinematics
 
-from general.RRS_distributions import linear_distribution
-from general.RRS_distributions import center_close_distribution
-from general.RRS_distributions import center_mid_distribution
+from utils.RRS_distributions import linear_distribution
+from utils.RRS_distributions import center_close_distribution
+from utils.RRS_distributions import center_mid_distribution
 
-from general.failure_oracle import FailureOracle
+from utils.failure_oracle import FailureOracle
 
 from preprocess_functions import processFile
 from preprocess_functions import countVectorsInFile
@@ -251,15 +251,15 @@ save_name += ".npy"
    
 save_path = ""
 if args.scenario == "beamng_random":
-    save_path = "../../output/beamng/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
+    save_path = "../output/beamng/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 elif args.scenario == "beamng_generated":
-    save_path = "../../output/beamng/generated_tests/{}/physical_coverage/processed/{}/".format(args.distribution, args.total_samples)
+    save_path = "../output/beamng/generated_tests/{}/physical_coverage/processed/{}/".format(args.distribution, args.total_samples)
 elif args.scenario == "highway_random":
-    save_path = "../../output/highway/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
+    save_path = "../output/highway/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 elif args.scenario == "highway_generated":
-    save_path = "../../output/highway/generated_tests/{}/physical_coverage/processed/{}/".format(args.distribution, args.total_samples)
+    save_path = "../output/highway/generated_tests/{}/physical_coverage/processed/{}/".format(args.distribution, args.total_samples)
 elif args.scenario == "waymo_random":
-    save_path = "../../output/waymo/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
+    save_path = "../output/waymo/random_tests/physical_coverage/processed/{}/{}".format(args.distribution, args.total_samples)
 else:
     print("Error 4")
     exit()
