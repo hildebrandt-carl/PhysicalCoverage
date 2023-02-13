@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-from matplotlib.widgets import Button
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',     type=str,  default="/mnt/extradrive3/PhysicalCoverageData",          help="The path to the data")

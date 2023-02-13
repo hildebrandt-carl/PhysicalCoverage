@@ -10,14 +10,14 @@ import multiprocessing
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/waymo")])
+base_directory = str(path[:path.rfind("/environments/waymo")])
 sys.path.append(base_directory)
 
 from tqdm import tqdm
 from scenario_convert_functions import convert_file_to_raw_vector
 
-from general.environment_configurations import RRSConfig
-from general.environment_configurations import WaymoKinematics
+from utils.environment_configurations import RRSConfig
+from utils.environment_configurations import WaymoKinematics
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',     type=str,  default="/mnt/extradrive3/PhysicalCoverageData",          help="The path to the data")
@@ -46,6 +46,16 @@ if len(all_files) <= 0:
 if not os.path.exists('../../output/'):
     os.makedirs('../../output/')
 
+# Create the output directory if it doesn't exists
+additional_info_save_folder = '../../output/additional_data'
+if not os.path.exists(additional_info_save_folder):
+    os.makedirs(additional_info_save_folder)
+
+# Create the output data
+save_folder = "../../output/waymo/random_tests/physical_coverage/raw/"
+if not os.path.exists("{}".format(save_folder)):
+    os.makedirs("{}".format(save_folder))
+
 # Create a list of processors
 total_processors = int(args.cores)
 pool =  multiprocessing.Pool(processes=total_processors)
@@ -59,5 +69,8 @@ for filename in all_files:
 results = []
 for job in tqdm(jobs):
     results.append(job.get())
+
+# Its 8pm the pool is closed
+pool.close()
 
 print("Done")

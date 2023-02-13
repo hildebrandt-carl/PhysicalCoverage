@@ -1,7 +1,6 @@
 import sys
 import glob
 import argparse
-import scipy.stats
 import multiprocessing
 
 from pathlib import Path
@@ -15,9 +14,9 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
-from general.environment_configurations import RRSConfig
-from general.environment_configurations import BeamNGKinematics
-from general.environment_configurations import HighwayKinematics
+from utils.environment_configurations import RRSConfig
+from utils.environment_configurations import BeamNGKinematics
+from utils.environment_configurations import HighwayKinematics
 
 from scipy.optimize import curve_fit
 
@@ -221,16 +220,16 @@ def determine_test_suite_sizes(number_of_tests):
     test_suite_sizes = test_suite_size_percentage * number_of_tests
     return test_suite_sizes
 
-# Declare the greedy sample size
-greedy_sample_size = 100
+
 
 # Get the input arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",     help="The location and name of the datafolder")
+parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",          help="The location and name of the datafolder")
 parser.add_argument('--number_of_tests',    type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--distribution',       type=str, default="",                                               help="linear/center_close/center_mid")
 parser.add_argument('--RRS_number',         type=int, default=3,                                                help="The number of beams you want to consider")
 parser.add_argument('--scenario',           type=str, default="",                                               help="beamng/highway")
+parser.add_argument('--greedy_sample_size', type=int, default=10,                                               help="The number of random samples considered each iteration of the greedy algorithm")
 parser.add_argument('--cores',              type=int, default=4,                                                help="number of available cores")
 args = parser.parse_args()
 
@@ -300,6 +299,9 @@ feasible_file = feasible_file[0]
 test_suite_sizes = determine_test_suite_sizes(args.number_of_tests)
 print("Considered test suite sizes: {}".format(test_suite_sizes))
 
+# Declare the greedy sample size
+greedy_sample_size = args.greedy_sample_size
+
 # Load the traces
 global traces
 global crashes
@@ -328,7 +330,7 @@ for stall in stalls:
             unique_failure_set.add(s)
 
 # Create the figure
-plt.figure(1)
+plt.figure("{} - {}".format(args.scenario, greedy_sample_size), figsize=(3.5,5))
 
 # For each of the different beams
 print("Generating random tests")
@@ -354,15 +356,17 @@ if args.scenario == "highway":
 if args.scenario == "beamng":
     increment = 10
 
+# Create the legend for line of best fit
 plt.plot([], [] ,'--', color="black",label="Line of Best Fit")
 
+# Create the plot
 plt.legend(markerscale=5)
 plt.title(args.distribution)
-# plt.xticks(np.arange(0, np.max(random_test_suite_size) + 0.01,  args.number_of_tests/100))
 plt.yticks(np.arange(0, np.max(best_crash_count) + 0.01, increment))
 plt.ylabel("Unique Failures")
 plt.xlabel("Test Suite Size")
-# Round the x ticks to 3 places
-# plt.ticklabel_format(style='sci', axis='x', scilimits=(2,3))
 plt.grid(alpha=0.5)
+
+# Show the plot
+plt.tight_layout()
 plt.show()

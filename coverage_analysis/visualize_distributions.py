@@ -30,6 +30,8 @@ from matplotlib import cm
 from matplotlib.colors import Normalize 
 from scipy.interpolate import interpn
 
+from utils.common import rotate
+
 def create_outline(plt, ego_position, start_point):
     # Compute boundary points
     boundary_points = []
@@ -59,21 +61,6 @@ def create_outline(plt, ego_position, start_point):
     # Return the plt
     return plt
 
-
-def rotate(origin, point, angle):
-    """
-    Rotate a point counterclockwise by a given angle around a given origin.
-
-    The angle should be given in degrees.
-    """
-    angle = math.radians(angle)
-
-    ox, oy = origin
-    px, py = point
-
-    qx = ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy)
-    qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
-    return qx, qy
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',       type=str, default="/mnt/extradrive3/PhysicalCoverageData",    help="The location and name of the datafolder")
