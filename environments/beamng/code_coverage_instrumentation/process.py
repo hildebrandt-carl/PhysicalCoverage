@@ -281,7 +281,6 @@ for file_name in all_files:
                 # Add to the end of the function
                 if add_enter_exit_to_end:
                     pass
-                    # TODO
                     whitespace = len(line) - len(line.lstrip())
                     new_line = line[:whitespace] + "  enter_or_exit_function('exit', '{}')\n".format(func_name) + line
                 

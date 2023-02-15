@@ -36,6 +36,7 @@ max_distance    = WK.max_velocity
 
 # Get all the files
 all_files = glob.glob("{}/waymo/random_tests/physical_coverage/frames/*.tfrecord".format(args.data_path))
+all_files = sorted(all_files)
 
 # List which files were found
 print("Found {} scenario files".format(len(all_files)))
@@ -47,7 +48,7 @@ if not os.path.exists('../../output/'):
     os.makedirs('../../output/')
 
 # Create the output directory if it doesn't exists
-additional_info_save_folder = '../../output/additional_data'
+additional_info_save_folder = '../../output/waymo/random_tests/physical_coverage/additional_data/'
 if not os.path.exists(additional_info_save_folder):
     os.makedirs(additional_info_save_folder)
 

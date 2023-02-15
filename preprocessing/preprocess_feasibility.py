@@ -21,9 +21,8 @@ from utils.environment_configurations import WaymoKinematics
 from utils.environment_configurations import BeamNGKinematics
 from utils.environment_configurations import HighwayKinematics
 
-from utils.RRS_distributions import linear_distribution
+from utils.RRS_distributions import center_full_distribution
 from utils.RRS_distributions import center_close_distribution
-from utils.RRS_distributions import center_mid_distribution
 
 from preprocess_functions import processFileFeasibility
 from preprocess_functions import getFeasibleVectors
@@ -143,8 +142,8 @@ def highway_handler(file_name, new_steering_angle, new_max_distance, RRS_number,
     return True
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',      type=str, default="/mnt/extradrive3/PhysicalCoverageData",     help="The location and name of the datafolder")
-parser.add_argument('--distribution',   type=str, default="",                                               help="linear/center_close/center_mid")
+parser.add_argument('--data_path',      type=str, default="/mnt/extradrive3/PhysicalCoverageData",          help="The location and name of the datafolder")
+parser.add_argument('--distribution',   type=str, default="",                                               help="center_close/center_full")
 parser.add_argument('--scenario',       type=str, default="",                                               help="beamng/highway")
 parser.add_argument('--cores',          type=int, default=4,                                                help="number of available cores")
 args = parser.parse_args()
@@ -170,12 +169,10 @@ else:
     exit()
 
 # Get the distribution
-if args.distribution   == "linear":
-    distribution  = linear_distribution(args.scenario)
+if args.distribution   == "center_full":
+    distribution  = center_full_distribution(args.scenario)
 elif args.distribution == "center_close":
     distribution  = center_close_distribution(args.scenario)
-elif args.distribution == "center_mid":
-    distribution  = center_mid_distribution(args.scenario)
 else:
     print("ERROR: Unknown distribution ({})".format(args.distribution))
     exit()

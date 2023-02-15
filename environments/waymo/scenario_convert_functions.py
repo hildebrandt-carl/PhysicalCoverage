@@ -25,7 +25,7 @@ def convert_file_to_raw_vector(filename, total_lines, steering_angle, max_distan
     scenario_name = filename[filename.rfind("/")+1:filename.rfind(".")]
 
     # Create the additional info save folder
-    additional_info_save_folder = '../../output/additional_data/{}'.format(scenario_name)
+    additional_info_save_folder = '../../output/waymo/random_tests/physical_coverage/additional_data/{}'.format(scenario_name)
     if not os.path.exists("{}".format(additional_info_save_folder)):
         os.makedirs("{}".format(additional_info_save_folder))
 
@@ -171,8 +171,8 @@ def get_clean_lidar(frame, save_folder, frame_counter):
     points_all = np.concatenate(cartesian_points, axis=0)
 
     # Declare the range
-    LOW_Z = 0.5
-    HIGH_Z = 1
+    LOW_Z = 0.75
+    HIGH_Z = 1.25
 
     # Create the array to hold the data
     points_at_z_height = []

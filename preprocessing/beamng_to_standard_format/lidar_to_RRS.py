@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',     type=str, default="/mnt/extradrive3/PhysicalCoverageData",  help="The location and name of the datafolder")
 parser.add_argument('--cores',         type=int, default=4,                                             help="number of available cores")
 parser.add_argument('--scenario',      type=str, default="",                                            help="beamng_random/beamng_generated")
-parser.add_argument('--distribution',  type=str, default="",                                            help="Only used when using beamng_generated (linear/center_close/center_mid)")
+parser.add_argument('--distribution',  type=str, default="",                                            help="Only used when using beamng_generated (center_close/center_full)")
 parser.add_argument('--plot',             action='store_true')
 args = parser.parse_args()
 

@@ -27,7 +27,7 @@ parser.add_argument('--highway_number_tests',   type=int, default=1000000,      
 parser.add_argument('--beamng_number_tests',    type=int, default=10000,                                        help="The number of tests for beamng")
 parser.add_argument('--waymo_number_tests',     type=int, default=798,                                          help="The number of tests for waymo")
 parser.add_argument('--RRS_number',             type=int, default=10,                                           help="The RRS number")
-parser.add_argument('--distribution',           type=str, default="",                                           help="linear/center_close/center_mid")
+parser.add_argument('--distribution',           type=str, default="",                                           help="center_close/center_full")
 
 args = parser.parse_args()
 
@@ -49,7 +49,7 @@ print("-----------Loading Data-----------")
 print("----------------------------------")
 
 # Checking the distribution
-if not (args.distribution == "linear" or args.distribution == "center_close" or args.distribution == "center_mid"):
+if not (args.distribution == "center_close" or args.distribution == "center_full"):
     print("ERROR: Unknown distribution ({})".format(args.distribution))
     exit()
 

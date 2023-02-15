@@ -25,9 +25,9 @@ from utils.file_functions import get_beam_number_from_file
 from utils.file_functions import order_files_by_beam_number
 from utils.environment_configurations import RRSConfig
 from utils.environment_configurations import WaymoKinematics
-from utils.RRS_distributions import linear_distribution
 from utils.RRS_distributions import center_close_distribution
-from utils.RRS_distributions import center_mid_distribution
+from utils.RRS_distributions import center_full_distribution
+from utils.common import rotate
 
 from matplotlib_venn import venn3
 
@@ -35,12 +35,10 @@ from matplotlib_venn import venn3
 def show_most_common_RRS(indices, distribution, scenario, title=""):
 
     # Get the distribution
-    if distribution   == "linear":
-        distribution  = linear_distribution(scenario)
-    elif distribution == "center_close":
+    if distribution == "center_close":
         distribution  = center_close_distribution(scenario)
-    elif distribution == "center_mid":
-        distribution  = center_mid_distribution(scenario)
+    elif distribution == "center_full":
+        distribution  = center_full_distribution(scenario)
     else:
         print("ERROR: Unknown distribution ({})".format(distribution))
         exit()
@@ -86,7 +84,7 @@ def show_most_common_RRS(indices, distribution, scenario, title=""):
                 # Compute the actual point
                 l = rrs_lengths[k]
                 a = angles[rrs_resolution][k]
-                p = [l, 0]
+                p = [0, l]
                 p_r = rotate(origin=[0,0], point=p, angle=a)
                 actual_points.append(p_r)
 
@@ -94,7 +92,7 @@ def show_most_common_RRS(indices, distribution, scenario, title=""):
                 possible_p = predefined_points[samples[rrs_resolution][k]]
                 for l in possible_p:
                     a = angles[rrs_resolution][k]
-                    p = [l, 0]
+                    p = [0, l]
                     p_r = rotate(origin=[0,0], point=p, angle=a)
                     possible_points.append(p_r)
 
@@ -111,8 +109,8 @@ def show_most_common_RRS(indices, distribution, scenario, title=""):
                 y = [0, p[1]]
                 axs[i, j].plot(x, y, c="C0")
 
-            axs[i, j].set_xlim([-10, 10])
-            axs[i, j].set_ylim([-1, 15])
+            axs[i, j].set_xlim([-20, 20])
+            axs[i, j].set_ylim([-1, 40])
             axs[i, j].set_title(rrs_count)
 
 def show_data_from_index(indices, title="", camera=True):
@@ -260,7 +258,7 @@ def plot_venn(indices, fig_name, fig_title):
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",          help="The location and name of the datafolder")
 parser.add_argument('--number_of_tests',    type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--distribution',       type=str, default="",                                               help="linear/center_close/center_mid")
+parser.add_argument('--distribution',       type=str, default="",                                               help="center_close/center_full")
 parser.add_argument('--scenario',           type=str, default="",                                               help="waymo")
 parser.add_argument('--tracking',           type=int, default=1,                                                help="Declare the number of indices we are tracking for best and worst")
 parser.add_argument('--cores',              type=int, default=4,                                                help="Number of cores")
@@ -301,7 +299,7 @@ load_name += "_t" + str(args.number_of_tests)
 load_name += ".npy"
 
 # Checking the distribution
-if not (args.distribution == "linear" or args.distribution == "center_close" or args.distribution == "center_mid"):
+if not (args.distribution == "center_close" or args.distribution == "center_full"):
     print("ERROR: Unknown distribution ({})".format(args.distribution))
     exit()
 
@@ -387,14 +385,20 @@ for RRS_index in range(len(RRS_numbers)):
     print("\n")
     print("-------Same vs Distinct Scenarios---------")
 
-    print("Comparing 3 highway scenarios highway")
-    highway_scenarios = [66, 120, 129]
-    plot_venn(highway_scenarios, "RRS {} - Same Scenarios Venn".format(RRS_number), "Same Scenarios")
+    print("Comparing 3 similar scenarios and 3 random scenarios")
 
-    # 94, 97, 121, 129, 195
-    print("Comparing 3 highway scenarios highway")
-    random_scenarios = [203, 420, 141]
-    plot_venn(random_scenarios, "RRS {} - Distinct Scenarios Venn".format(RRS_number), "Distinct Scenarios")
+    open_road_scenarios = [127, 120, 129]
+    plot_venn(open_road_scenarios, "RRS {} - Open Road Scenarios Venn".format(RRS_number), "Same Scenarios")
+
+    # Create a plot of the best and worst
+    show_data_from_index(open_road_scenarios, title="Open Road Scenarios Camera Data", camera=True)
+    show_most_common_RRS(open_road_scenarios, args.distribution, args.scenario, title="Open Road Scenarios RRS Data")
+
+    random_scenarios = [148, 141, 14]
+    plot_venn(random_scenarios, "RRS {} - ParkingLot + UrbanBackRoad +  SingleLaneNeighborhood Scenarios Venn".format(RRS_number), "Distinct Scenarios")
+
+    show_data_from_index(random_scenarios, title="ParkingLot + UrbanBackRoad +  SingleLaneNeighborhood Scenarios Camera Data", camera=True)
+    show_most_common_RRS(random_scenarios, args.distribution, args.scenario, title="ParkingLot + UrbanBackRoad +  SingleLaneNeighborhood Scenarios RRS Data")
 
     print("Done")
 
@@ -490,10 +494,8 @@ for RRS_index in range(len(RRS_numbers)):
     # Create a plot of the best and worst
     show_data_from_index(maximum_indices[-1], title="Most similar RRS camera data", camera=True)
     show_data_from_index(minimum_indices[0], title="Least similar RRS camera data", camera=True)
-    show_data_from_index(maximum_indices[-1], title="Most similar RRS reach data", camera=False)
-    show_data_from_index(minimum_indices[0], title="Least similar RRS reach data", camera=False)
     show_most_common_RRS(maximum_indices[-1], args.distribution, args.scenario, title="Most similar RRS data")
-    show_most_common_RRS(minimum_indices[-1], args.distribution, args.scenario, title="Least similar RRS data")
+    show_most_common_RRS(minimum_indices[0], args.distribution, args.scenario, title="Least similar RRS data")
 
     print("Done")
 

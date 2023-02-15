@@ -27,10 +27,8 @@ from utils.file_functions import get_beam_number_from_file
 from utils.file_functions import order_files_by_beam_number
 from utils.environment_configurations import RRSConfig
 from utils.environment_configurations import WaymoKinematics
-from utils.RRS_distributions import linear_distribution
-from utils.RRS_distributions import linear_distribution
 from utils.RRS_distributions import center_close_distribution
-from utils.RRS_distributions import center_mid_distribution
+from utils.RRS_distributions import center_full_distribution
 from utils.common import rotate
 
 def get_clean_lidar(frame, save_folder, frame_counter):
@@ -48,8 +46,8 @@ def get_clean_lidar(frame, save_folder, frame_counter):
     points_all = np.concatenate(cartesian_points, axis=0)
 
     # Declare the range
-    LOW_Z = 0.5
-    HIGH_Z = 1
+    LOW_Z = 0.75
+    HIGH_Z = 1.25
 
     # Create the array to hold the data
     points_at_z_height = []
@@ -67,20 +65,15 @@ def get_clean_lidar(frame, save_folder, frame_counter):
     return points_at_z_height
 
 
-def create_distribution_video(frame_name, scenario_name, traces, distribution, save_folder):
+def create_distribution_video(frame_name, scenario_name, traces, distribution, save_folder, distribution_name):
 
     # Create the output directory if it doesn't exists
-    out_folder = '{}/{}'.format(save_folder, scenario_name)
+    out_folder = '{}/{}/rrs_data/{}'.format(save_folder, scenario_name, distribution_name)
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    # Create the subplot
-    plt.figure(figsize = (10, 10))
-    plt.title('RRS')
-
     # Load the data
     dataset = tf.data.TFRecordDataset("{}".format(frame_name), compression_type='')
-
 
     # Get angle information needed for plotting
     angles              = distribution.get_angle_distribution()
@@ -91,7 +84,10 @@ def create_distribution_video(frame_name, scenario_name, traces, distribution, s
 
     # Go through each of the RRS
     for data, rrs in zip(dataset, traces):
-        
+
+        # Create the subplot
+        plt.figure(figsize = (10, 10))
+        plt.title('RRS')
         frame_counter += 1
 
         # Load the frame
@@ -152,8 +148,8 @@ def create_distribution_video(frame_name, scenario_name, traces, distribution, s
 
         plt.xlim([75, -75])
         plt.ylim([-75, 75])
-        print("{}/rrs{:05d}.png".format(out_folder, frame_counter))
         plt.savefig("{}/rrs{:05d}.png".format(out_folder, frame_counter))
+        plt.close()
 
 
 parser = argparse.ArgumentParser()
@@ -178,12 +174,10 @@ else:
     exit()
 
 # Get the distribution
-if args.distribution   == "linear":
-    distribution  = linear_distribution(args.scenario)
-elif args.distribution == "center_close":
+if args.distribution == "center_close":
     distribution  = center_close_distribution(args.scenario)
-elif args.distribution == "center_mid":
-    distribution  = center_mid_distribution(args.scenario)
+elif args.distribution == "center_full":
+    distribution  = center_full_distribution(args.scenario)
 else:
     print("ERROR: Unknown distribution ({})".format(args.distribution))
     exit()
@@ -207,7 +201,7 @@ load_name += "_t" + str(args.number_of_tests)
 load_name += ".npy"
 
 # Checking the distribution
-if not (args.distribution == "linear" or args.distribution == "center_close" or args.distribution == "center_mid"):
+if not (args.distribution == "center_close" or args.distribution == "center_full"):
     print("ERROR: Unknown distribution ({})".format(args.distribution))
     exit()
 
@@ -225,7 +219,7 @@ if not os.path.exists('../output/'):
     os.makedirs('../output/')
 
 # Create the output directory if it doesn't exists
-additional_info_save_folder = '../output/additional_data/raw_rrs/{}'.format(args.distribution)
+additional_info_save_folder = '../output/additional_data/'
 if not os.path.exists(additional_info_save_folder):
     os.makedirs(additional_info_save_folder)
 
@@ -296,8 +290,13 @@ for RRS_index in range(len(RRS_numbers)):
                 f_name = f
                 break
 
+        if not (("scenario430" in f_name) or ("scenario351" in f_name) or ("scenario650" in f_name)):
+            continue
+
         if len(f_name) > 0:
-            jobs.append(pool.apply_async(create_distribution_video, args=([f_name, s_name, traces, distribution, additional_info_save_folder])))
+            jobs.append(pool.apply_async(create_distribution_video, args=([f_name, s_name, traces, distribution, additional_info_save_folder, args.distribution])))
+        else:
+            print("HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         time.sleep(0.01)
 
     # Get the results

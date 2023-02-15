@@ -24,13 +24,13 @@ def unison_shuffled_copies(a, b):
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",     help="The location and name of the datafolder")
 parser.add_argument('--number_of_tests',    type=int, default=1,                                                help="The number of tests used while computing coverage")
-parser.add_argument('--distribution',       type=str, default="",                                               help="linear/center_close/center_mid")
+parser.add_argument('--distribution',       type=str, default="",                                               help="center_close/center_full")
 parser.add_argument('--scenario',           type=str, default="",                                               help="beamng/highway")
 parser.add_argument('--ordered',            action='store_true')
 args = parser.parse_args()
 
 # Checking the distribution
-if not (args.distribution == "linear" or args.distribution == "center_close" or args.distribution == "center_mid"):
+if not (args.distribution == "center_close" or args.distribution == "center_full"):
     print("ERROR: Unknown distribution ({})".format(args.distribution))
     exit()
 

@@ -226,7 +226,7 @@ def determine_test_suite_sizes(number_of_tests):
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",          help="The location and name of the datafolder")
 parser.add_argument('--number_of_tests',    type=int, default=-1,                                               help="-1 all samples, otherwise randomly selected x samples")
-parser.add_argument('--distribution',       type=str, default="",                                               help="linear/center_close/center_mid")
+parser.add_argument('--distribution',       type=str, default="",                                               help="center_close/center_full")
 parser.add_argument('--RRS_number',         type=int, default=3,                                                help="The number of beams you want to consider")
 parser.add_argument('--scenario',           type=str, default="",                                               help="beamng/highway")
 parser.add_argument('--greedy_sample_size', type=int, default=10,                                               help="The number of random samples considered each iteration of the greedy algorithm")
@@ -268,7 +268,7 @@ load_name += "_t" + str(args.number_of_tests)
 load_name += ".npy"
 
 # Checking the distribution
-if not (args.distribution == "linear" or args.distribution == "center_close" or args.distribution == "center_mid"):
+if not (args.distribution == "center_close" or args.distribution == "center_full"):
     print("ERROR: Unknown distribution ({})".format(args.distribution))
     exit()
 
