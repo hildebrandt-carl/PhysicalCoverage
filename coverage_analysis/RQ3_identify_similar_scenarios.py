@@ -56,7 +56,7 @@ def show_most_common_RRS(indices, distribution, scenario, title=""):
     # Go through the indices
     for i, index in enumerate(indices):
         # Get the current trace
-        current_trace = random_traces[index, :, :]
+        current_trace = random_traces[index]
 
         # Create a list of tuples that we can Counter
         rrs_list = []
@@ -208,8 +208,7 @@ def number_of_duplicates(list_a, list_b, list_c=None):
 
     if list_c is not None:
         count_c = Counter(list_c)
-    
-    
+
     # Get all common keys between both lists
     common_keys = set(count_a.keys()).intersection(count_b.keys())
     if list_c is not None:
@@ -304,7 +303,7 @@ if not (args.distribution == "center_close" or args.distribution == "center_full
     exit()
 
 # Get the file names
-base_path = '/mnt/extradrive3/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+base_path = '{}/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.data_path, args.scenario, args.distribution, args.number_of_tests)
 random_trace_file_names         = glob.glob(base_path + "traces_*")
 random_trace_scenario_names     = glob.glob(base_path + "processed_files_*")
 
@@ -370,7 +369,7 @@ for RRS_index in range(len(RRS_numbers)):
     # Convert to hash value for easier comparison
     for test_number in tqdm(range(np.shape(random_traces)[0])):
         hashes = []
-        current_trace = random_traces[test_number, :, :]
+        current_trace = random_traces[test_number]
         for t in current_trace:
             # Ignore nans
             if not np.isnan(t).any():
@@ -386,13 +385,13 @@ for RRS_index in range(len(RRS_numbers)):
     print("-------Same vs Distinct Scenarios---------")
 
     print("Comparing 3 similar scenarios and 3 random scenarios")
-
-    open_road_scenarios = [127, 120, 129]
-    plot_venn(open_road_scenarios, "RRS {} - Open Road Scenarios Venn".format(RRS_number), "Same Scenarios")
+    
+    highway_scenarios = [3, 96, 271]
+    plot_venn(highway_scenarios, "RRS {} - Open Road Scenarios Venn".format(RRS_number), "Same Scenarios")
 
     # Create a plot of the best and worst
-    show_data_from_index(open_road_scenarios, title="Open Road Scenarios Camera Data", camera=True)
-    show_most_common_RRS(open_road_scenarios, args.distribution, args.scenario, title="Open Road Scenarios RRS Data")
+    show_data_from_index(highway_scenarios, title="Open Road Scenarios Camera Data", camera=True)
+    show_most_common_RRS(highway_scenarios, args.distribution, args.scenario, title="Open Road Scenarios RRS Data")
 
     random_scenarios = [148, 141, 14]
     plot_venn(random_scenarios, "RRS {} - ParkingLot + UrbanBackRoad +  SingleLaneNeighborhood Scenarios Venn".format(RRS_number), "Distinct Scenarios")
@@ -487,15 +486,17 @@ for RRS_index in range(len(RRS_numbers)):
 
     print("Comparing Similar RRS")
     plot_venn(maximum_indices[-1], "RRS {} - Same RRS Venn".format(RRS_number), "Same RRS")
-
     print("Comparing Distinct RRS")
     plot_venn(minimum_indices[0], "RRS {} - Distinct RRS Venn".format(RRS_number), "Distinct RRS")
 
     # Create a plot of the best and worst
-    show_data_from_index(maximum_indices[-1], title="Most similar RRS camera data", camera=True)
-    show_data_from_index(minimum_indices[0], title="Least similar RRS camera data", camera=True)
     show_most_common_RRS(maximum_indices[-1], args.distribution, args.scenario, title="Most similar RRS data")
     show_most_common_RRS(minimum_indices[0], args.distribution, args.scenario, title="Least similar RRS data")
+
+    reverse = TRACKING - 1
+    for track in range(TRACKING):
+        show_data_from_index(maximum_indices[reverse-track], title="{} - Most similar RRS camera data".format(track), camera=True)
+        show_data_from_index(minimum_indices[track], title="{} - Least similar RRS camera data".format(track), camera=True)
 
     print("Done")
 

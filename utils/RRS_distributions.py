@@ -219,38 +219,38 @@ class center_full_distribution():
         if "highway" in self.scenario:
             sample_distribution = {
                 1:  np.array([15]),
-                2:  np.array([7, 7]), 
-                3:  np.array([5, 6, 5]),
-                4:  np.array([5, 6, 6, 5]),
-                5:  np.array([4, 5, 5, 5, 4]),
-                6:  np.array([4, 4, 5, 5, 4, 4]),
-                7:  np.array([3, 4, 5, 6, 5, 4, 3]),
-                8:  np.array([3, 4, 4, 5, 5, 4, 4, 3]),
-                9:  np.array([2, 3, 4, 5, 6, 5, 4, 3, 2]),
-                10: np.array([2, 3, 4, 5, 6, 6, 5, 4, 3, 2])}
+                2:  np.array([5, 5]), 
+                3:  np.array([3, 4, 3]),
+                4:  np.array([2, 3, 3, 4]),
+                5:  np.array([4, 4, 4, 4, 4]),
+                6:  np.array([4, 4, 4, 4, 4, 4]),
+                7:  np.array([4, 4, 4, 4, 4, 4, 4]),
+                8:  np.array([4, 4, 4, 4, 4, 4, 4, 4]),
+                9:  np.array([4, 4, 4, 4, 4, 4, 4, 4, 4]),
+                10: np.array([4, 4, 4, 4, 4, 4, 4, 4, 4, 4])}
         elif "beamng" in self.scenario:
             sample_distribution = {
-                1:  np.array([15]),
-                2:  np.array([7, 7]), 
-                3:  np.array([5, 6, 5]),
-                4:  np.array([5, 6, 6, 5]),
-                5:  np.array([4, 5, 5, 5, 4]),
-                6:  np.array([4, 4, 5, 5, 4, 4]),
-                7:  np.array([3, 4, 5, 6, 5, 4, 3]),
-                8:  np.array([3, 4, 4, 5, 5, 4, 4, 3]),
-                9:  np.array([2, 3, 4, 5, 6, 5, 4, 3, 2]),
-                10: np.array([2, 3, 4, 5, 6, 6, 5, 4, 3, 2])}
+                1:  np.array([10]),
+                2:  np.array([5, 5]), 
+                3:  np.array([3, 4, 3]),
+                4:  np.array([4, 4, 4, 4]),
+                5:  np.array([4, 4, 3, 4, 4]),
+                6:  np.array([4, 4, 4, 4, 4, 4]),
+                7:  np.array([4, 4, 4, 4, 4, 4, 4]),
+                8:  np.array([4, 4, 4, 4, 4, 4, 4, 4]),
+                9:  np.array([4, 4, 4, 4, 4, 4, 4, 4, 4]),
+                10: np.array([4, 4, 4, 4, 4, 4, 4, 4, 4, 4])}
         elif "waymo" in self.scenario:
             sample_distribution = {
-                1:  np.array([15]),
-                2:  np.array([7, 7]), 
-                3:  np.array([5, 6, 5]),
-                4:  np.array([5, 6, 6, 5]),
-                5:  np.array([4, 5, 5, 5, 4]),
-                6:  np.array([4, 4, 5, 5, 4, 4]),
-                7:  np.array([3, 4, 5, 6, 5, 4, 3]),
-                8:  np.array([3, 4, 4, 5, 5, 4, 4, 3]),
-                9:  np.array([2, 3, 4, 5, 6, 5, 4, 3, 2]),
+                1:  np.array([10]),
+                2:  np.array([5, 5]), 
+                3:  np.array([3, 4, 3]),
+                4:  np.array([4, 4, 4, 4]),
+                5:  np.array([4, 4, 3, 4, 4]),
+                6:  np.array([4, 4, 4, 4, 4, 4]),
+                7:  np.array([4, 4, 4, 4, 4, 4, 4]),
+                8:  np.array([4, 4, 4, 4, 4, 4, 4, 4]),
+                9:  np.array([4, 4, 4, 4, 4, 4, 4, 4, 4]),
                 10: np.array([4, 4, 4, 4, 4, 4, 4, 4, 4, 4])}
 
         return sample_distribution

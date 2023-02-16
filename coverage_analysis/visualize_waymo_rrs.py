@@ -206,7 +206,7 @@ if not (args.distribution == "center_close" or args.distribution == "center_full
     exit()
 
 # Get the file names
-base_path = '/mnt/extradrive3/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+base_path = '{}/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.data_path, args.scenario, args.distribution, args.number_of_tests)
 random_trace_file_names         = glob.glob(base_path + "traces_*")
 random_trace_scenario_names     = glob.glob(base_path + "processed_files_*")
 
@@ -219,7 +219,7 @@ if not os.path.exists('../output/'):
     os.makedirs('../output/')
 
 # Create the output directory if it doesn't exists
-additional_info_save_folder = '../output/additional_data/'
+additional_info_save_folder = '../output/waymo/physical_coverage/additional_data/'
 if not os.path.exists(additional_info_save_folder):
     os.makedirs(additional_info_save_folder)
 
@@ -290,13 +290,10 @@ for RRS_index in range(len(RRS_numbers)):
                 f_name = f
                 break
 
-        if not (("scenario430" in f_name) or ("scenario351" in f_name) or ("scenario650" in f_name)):
-            continue
-
         if len(f_name) > 0:
             jobs.append(pool.apply_async(create_distribution_video, args=([f_name, s_name, traces, distribution, additional_info_save_folder, args.distribution])))
         else:
-            print("HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            pass
         time.sleep(0.01)
 
     # Get the results

@@ -142,12 +142,8 @@ for i in range(len(RRS_numbers)):
                 if np.any(np.isnan(t)) == False:
                     seen_RRS.add(tuple(t))
 
-        denominator = len(all_RRS)
-        print("Total possible RRS: {}".format(denominator))
+    known_included_vector = tuple([15, 15, 5, 5, 35, 35, 35, 35, 15, 5])
+    assert(known_included_vector in seen_RRS)
 
-        numerator = len(seen_RRS)
-        print("Total unique RRS seen: {}".format(numerator))
-
-        coverage = np.round((numerator / denominator) * 100, 4)
-
-        print("Coverage: {}%".format(coverage))
+    vector_of_interest = tuple([35, 35, 5, 5, 5, 5, 5, 5, 5, 5])
+    print("{} is in seen RRS: {}".format(vector_of_interest, vector_of_interest in seen_RRS))

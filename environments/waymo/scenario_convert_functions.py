@@ -35,8 +35,8 @@ def convert_file_to_raw_vector(filename, total_lines, steering_angle, max_distan
     if not os.path.exists("{}/point_cloud_data/raw".format(additional_info_save_folder)):
         os.makedirs("{}/point_cloud_data/raw".format(additional_info_save_folder))
 
-    if not os.path.exists("{}/point_cloud_data/RRS".format(additional_info_save_folder)):
-        os.makedirs("{}/point_cloud_data/RRS".format(additional_info_save_folder))
+    if not os.path.exists("{}/point_cloud_data/reach_set".format(additional_info_save_folder)):
+        os.makedirs("{}/point_cloud_data/reach_set".format(additional_info_save_folder))
 
     # Create the output data
     save_folder = "../../output/waymo/random_tests/physical_coverage/raw/"
@@ -266,5 +266,5 @@ def plot_lidar(environment_data, save_folder, frame_counter):
     plt.ylim([-75, 75])
 
     # plot the graph
-    plt.savefig("{}/point_cloud_data/RRS/point_cloud{:05d}.png".format(save_folder, frame_counter))
+    plt.savefig("{}/point_cloud_data/reach_set/point_cloud{:05d}.png".format(save_folder, frame_counter))
     plt.close()
