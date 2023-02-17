@@ -330,7 +330,7 @@ for stall in stalls:
             unique_failure_set.add(s)
 
 # Create the figure
-plt.figure("{} - {}".format(args.scenario, greedy_sample_size), figsize=(3.5,5))
+plt.figure("{} - {}".format(args.scenario, greedy_sample_size), figsize=(3.5,2.5))
 
 # For each of the different beams
 print("Generating random tests")
@@ -360,8 +360,8 @@ if args.scenario == "beamng":
 plt.plot([], [] ,'--', color="black",label="Line of Best Fit")
 
 # Create the plot
-plt.legend(markerscale=5)
-plt.title(args.distribution)
+# plt.legend(markerscale=5,ncols=4)
+# plt.title(args.distribution)
 plt.yticks(np.arange(0, np.max(best_crash_count) + 0.01, increment))
 plt.ylabel("Unique Failures")
 plt.xlabel("Test Suite Size")

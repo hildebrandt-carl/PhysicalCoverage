@@ -16,13 +16,12 @@ path = str(current_file.absolute())
 base_directory = str(path[:path.rfind("/coverage_analysis")])
 sys.path.append(base_directory)
 
-from general.line_coverage_configuration import clean_branch_data
-from general.line_coverage_configuration import get_code_coverage
-from general.line_coverage_configuration import get_ignored_lines
-from general.line_coverage_configuration import get_ignored_branches
-from general.file_functions import get_beam_number_from_file
-from general.file_functions import order_files_by_beam_number
-
+from utils.line_coverage_configuration import clean_branch_data
+from utils.line_coverage_configuration import get_code_coverage
+from utils.line_coverage_configuration import get_ignored_lines
+from utils.line_coverage_configuration import get_ignored_branches
+from utils.file_functions import get_beam_number_from_file
+from utils.file_functions import order_files_by_beam_number
 
 # multiple core
 def random_selection(cores, test_suite_size, number_of_test_suites):
@@ -93,13 +92,14 @@ def random_select(number_of_tests):
     line_coverage_percentage    = (float(len(line_coverage_set)) / code_coverage_denomiator) * 100
     branch_coverage_percentage  = (float(len(branch_coverage_set)) / branch_coverage_denominator) * 100
     failures_found              = len(seen_failure_set)
+    all_failures                = len(unique_failure_set)
+    failure_percentage          = float(failures_found / all_failures) * 100
 
-    return [line_coverage_percentage, branch_coverage_percentage, failures_found]
-
+    return [line_coverage_percentage, branch_coverage_percentage, failure_percentage]
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',             type=str, default="/mnt/extradrive3/PhysicalCoverageData",  help="The location and name of the datafolder")
+parser.add_argument('--data_path',             type=str, default="/mnt/extradrive3/PhysicalCoverageData",       help="The location and name of the datafolder")
 parser.add_argument('--number_of_test_suites', type=int, default=10,                                            help="The number of random test suites created")
 parser.add_argument('--number_of_tests',       type=int, default=-1,                                            help="-1 all samples, otherwise randomly selected x samples")
 parser.add_argument('--distribution',          type=str, default="",                                            help="center_full/center_close")
@@ -255,7 +255,7 @@ pool.close()
 code_coverage_denomiator    = len(all_lines_set)
 branch_coverage_denominator = len(all_branches_set_clean)
 
-test_suit_sizes = [5, 10, 25, 50, 100, 250, 500, 1000]
+test_suit_sizes = [10, 50, 100, 500, 1000]
 
 # Compute the correlation
 for j, test_suite_size in enumerate(test_suit_sizes):
@@ -291,12 +291,18 @@ for j, test_suite_size in enumerate(test_suit_sizes):
 
 plt.figure("Line")
 plt.xlabel("Line Coverage (%)")
-plt.ylabel("Unique Failures (#)")
+plt.ylabel("Unique Failures (%)")
+plt.title("Line Coverage: {}".format(args.scenario))
+plt.xlim([-5,100])
+plt.ylim([-5,100])
 plt.legend()
 
 plt.figure("Branch")
 plt.xlabel("Branch Coverage (%)")
-plt.ylabel("Unique Failures (#)")
+plt.ylabel("Unique Failures (%)")
+plt.title("Branch Coverage: {}".format(args.scenario))
+plt.xlim([-5,100])
+plt.ylim([-5,100])
 plt.legend()
 
 plt.show()

@@ -14,12 +14,12 @@ sys.path.append(base_directory)
 import numpy as np
 import matplotlib.pyplot as plt
 
-from general.trajectory_coverage import load_driving_area
-from general.trajectory_coverage import create_coverage_array
-from general.trajectory_coverage import compute_trajectory_coverage
-from general.trajectory_coverage import load_improved_bounded_driving_area
-from general.environment_configurations import BeamNGKinematics
-from general.environment_configurations import HighwayKinematics
+from utils.trajectory_coverage import load_driving_area
+from utils.trajectory_coverage import create_coverage_array
+from utils.trajectory_coverage import compute_trajectory_coverage
+from utils.trajectory_coverage import load_improved_bounded_driving_area
+from utils.environment_configurations import BeamNGKinematics
+from utils.environment_configurations import HighwayKinematics
 
 
 # Get the input arguments

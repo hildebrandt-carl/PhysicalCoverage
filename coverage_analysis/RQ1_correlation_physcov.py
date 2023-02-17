@@ -17,11 +17,11 @@ from matplotlib_venn import venn2
 import numpy as np
 import matplotlib.pyplot as plt
 
-from general.file_functions import get_beam_number_from_file
-from general.file_functions import order_files_by_beam_number
-from general.environment_configurations import RRSConfig
-from general.environment_configurations import BeamNGKinematics
-from general.environment_configurations import HighwayKinematics
+from utils.file_functions import get_beam_number_from_file
+from utils.file_functions import order_files_by_beam_number
+from utils.environment_configurations import RRSConfig
+from utils.environment_configurations import BeamNGKinematics
+from utils.environment_configurations import HighwayKinematics
 
 # multiple core
 def random_selection(cores, test_suite_size, number_of_test_suites):
@@ -89,10 +89,11 @@ def random_select(number_of_tests):
 
     # Compute the coverage and the crash percentage
     coverage_percentage = (float(len(seen_RRS_set)) / len(feasible_RRS_set)) * 100
-    failure_percentage =  (float(len(seen_failure_set)) / len(unique_failure_set)) * 100
-    failures_found = len(seen_failure_set)
+    failures_found              = len(seen_failure_set)
+    all_failures                = len(unique_failure_set)
+    failure_percentage          = float(failures_found / all_failures) * 100
 
-    return [coverage_percentage, failures_found]
+    return [coverage_percentage, failure_percentage]
 
 # Get the input arguments
 parser = argparse.ArgumentParser()
@@ -169,7 +170,7 @@ crash_file_names = order_files_by_beam_number(crash_file_names, RRS_numbers)
 stall_file_names = order_files_by_beam_number(stall_file_names, RRS_numbers)
 feasible_file_names = order_files_by_beam_number(feasible_file_names, RRS_numbers)
 
-# Assume we are only doing RRS 10
+# Select a specific RRS
 i = args.RRS - 1
 
 # Get the beam number and files we are currently considering
@@ -224,7 +225,7 @@ denominator = len(feasible_RRS_set)
 
 total_tests = len(traces)
 
-test_suit_sizes = [5, 10, 25, 50, 100, 250, 500, 1000]
+test_suit_sizes = [10, 50, 100, 500, 1000]
 
 # Compute the correlation
 for j, test_suite_size in enumerate(test_suit_sizes):
@@ -245,7 +246,9 @@ for j, test_suite_size in enumerate(test_suit_sizes):
     print("---------------------------------------------")
 
 plt.xlabel("Physical Coverage (%)")
-plt.ylabel("Unique Failures (#)")
+plt.ylabel("Unique Failures (%)")
 plt.legend()
+plt.title("PhysCov - RRS {}: {}".format(args.RRS, args.scenario))
+plt.xlim([-5,100])
+plt.ylim([-5,100])
 plt.show()
-

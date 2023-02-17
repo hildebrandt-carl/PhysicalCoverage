@@ -17,9 +17,9 @@ import numpy as np
 from collections import Counter
 import matplotlib.pyplot as plt
 
-from general.file_functions import unison_shuffled_copies
-from general.environment_configurations import BeamNGKinematics
-from general.environment_configurations import HighwayKinematics
+from utils.trajectory_coverage import unison_shuffled_copies
+from utils.environment_configurations import BeamNGKinematics
+from utils.environment_configurations import HighwayKinematics
 
 
 # Get the input arguments

@@ -7,7 +7,7 @@ path = str(current_file.absolute())
 base_directory = str(path[:path.rfind("/general")])
 sys.path.append(base_directory)
 
-from general.file_functions import get_filename_prefix
+from utils.file_functions import get_filename_prefix
 
 def get_code_coverage(filename):
     # Open the file

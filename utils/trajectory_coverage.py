@@ -27,8 +27,8 @@ def load_driving_area(scenario):
 def load_improved_bounded_driving_area(scenario):
 
     # Get the file
-    lower_file_name = "../beamng/trajectory_driving_area/{}/right.txt".format(scenario)
-    upper_file_name = "../beamng/trajectory_driving_area/{}/left.txt".format(scenario)
+    lower_file_name = "../environments/{}/trajectory_driving_area/right.txt".format(scenario)
+    upper_file_name = "../environments/{}/trajectory_driving_area/left.txt".format(scenario)
 
     # Load the lower data
     lower_file = open(lower_file_name, "r")
@@ -93,7 +93,7 @@ def crossed_line(line, incoming_point):
 
     return d
 
-def create_coverage_array(scenario, drivable_x_size, drivable_y_size, index_lower_bound_x, index_lower_bound_y, index_upper_bound_x, index_upper_bound_y, index_x_array, index_y_array):
+def create_coverage_array(scenario, drivable_x_size, drivable_y_size, index_lower_bound_x, index_lower_bound_y, index_upper_bound_x, index_upper_bound_y, index_x_array, index_y_array, debug=True):
 
     # Create the coverage array
     coverage_array = np.full((drivable_x_size, drivable_y_size), 0,  dtype=int)
@@ -101,7 +101,7 @@ def create_coverage_array(scenario, drivable_x_size, drivable_y_size, index_lowe
     if scenario == "beamng":
 
         # Loop through the coverage array
-        for x in tqdm(range(0, drivable_x_size, 1)):
+        for x in tqdm(range(0, drivable_x_size, 1), disable=not debug):
 
             # Set the current state (start with invalid)
             state = -1
@@ -162,7 +162,7 @@ def create_coverage_array(scenario, drivable_x_size, drivable_y_size, index_lowe
     # Return the coverage array
     return coverage_array, index_x_array, index_y_array
 
-def compute_trajectory_coverage(coverage_array, number_test_suites, number_tests, index_x_array, index_y_array, drivable_x_size, drivable_y_size):
+def compute_trajectory_coverage(coverage_array, number_test_suites, number_tests, index_x_array, index_y_array, drivable_x_size, drivable_y_size, debug=True):
 
     # Declare the upper bound used to detect nan
     upper_bound = sys.maxsize - 1e5
@@ -171,16 +171,18 @@ def compute_trajectory_coverage(coverage_array, number_test_suites, number_tests
     naive_coverage_denominator = float(drivable_x_size * drivable_y_size)
     improved_coverage_denominator = float(np.count_nonzero(coverage_array==0))
 
-    print("Naive denominator: {}".format(naive_coverage_denominator))
-    print("Improved denominator: {}".format(improved_coverage_denominator))
+    if debug:
+        print("Naive denominator: {}".format(naive_coverage_denominator))
+        print("Improved denominator: {}".format(improved_coverage_denominator))
 
     # Create the final coverage array
     naive_coverage_percentage       = np.zeros((number_test_suites, number_tests))
     improved_coverage_percentage    = np.zeros((number_test_suites, number_tests))
 
-    # Run this 10 times
+    # Run this number_test_suites times
     for test_suite_number in range(number_test_suites):
-        print("Test Suite {}".format(test_suite_number))
+        if debug:
+            print("Test Suite {}".format(test_suite_number))
 
         # Shuffle both arrays
         index_x_array, index_y_array = unison_shuffled_copies(index_x_array, index_y_array)
@@ -189,7 +191,7 @@ def compute_trajectory_coverage(coverage_array, number_test_suites, number_tests
         tmp_coverage_array = copy.deepcopy(coverage_array)
 
         # Loop through the data and mark off all that we have seen
-        for i, coverage_index in tqdm(enumerate(zip(index_x_array, index_y_array)), total=len(index_x_array)):
+        for i, coverage_index in tqdm(enumerate(zip(index_x_array, index_y_array)), total=len(index_x_array), disable=not debug):
 
             # Get the x and y index
             x_index = coverage_index[0]
