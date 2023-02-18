@@ -37,3 +37,6 @@ python -m pip install -e .\BeamNGpy\
 
 install shapely
 python -m pip install shapely
+
+
+Will be completed by Sunday Feb 19th
