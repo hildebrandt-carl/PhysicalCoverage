@@ -1,6 +1,6 @@
 # Data Subset
 
-We have provided the data as a zip file. The ziped files are 10.2GB when extracted they are roughly 81.5GB.
+We have provided the data as a zip file. The ziped files are 10.2GB when extracted they are roughly 81.6GB.
 
 
 

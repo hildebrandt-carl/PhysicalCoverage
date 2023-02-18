@@ -27,8 +27,8 @@ def load_driving_area(scenario):
 def load_improved_bounded_driving_area(scenario):
 
     # Get the file
-    lower_file_name = "../environments/{}/trajectory_driving_area/right.txt".format(scenario)
-    upper_file_name = "../environments/{}/trajectory_driving_area/left.txt".format(scenario)
+    lower_file_name = "../../environments/{}/trajectory_driving_area/right.txt".format(scenario)
+    upper_file_name = "../../environments/{}/trajectory_driving_area/left.txt".format(scenario)
 
     # Load the lower data
     lower_file = open(lower_file_name, "r")
