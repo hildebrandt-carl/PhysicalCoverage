@@ -24,6 +24,7 @@ for index in args.index.split(', '):
     all_pictures = glob.glob("{}/camera_data/camera*.png".format(folder))
     all_pictures = sorted(all_pictures)
 
+    print("here: {}".format("{}/camera_data/camera*.png".format(folder)))
 
     # Create the subplot
     fig, axs = plt.subplots(2, 5, figsize=(19, 4))

@@ -12,21 +12,13 @@ All notes in this document are related to everything other than BeamNG. To run B
 
 ### Hardware
 
-This software was developed and run on the following machine:
+This software was developed, run and test on the following machines. **Note:** BeamNG requires the Windows operating system, and was run on a different machine. For more details on BeamNG please refer to the BeamNG [README.MD](./environments/beamng/README.md).
 
-__Computer 1:__
-* Operating System: Ubuntu 20.04
-* CPU: AMD Ryzen Threadripper 3990X
-* CPU Cores: 128
-* RAM: 128 GB
 
-However the entire artifact has also been tested on a machine with lower specifications:
-
-__Computer 2:__
-* Operating System: Ubuntu 20.04
-* CPU: Intel Core i7-10750H
-* CPU Cores: 12
-* RAM: 16 GB
+| Computer   | CPU                              | CPU Cores | RAM       | Operating System  |
+|------------|------------------------------	|-------	|-------	|---------------    |
+| Computer 1 | AMD Ryzen Threadripper 3990X     | 128       | 128 GB    | Ubuntu 20.04      |
+| Computer 2 | Intel Core i7-10750H             | 12        | 16 GB     | Ubuntu 20.04      |
 
 ### Software
 
@@ -56,23 +48,21 @@ python3 -m pip install ordered_set
 | Highway-Env       	| This will describe how to run the HighwayEnv environment, and how to generate sample runs.                	| [README.MD](./environments/highway/README.md)    	|
 | BeamNG            	| This will describe how to run the BeamNG environment, and how to generate sample runs. (Requires windows) 	| [README.MD](./environments/beamng/README.md)    	|
 | Waymo             	| This will describe how to run the Waymo Open Perception Dataset, and how to extract the data.             	| [README.MD](./environments/waymo/README.md)    	|
-| RRS Visualization 	| This will show you how to create visualizations of the RRS data.                                          	| [README.MD](./visulization/README.md)    	        |
 | RRS Pipeline      	| This will show you how to run the RRS Pipeline on example data, as well as your own.                      	| [README.MD](./processing_pipeline/README.md)      |
 | Data Analysis     	| This will show you how to generate the graphs presented in our paper.                                     	| [README.MD](./data_analysis/README.md)    	    |
 | Provided Data      	| This will provide a subset of the data from the original data. The original data is over 2TB.                	| [README.MD](./data_subset/README.md)              |
 
-# Examples
 
-Here are some examples of what this repo will guide you through
+## Data Provided
 
-## Generating data using HighwayEnv
+We have provided the following data. For more information of the details of the data please refer to the data subset [README.MD](./data_subset/README.md).
 
-![highway environment](./misc/highway/highway_example.gif)
-
-##  Generating data using BeamNG
-
-Will be completed by Sunday Feb 19th
-
-## Extracting data from the Waymo Perception Open Dataset
-
-Will be completed by Sunday Feb 19th
+TODO Table
+<!-- | Component         	| Description                                                                                               	| Link 	|
+|-------------------	|-----------------------------------------------------------------------------------------------------------	|------	|
+| Highway-Env       	| This will describe how to run the HighwayEnv environment, and how to generate sample runs.                	| [README.MD](./environments/highway/README.md)    	|
+| BeamNG            	| This will describe how to run the BeamNG environment, and how to generate sample runs. (Requires windows) 	| [README.MD](./environments/beamng/README.md)    	|
+| Waymo             	| This will describe how to run the Waymo Open Perception Dataset, and how to extract the data.             	| [README.MD](./environments/waymo/README.md)    	|
+| RRS Pipeline      	| This will show you how to run the RRS Pipeline on example data, as well as your own.                      	| [README.MD](./processing_pipeline/README.md)      |
+| Data Analysis     	| This will show you how to generate the graphs presented in our paper.                                     	| [README.MD](./data_analysis/README.md)    	    |
+| Provided Data      	| This will provide a subset of the data from the original data. The original data is over 2TB.                	| [README.MD](./data_subset/README.md)              | -->

@@ -6,6 +6,8 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 
+from random import randint
+
 from datetime import datetime
 from scipy.spatial import distance
 from shapely.geometry import Point
@@ -13,57 +15,22 @@ from shapely.geometry import Polygon
 from shapely.geometry import LineString
 
 np.set_printoptions(suppress=True)
+np.seterr(divide='ignore', invalid='ignore')
 
 def create_frame_plot(data, origin, orientation, title, fig_num):
     fig = plt.figure(fig_num)
     plt.clf()
-    ax = fig.add_subplot(111)
-    ax.scatter(data[:,0], data[:,1], s=5)
-    ax.quiver(origin[0], origin[1], orientation[0], orientation[1])
-    ax.set_xlabel('X Label')
-    ax.set_ylabel('Y Label')
     plt.title(title)
+    plt.gca().invert_yaxis()
+    plt.scatter(data[:,0], data[:,1], s=5)
+    ax = plt.gca()
+    ax.quiver(origin[0], origin[1], orientation[0], orientation[1])
     plt.xlim([-175, 175])
     plt.ylim([-175, 175])
-    return plt
-
-def create_lidar_plot(data, title, x_range, y_range, fig_num):
-    plt.figure(fig_num)
-    plt.clf()
-    plt.title(title)
-    # Display the environment
-    for i in range(len(data["polygons"])):
-        # Get the polygon
-        p = data["polygons"][i]
-        x,y = p.exterior.xy
-        # Get the color
-        c = "g" if i == 0 else "r"
-        # Plot
-        plt.plot(x, y, color=c)
-    # Display the reachset
-    for i in range(len(data["r_set"])):
-        # Get the polygon
-        p = data["r_set"][i]
-        x,y = p.xy
-        # Get the color
-        c = "r"
-        # Plot
-        plt.plot(x, y, color=c, alpha=0.5)
-    # Display the reachset
-    for i in range(len(data["final_r_set"])):
-        # Get the polygon
-        p = data["final_r_set"][i]
-        x,y = p.xy
-        # Get the color
-        c = "g"
-        # Plot
-        plt.plot(x, y, color=c)
-    # Set the size of the graph
-    plt.xlim(x_range)
-    plt.ylim(y_range)
-    # Invert the y axis as negative is up and show ticks
-    ax = plt.gca()
+    ax.set_ylim(ax.get_ylim()[::-1])
     ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+    # plot the graph
+    plt.pause(0.1)
     return plt
 
 def getStep(a, MinClip):
@@ -276,8 +243,8 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
 
             # Plot the points and rotated points
             if plot:
-                plt = create_frame_plot(data["lidar"], data["origin"], data["orientation"], "World frame", 1)
-                plt = create_frame_plot(data["rotated_lidar"], data["origin"], data["ego_orientation"] , "Vehicle frame", 2)
+                # plt = create_frame_plot(data["lidar"], data["origin"], data["orientation"], "World frame", 1)
+                plt = create_frame_plot(data["rotated_lidar"], data["origin"], data["ego_orientation"] , "Lidar - Vehicle frame", 2)
 
             # Create the car as an object
             ego_position = [0, 0]
@@ -309,9 +276,9 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
             environment_data["final_r_set"] = final_r_set
 
             if plot:
-                plt.figure(1)
+                plt.figure(3)
                 plt.clf()
-                plt.title('Environment')
+                plt.title('Zoomed Environment')
 
                 # Invert the y axis for easier viewing
                 plt.gca().invert_yaxis()
@@ -357,11 +324,7 @@ def process_file(file_name, save_name, external_vehicle_count, file_number, tota
 
                 # plot the graph
                 plt.pause(0.1)
-                plt.savefig('../../output/file' + str(file_number) + 'frame' + str(frame_counter) + '.png')
-
-                # Plot the environment figures
-                plt = create_lidar_plot(environment_data, "Environment Zoomed", [-15, 45], [-30, 30], 3)
-                plt = create_lidar_plot(environment_data, "Environment", [-100, 100], [-100, 100], 4)
+                # plt.savefig('../../output/file' + str(file_number) + 'frame' + str(frame_counter) + '.png')
 
             # Get the wall time
             wall_time = data["timestamp"] - previous_time_stamp

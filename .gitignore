@@ -19,6 +19,7 @@ _build
 # Test files
 .pytest_cache
 .cache
+__pycache__
 
 # Outputs
 output/
@@ -30,4 +31,6 @@ tmp2/
 
 .DS_Store
 
-/data_subset
+/data_subset/beamng
+/data_subset/highway
+/data_subset/waymo

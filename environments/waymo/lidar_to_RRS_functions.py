@@ -13,6 +13,7 @@ from shapely.geometry import Polygon
 from shapely.geometry import LineString
 
 np.set_printoptions(suppress=True)
+np.seterr(divide='ignore', invalid='ignore')
 
 def create_frame_plot(data, origin, orientation, title, fig_num):
     fig = plt.figure(fig_num)

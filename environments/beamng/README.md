@@ -1,6 +1,6 @@
 # PhysicalCoverage_BeamNG
 
-THe only portion of this software which will not run on the above is the . BeamNG requires a windows computer to operate. The BeamNG software was tested on:
+<!-- THe only portion of this software which will not run on the above is the . BeamNG requires a windows computer to operate. The BeamNG software was tested on:
 
 __BeamNG Computer 3:__
 * Operating System: Windows 11
@@ -36,7 +36,7 @@ Next install beamngpy using:
 python -m pip install -e .\BeamNGpy\
 
 install shapely
-python -m pip install shapely
+python -m pip install shapely -->
 
 
 Will be completed by Sunday Feb 19th

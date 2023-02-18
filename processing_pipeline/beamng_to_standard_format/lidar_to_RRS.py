@@ -10,19 +10,19 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/beamng")])
+base_directory = str(path[:path.rfind("/processing_pipeline/beamng_to_standard_format/")])
 sys.path.append(base_directory)
 
 from tqdm import tqdm
 from lidar_to_RRS_functions import process_file
 
-from general.environment_configurations import RRSConfig
-from general.environment_configurations import BeamNGKinematics
+from utils.environment_configurations import RRSConfig
+from utils.environment_configurations import BeamNGKinematics
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',     type=str, default="/mnt/extradrive3/PhysicalCoverageData",  help="The location and name of the datafolder")
 parser.add_argument('--cores',         type=int, default=4,                                             help="number of available cores")
-parser.add_argument('--scenario',      type=str, default="",                                            help="beamng_random/beamng_generated")
+parser.add_argument('--scenario',      type=str, default="beamng_random",                                            help="beamng_random/beamng_generated")
 parser.add_argument('--distribution',  type=str, default="",                                            help="Only used when using beamng_generated (center_close/center_full)")
 parser.add_argument('--plot',             action='store_true')
 args = parser.parse_args()
@@ -38,11 +38,11 @@ total_lines     = RRS.beam_count
 
 if args.scenario == "beamng_random":
     raw_file_location       = "{}/beamng/random_tests/physical_coverage/lidar/".format(args.data_path)
-    output_file_location    = "../../../output/beamng/random_tests/physical_coverage/raw/"
+    output_file_location    = "../../output/beamng/random_tests/physical_coverage/raw/"
     file_names = glob.glob(raw_file_location + "/*/*.csv")
 elif args.scenario == "beamng_generated":
     raw_file_location       = "{}/beamng/generated_tests/{}/physical_coverage/lidar/".format(args.data_path, args.distribution)
-    output_file_location    = "../../../output/beamng/generated_tests/{}/physical_coverage/raw/".format(args.distribution)
+    output_file_location    = "../../output/beamng/generated_tests/{}/physical_coverage/raw/".format(args.distribution)
     file_names = glob.glob(raw_file_location + "/*/*.csv")
 else:
     print("Error: Unknown Scenario")
