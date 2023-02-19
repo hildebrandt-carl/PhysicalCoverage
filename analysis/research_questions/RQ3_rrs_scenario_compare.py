@@ -382,26 +382,6 @@ for RRS_index in range(len(RRS_numbers)):
         random_traces_hashes.append(hashes)
 
     print("\n")
-    print("-------Same vs Distinct Scenarios---------")
-
-    print("Comparing 3 similar scenarios and 3 random scenarios")
-    
-    highway_scenarios = [3, 96, 271]
-    plot_venn(highway_scenarios, "RRS {} - Open Road Scenarios Venn".format(RRS_number), "Same Scenarios")
-
-    # Create a plot of the best and worst
-    show_data_from_index(highway_scenarios, title="Open Road Scenarios Camera Data", camera=True)
-    show_most_common_RRS(highway_scenarios, args.distribution, args.scenario, title="Open Road Scenarios RRS Data")
-
-    random_scenarios = [148, 141, 14]
-    plot_venn(random_scenarios, "RRS {} - ParkingLot + UrbanBackRoad +  SingleLaneNeighborhood Scenarios Venn".format(RRS_number), "Distinct Scenarios")
-
-    show_data_from_index(random_scenarios, title="ParkingLot + UrbanBackRoad +  SingleLaneNeighborhood Scenarios Camera Data", camera=True)
-    show_most_common_RRS(random_scenarios, args.distribution, args.scenario, title="ParkingLot + UrbanBackRoad +  SingleLaneNeighborhood Scenarios RRS Data")
-
-    print("Done")
-
-    print("\n")
     print("----------Same vs Distinct RRS------------")
 
     # Create all permutations of the test indices

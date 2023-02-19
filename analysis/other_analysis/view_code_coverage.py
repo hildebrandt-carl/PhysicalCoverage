@@ -12,13 +12,13 @@ from tqdm import tqdm
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/coverage_analysis")])
+base_directory = str(path[:path.rfind("/analysis/other_analysis")])
 sys.path.append(base_directory)
 
-from general.line_coverage_configuration import clean_branch_data
-from general.line_coverage_configuration import get_code_coverage
-from general.line_coverage_configuration import get_ignored_lines
-from general.line_coverage_configuration import get_ignored_branches
+from utils.line_coverage_configuration import clean_branch_data
+from utils.line_coverage_configuration import get_code_coverage
+from utils.line_coverage_configuration import get_ignored_lines
+from utils.line_coverage_configuration import get_ignored_branches
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',          type=str, default="/mnt/extradrive3/PhysicalCoverageData",     help="The location and name of the datafolder")

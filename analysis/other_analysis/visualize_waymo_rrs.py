@@ -18,7 +18,7 @@ from waymo_open_dataset import dataset_pb2 as open_dataset
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/coverage_analysis")])
+base_directory = str(path[:path.rfind("/analysis/other_analysis")])
 sys.path.append(base_directory)
 
 from tqdm import tqdm

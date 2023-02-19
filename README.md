@@ -56,13 +56,3 @@ python3 -m pip install ordered_set
 ## Data Provided
 
 We have provided the following data. For more information of the details of the data please refer to the data subset [README.MD](./data_subset/README.md).
-
-TODO Table
-<!-- | Component         	| Description                                                                                               	| Link 	|
-|-------------------	|-----------------------------------------------------------------------------------------------------------	|------	|
-| Highway-Env       	| This will describe how to run the HighwayEnv environment, and how to generate sample runs.                	| [README.MD](./environments/highway/README.md)    	|
-| BeamNG            	| This will describe how to run the BeamNG environment, and how to generate sample runs. (Requires windows) 	| [README.MD](./environments/beamng/README.md)    	|
-| Waymo             	| This will describe how to run the Waymo Open Perception Dataset, and how to extract the data.             	| [README.MD](./environments/waymo/README.md)    	|
-| RRS Pipeline      	| This will show you how to run the RRS Pipeline on example data, as well as your own.                      	| [README.MD](./processing_pipeline/README.md)      |
-| Data Analysis     	| This will show you how to generate the graphs presented in our paper.                                     	| [README.MD](./data_analysis/README.md)    	    |
-| Provided Data      	| This will provide a subset of the data from the original data. The original data is over 2TB.                	| [README.MD](./data_subset/README.md)              | -->

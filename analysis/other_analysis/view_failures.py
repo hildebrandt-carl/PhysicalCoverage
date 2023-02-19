@@ -9,11 +9,11 @@ from tqdm import tqdm
 from pathlib import Path
 current_file = Path(__file__)
 path = str(current_file.absolute())
-base_directory = str(path[:path.rfind("/coverage_analysis")])
+base_directory = str(path[:path.rfind("/analysis/other_analysis")])
 sys.path.append(base_directory)
 
-from general.file_functions import get_beam_number_from_file
-from general.file_functions import order_files_by_beam_number
+from utils.file_functions import get_beam_number_from_file
+from utils.file_functions import order_files_by_beam_number
 
 # Used to shuffle two arrays together
 def unison_shuffled_copies(a, b):
