@@ -74,7 +74,7 @@ python basic_drive.py
 
 If all went well you should see the following:
 
-![BeamNG Basic Drive Example](../../misc/beamng/beamng_basic_drive.gif)
+![BeamNG Basic Drive Example](../../misc/beamng/basic_drive.gif)
 
 **Note:** The car is set to automatically drive around the world, and so it might turn left, right or go straight at the first intersection.
 
@@ -89,7 +89,7 @@ python manual_drive.py
 
 If everything worked you should see the following. **Note** you can drive around with the arrow keys. Here you can also see the soft body physics at work!
 
-![BeamNG Basic Drive Example](../../misc/beamng/beamng_manual_drive.gif)
+![BeamNG Basic Drive Example](../../misc/beamng/manual_drive.gif)
 
 ### Checking LiDAR is Working
 
@@ -113,7 +113,7 @@ Getting (284004,) lidar points
 
 Additionally you will notice the LiDAR on the simulation GUI, as shown below:
 
-![BeamNG Basic LiDAR Example](../../misc/beamng/beamng_basic_lidar.gif)
+![BeamNG Basic LiDAR Example](../../misc/beamng/basic_lidar.gif)
 
 
 ## Adding Code Coverage to Lua
@@ -128,4 +128,4 @@ Once you have confirmed that you are able to run each of the basic tests, and th
 python .\run_random_tests.py --total_runs 2 --traffic_count 3 --ai_mode limit --port 64256
 ```
 
-Image coming soon
+Gif coming soon.
