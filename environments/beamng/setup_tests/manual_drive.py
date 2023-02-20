@@ -23,8 +23,8 @@ def main():
 
     # Get BeamNG's location and workspace
     current_user = os.environ.get("USERNAME")
-    bng_loc = 'C:\\Users\\{}\\Documents\\Beamng\\BeamNG.tech.v0.23.5.1'.format(current_user)
-    bng_usr = 'C:\\Users\\{}\\Documents\\Beamng\\{}'.format(current_user, args.workspace) 
+    bng_loc = 'C:\\Users\\{}\\BeamNG\\BeamNG.tech-0.23.5.1'.format(current_user)
+    bng_usr = 'C:\\Users\\{}\\BeamNG\\{}'.format(current_user, args.workspace)
 
     # Setup logging and random seed
     random.seed(1703)

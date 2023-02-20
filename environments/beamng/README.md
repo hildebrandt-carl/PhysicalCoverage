@@ -23,7 +23,7 @@ We will be using [BeamNG.Tech](https://beamng.tech/), as our simulation software
 
 ![BeamNG Tech Banner](../../misc/beamng/beamngtech.gif)
 
-When you are granted access you will also be sent a `tech.key`. This key needs to be placed in `C:\Users\<name>\Documents\BeamNG.tech` for the software to find and verify it. The same access email will also give you a link to download different versions of the software. We have tested on multiple versions, however this document is written for `BeamNG.tech.v0.23.5.1`. Download it and place it in `"C:\Users\<name>\BeamNGWorkspace\BeamNG.tech.v0.23.5.1"`.
+When you are granted access you will also be sent a `tech.key`. This key needs to be placed in your workspace (More information below) for the software to find and verify it. The same access email will also give you a link to download different versions of the software. We have tested on multiple versions, however this document is written for `BeamNG.tech-0.23.5.1`. Download it and place it in `C:\Users\<name>\BeamNG\BeamNG.tech-0.23.5.1`.
 
 **Note:** This software has been tested on **Version 0.23.5.1**, however we have seen it working on other versions
 
@@ -53,6 +53,28 @@ Finally we need to install a few additional python packages. Run the following:
 ```bash
 python -m pip install shapely
 ```
+
+### Setting up your workspace
+
+We now describe how to setup the workspace. For the official instructions you can follow this [README](https://github.com/BeamNG/BeamNGpy/tree/v1.21.1#prerequisites)
+
+Using BeamNG.tech version 0.23.5.1 the workspace needs to be set up by the user. This step needs to be repeated for every newly installed BeamNG.tech version and helps BeamNGpy to determine the correct user directory for mod deployment. However to do this you can follow these steps:
+
+1) Create a workspace directory named `C:\Users\<name>\BeamNG\BeamNGWorkspace` and then place your license file into it.
+
+2) Create an environment variable called `BNG_HOME`. You can do that by:
+Edit the system environment variables -> Environment Variables -> System Variables (NEW) 
+Varibale Name: `BNG_HOME `
+Variable Value: `C:\Users\<name>\BeamNG\BeamNG.tech-0.23.5.1`
+
+3) Create both workspaces by, first restarting the terminal (if you have just created the environment variable) and running:
+```bash
+beamngpy setup-workspace C:\Users\<name>\BeamNG\BeamNGWorkspace
+```
+
+**Note**: If you get any errors about not knowing the `beamngpy` command, refer to this [issue](https://github.com/BeamNG/BeamNGpy/issues/203#event-8563612735)
+
+If everything worked you will notice that the `BeamNG` simulator opens and then closes.
 
 # Using BeamNG
 
@@ -125,7 +147,10 @@ The next step is to update BeamNG py with the ability to perform code coverage. 
 Once you have confirmed that you are able to run each of the basic tests, and that you have added the code coverage functionality to BeamNGpy, you are finally ready to generate the study data. To do that first lets run a single example. To do that run the following code:
 
 ```bash
+cd ./environments/beamng/random_tests
 python .\run_random_tests.py --total_runs 2 --traffic_count 3 --ai_mode limit --port 64256
 ```
 
 Gif coming soon.
+
+This will also produce an output folder that contains both physical coverage, as well as code coverage. Both of these will match the type of data found in our `data_subset`.
