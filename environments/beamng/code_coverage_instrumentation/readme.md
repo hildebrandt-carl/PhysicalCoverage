@@ -1,20 +1,20 @@
-First you need to place `ai.lua` inside the original code folder.
+# Adding Code Coverage to BeamNGPy
 
-```shell
-cp C:\Users\hilde\Documents\Beamng\BeamNG.tech.v0.23.5.1\lua\vehicle\ai.lua C:\Users\hilde\Documents\Beamng\PhysicalCoverageBeamNG\InstrumentCode\original_code\ai.lua
+
+## Adding instrumented Lua Code
+
+We have provided you with instrumented `ai.lua` code. This new `ai.lua` is an instrumented version which updates an array each time a line is covered. We use that array to compute line, branch, and path coverage. At the bottom of this document we have provided you with how to use our tool to instrument any Lua code.
+
+Replace the original `ai.lua` file with our newly instrumented file inside the `instrumented_code` folder. You can do that using:
+```bash
+cp instrumented_code\ai.lua C:<path to beamng>\BeamNG.tech.v0.21.3.0\lua\vehicle\ai.lua 
 ```
 
-Next you want to run the python script to instrument the code
-```shell
-clear; python .\process.py
-```
+## Adding Coverage functions to BeamNGpy
 
-That will produce an instrumented file inside the `instrumented_code` folder. Copy that back to your `BeamNG` install.
-```shell
-cp instrumented_code\ai.lua C:\Users\hilde\Documents\Beamng\BeamNG.tech.v0.23.5.1\lua\vehicle\ai.lua 
-```
+Next you need to link beamngpy and Luo with the new functions to do that, add the following functions to the end of the `researchVE.lua` file. The file can be located at `C:<path to beamngpy>\BeamNGpy\src\beamngpy\lua\researchVE.lua`. 
 
-Next you need to link beamngpy and Luo with the new functions to do that, add the following functions to the end of the `researchVE.lua` file. The file can be located at `C:\Users\hilde\Documents\Beamng\BeamNGpy\src\beamngpy\lua\researchVE.lua`. 
+**Note:** Make sure to add these before the `return M` line
 
 ```lua
 -- Added this to handle line and branch coverage
@@ -59,7 +59,8 @@ M.handleStartCoverage = function(skt, msg)
 end
 ```
 
-Then you need to add a way to get the coverage for each of the vehicles in BeamNG. To do that edit the `vehicle.py` file. You can find that file in `C:\Users\hilde\Documents\Beamng\BeamNGpy\src\beamngpy\vehicle.py`. Add the following:
+Then you need to add a way to get the coverage for each of the vehicles in BeamNG. To do that edit the `vehicle.py` file. You can find that file in `C:<path to beamngpy>\BeamNGpy\src\beamngpy\vehicle.py`. Add the following:
+
 ```python
     # Requires you import numpy as np
     # returns list of lines covered
@@ -131,26 +132,25 @@ Then you need to add a way to get the coverage for each of the vehicles in BeamN
 
 **Note:** remember to add the `import numpy as np` to the top of that file.
 
+**YOU ARE NOW DONE AND CAN RETURN TO RUNNING OUR STUDY**
 
------
+---
+## Additional Changes to the Lua.ai
 
-These are the changes I made to the original code. They do not need to changed in your code, unless you are starting with a fresh `ai.lua`. If you are not using `ai.lua` then you do not need to worry.
+These are the changes I made to the original code.
 
-You can now run the `run_random_tests.py` script to generate data.
+I had to unwrap any statements written on a single line. Therefor
 
-Note: For this to work you need to manually unwrap any single line if statements. They break they code:(
-```
+```lua
 if not plan then return end
 ```
-Becomes
-```
+
+Becomes:
+```lua
 if not plan then
   return
 end
 ```
-
-Additionally any if statements written over multiple lines need to be grouped together
-
 
 I also needed to replace the following variables:
 ```lua
@@ -169,3 +169,19 @@ local strFormat = string.format
 ```
 
 This removes a number of up variables and thus allows us to instrument the function UpdateGFX in the code.
+
+
+## Insturmenting any Lua Code
+
+Note: This step was already done, and we have provided the instrumented Lua code in `instrumented_code` folder. However to instrument any code do the following
+
+```bash
+cp C:<path to file requiring instrumentation>\file.lua C:<Path to This Repo>\PhysicalCoverageBeamNG\InstrumentCode\original_code\file.lua
+```
+
+Next you want to run the python script to instrument the code
+```bash
+python .\process.py
+```
+
+That will produce an instrumented file inside the `instrumented_code` folder. 

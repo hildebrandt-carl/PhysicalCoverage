@@ -45,10 +45,11 @@ def main():
     vehicle.attach_sensor('lidar', lidar)
 
     # Add the vehicle to the scenario
-    scenario.add_vehicle(vehicle, pos=(-717.121, 101, 118.675), rot=None, rot_quat=(0, 0, 0.3826834, 0.9238795))
+    scenario.add_vehicle(vehicle, pos=(-852.024 , -513.641, 106.620), rot=None, rot_quat=(0, 0, 0.926127, -0.377211))
 
     # Create the scenario in BeamNG
     scenario.make(bng)
+    
     try:
 
         # Set simulator to be deterministic
