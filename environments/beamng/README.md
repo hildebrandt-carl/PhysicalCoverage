@@ -151,6 +151,6 @@ cd ./environments/beamng/random_tests
 python .\run_random_tests.py --total_runs 2 --traffic_count 3 --ai_mode limit --port 64256
 ```
 
-Gif coming soon.
+![BeamNG 3 Car Test](../../misc/beamng/3_car.gif)
 
-This will also produce an output folder that contains both physical coverage, as well as code coverage. Both of these will match the type of data found in our `data_subset`.
+In this example we can see the ego vehicle (red) driving on a highway with 3 traffic vehicles (white). This will produce an output folder that contains both physical coverage, as well as code coverage. Both of these will match the type of data found in our `data_subset`. To run our study you can simply use `./scripts/run_random_test1.ps1` which will generate 1500 tests with traffic vehicles varied between 1 and 10.
