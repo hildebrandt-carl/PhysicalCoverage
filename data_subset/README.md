@@ -11,13 +11,13 @@ sudo apt install p7zip-full p7zip-rar
 
 ## Downloading the Data
 
-We have provided the data as a zip file. The ziped files are 10.2GB when extracted they are roughly 81.6GB.
+We have provided the data as a zip file. The zipped files are 10.2GB when extracted they are roughly 81.6GB.
 
-To download the data run the `extract_data.sh` script. An example of running it is shown below:
+To download the data run the `download_and_extract_data.sh` script. An example of running it is shown below:
 
 ```bash
 cd /data_subset
-./extract_data.sh
+./download_and_extract_data.sh
 ```
 
 The script's output will look as follows:
