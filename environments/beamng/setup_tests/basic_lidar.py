@@ -25,8 +25,8 @@ def main():
 
     # Get BeamNG's location and workspace
     current_user = os.environ.get("USERNAME")
-    bng_loc = 'C:\\Users\\{}\\Documents\\Beamng\\BeamNG.tech.v0.23.5.1'.format(current_user)
-    bng_usr = 'C:\\Users\\{}\\Documents\\Beamng\\{}'.format(current_user, args.workspace) 
+    bng_loc = 'C:\\Users\\{}\\BeamNG\\BeamNG.tech-0.23.5.1'.format(current_user)
+    bng_usr = 'C:\\Users\\{}\\BeamNG\\{}'.format(current_user, args.workspace)
 
     # Setup logging and random seed
     random.seed(1703)
@@ -45,10 +45,11 @@ def main():
     vehicle.attach_sensor('lidar', lidar)
 
     # Add the vehicle to the scenario
-    scenario.add_vehicle(vehicle, pos=(-717.121, 101, 118.675), rot=None, rot_quat=(0, 0, 0.3826834, 0.9238795))
+    scenario.add_vehicle(vehicle, pos=(-852.024 , -513.641, 106.620), rot=None, rot_quat=(0, 0, 0.926127, -0.377211))
 
     # Create the scenario in BeamNG
     scenario.make(bng)
+    
     try:
 
         # Set simulator to be deterministic

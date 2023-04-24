@@ -491,8 +491,8 @@ def main():
 
     # Create the beamng class
     current_user = os.environ.get("USERNAME")
-    bng_loc = 'C:\\Users\\{}\\Documents\\Beamng\\BeamNG.tech.v0.23.5.1'.format(current_user)
-    bng_usr = 'C:\\Users\\{}\\Documents\\Beamng\\{}'.format(current_user, user_directory)
+    bng_loc = 'C:\\Users\\{}\\Beamng\\BeamNG.tech-0.23.5.1'.format(current_user)
+    bng_usr = 'C:\\Users\\{}\\Beamng\\{}'.format(current_user, user_directory)
     bng_obj = BeamNG_Random_Test_Generation(bng_loc=bng_loc, bng_usr=bng_usr, number_traffic_vehicles=number_traffic_vehicles, port=port, ai_mode=current_ai_mode)
 
     # Check to see that there is an output folder
