@@ -49,10 +49,12 @@ python3 -m pip install --upgrade pip
 python3 -m pip install gym==0.18
 python3 -m pip install matplotlib==3.6.0
 python3 -m pip install coverage==5.5
-python3 -m pip install shapely
+python3 -m pip install shapely==2.0.1
 python3 -m pip install numpy==1.19.5
 python3 -m pip install pandas==1.2.0
-python3 -m pip install ordered_set
+python3 -m pip install ordered_set==4.1.0
+python3 -m pip install tqdm==4.65.0
+python3 -m pip install matplotlib-venn==0.11.9
 ```
 
 ## Getting Started

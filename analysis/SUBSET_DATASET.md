@@ -2,8 +2,9 @@
 
 Below we provide information on how to generate the results for each of the different research questions using the subset dataset provided by this repo. 
 
-# RQ1
+**Note:** We assume you are in the `./PhysicalCoverage/analysis/research_questions` directory for the following README.
 
+# RQ1
 
 ## Question:
 
@@ -31,8 +32,7 @@ python3 RQ1_correlation_codecov.py --number_of_test_suites 100 --number_of_tests
 
 If you run this with `scenario` set to `highway` you will get the following results:
 
-![Code Coverage and Failure Correlation
-](../misc/research_questions/RQ1/subset/RQ1_highway_correlation_codecov.png)
+![Code Coverage and Failure Correlation](../misc/research_questions/RQ1/subset/RQ1_highway_correlation_codecov.png)
 
 
 If you run this with `scenario` set to `beamng` you will get the following results:
@@ -72,7 +72,28 @@ If you run this with `scenario` set to `beamng` you will get the following resul
 
 ## Trajectory Coverage and Failure Correlation
 
-TO BE DONE
+We looked at how Trajectory Coverage correlated with failures. To compute the Peerson R coefficient you can run the following `RQ1_correlation_trajcov.py.py` script. The script has the following parameters
+* `number_of_test_suites`: The number of test suites used to compute the correlation
+* `number_of_tests`: The number of tests in the dataset
+* `distribution`: The data distribution used (We used center_close for our study)
+* `scenario`: Either highway or beamng
+* `cores`: The number of cores used to do the computation
+* `data_path`: The path to the dataset
+
+An example of  using this script is shown below:
+
+```bash
+python3 RQ1_correlation_trajcov.py --number_of_test_suites 100 --number_of_tests 1000 --distribution center_close --scenario <scenario> --cores 16 --RRS 10 --data_path <full path to folder>//PhysicalCoverage/data_subset
+```
+
+If you run this with `scenario` set to `highway` you will get the following results:
+
+![TrajCov and Failure Correlation](../misc/research_questions/RQ1/subset/RQ1_highway_correlation_trajcov.png)
+
+If you run this with `scenario` set to `beamng` you will get the following results:
+
+<!-- ![TrajCov and Failure Correlation](../misc/research_questions/RQ1/subset/RQ1_beamng_correlation_trajcov.png) -->
+TODO BeamNG Image
 
 ## Coverage as Test Suite Size Increases
 

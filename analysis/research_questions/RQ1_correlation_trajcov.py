@@ -167,7 +167,7 @@ if not (args.distribution == "center_close" or args.distribution == "center_full
     exit()
 
 # Get the file names
-base_path = '/mnt/extradrive3/PhysicalCoverageData/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.scenario, args.distribution, args.number_of_tests)
+base_path = '{}/{}/random_tests/physical_coverage/processed/{}/{}/'.format(args.data_path, args.scenario, args.distribution, args.number_of_tests)
 position_file_names     = glob.glob(base_path + "ego_positions_*")
 crash_file_names        = glob.glob(base_path + "crash_*")
 stall_file_names        = glob.glob(base_path + "stall_*")
@@ -299,10 +299,6 @@ for j, test_suite_size in enumerate(test_suit_sizes):
     naive_coverage_percentage       = results[0]
     improved_coverage_percentage    = results[1]
     unique_crash_count              = results[2]
-
-    print(naive_coverage_percentage)
-    print(unique_crash_count)
-    print("--------------")
 
     # Compute the correlation
     n_r = stats.pearsonr(naive_coverage_percentage, unique_crash_count)
