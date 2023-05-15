@@ -34,3 +34,5 @@ tmp2/
 /data_subset/beamng
 /data_subset/highway
 /data_subset/waymo
+
+environments/highway/highway_env_v2/build/

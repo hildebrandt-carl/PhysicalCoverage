@@ -16,7 +16,7 @@ We have provided the data as a zip file. The zipped files are 10.2GB when extrac
 To download the data run the `download_and_extract_data.sh` script. An example of running it is shown below:
 
 ```bash
-cd /data_subset
+cd ./data_subset
 ./download_and_extract_data.sh
 ```
 
@@ -29,7 +29,7 @@ data.zip      90%[=====================================>             ]   8.56G  
 ...
 ```
 
-Once it has completed you should have a `highway`, `beamng` and `waymo` folder.
+Once it has completed you should have a `highway`, `beamng` and `waymo` folder, in the `./data_subset` directory.
 
 
 ## Understanding the data
