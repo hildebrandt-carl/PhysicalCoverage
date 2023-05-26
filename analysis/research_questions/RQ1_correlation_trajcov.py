@@ -284,8 +284,10 @@ else:
     exit()
 
 
+test_suit_sizes = [10, 50, 100, 500, 1000, 5000]
 
-test_suit_sizes = [10, 50, 100, 500, 1000]
+f_i = open("Traj_imporved-{}.txt".format(args.scenario), "w")
+f_n = open("Traj_naive-{}.txt".format(args.scenario), "w")
 
 for j, test_suite_size in enumerate(test_suit_sizes):
     print("Computing {} test suites of size {}".format(args.number_of_test_suites, test_suite_size))
@@ -309,8 +311,20 @@ for j, test_suite_size in enumerate(test_suit_sizes):
     i_r_value = round(i_r[0], 4)
     i_p_value = round(i_r[1], 4)
 
+    f_n.write("Test suite size: {}\n".format(test_suite_size))
+    f_n.write("Naive Trajectory Coverage             R value: {} - P value: {}\n".format(n_r_value, n_p_value))
+    f_n.write("Naive Average coverage: {}\n".format(np.average(naive_coverage_percentage)))
+    f_n.write("---------------------------------------------\n")
+
+    f_i.write("Test suite size: {}\n".format(test_suite_size))
+    f_i.write("Improved Trajectory Coverage coverage R value: {} - P value: {}\n".format(i_r_value, i_p_value))
+    f_i.write("Improved Average coverage: {}\n".format(np.average(improved_coverage_percentage)))
+    f_i.write("---------------------------------------------\n")
+
     print("Naive Trajectory Coverage             R value: {} - P value: {}".format(n_r_value, n_p_value))
     print("Improved Trajectory Coverage coverage R value: {} - P value: {}".format(i_r_value, i_p_value))
+    print("Naive Average coverage: {}".format(np.average(naive_coverage_percentage)))
+    print("Improved Average coverage: {}".format(np.average(improved_coverage_percentage)))
 
     # Plot the results
     plt.figure("Naive")
@@ -320,6 +334,9 @@ for j, test_suite_size in enumerate(test_suit_sizes):
     plt.scatter(improved_coverage_percentage, unique_crash_count, color="C{}".format(j), label="Size: {} - Correlation: {}".format(test_suite_size, i_r_value))
 
     print("---------------------------------------------")
+f_n.close()
+f_i.close()
+
 
 plt.figure("Naive")
 plt.xlabel("Naive Trajectory Coverage (%)")

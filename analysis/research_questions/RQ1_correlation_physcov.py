@@ -225,7 +225,9 @@ denominator = len(feasible_RRS_set)
 
 total_tests = len(traces)
 
-test_suit_sizes = [10, 50, 100, 500, 1000]
+test_suit_sizes = [10, 50, 100, 500, 1000, 5000]
+
+f = open("RRS{}-{}.txt".format(RRS_number, args.scenario), "w")
 
 # Compute the correlation
 for j, test_suite_size in enumerate(test_suit_sizes):
@@ -240,10 +242,18 @@ for j, test_suite_size in enumerate(test_suit_sizes):
     r_value = round(r[0], 4)
     p_value = round(r[1], 4)
     print("R value: {} - P value: {}".format(r_value, p_value))
-
+    print("Average coverage: {}".format(np.average(coverage_percentages)))
+    f.write("Test suite size: {}\n".format(test_suite_size))
+    f.write("R value: {} - P value: {}\n".format(r_value, p_value))
+    f.write("Average coverage: {}\n".format(np.average(coverage_percentages)))
+    f.write("---------------------------------------------\n")
     # Plot the results
     plt.scatter(coverage_percentages, unique_crash_count, color="C{}".format(j), label="Size: {} - Correlation: {}".format(test_suite_size, r_value))
     print("---------------------------------------------")
+
+
+f.close()
+
 
 plt.xlabel("Physical Coverage (%)")
 plt.ylabel("Unique Failures (%)")

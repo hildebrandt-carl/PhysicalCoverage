@@ -255,7 +255,10 @@ pool.close()
 code_coverage_denomiator    = len(all_lines_set)
 branch_coverage_denominator = len(all_branches_set_clean)
 
-test_suit_sizes = [10, 50, 100, 500, 1000]
+test_suit_sizes = [10, 50, 100, 500, 1000, 5000]
+
+f_l = open("line-{}.txt".format(args.scenario), "w")
+f_b = open("branch-{}.txt".format(args.scenario), "w")
 
 # Compute the correlation
 for j, test_suite_size in enumerate(test_suit_sizes):
@@ -279,8 +282,20 @@ for j, test_suite_size in enumerate(test_suit_sizes):
     b_r_value = round(b_r[0], 4)
     b_p_value = round(b_r[1], 4)
 
+    f_l.write("Test suite size: {}\n".format(test_suite_size))
+    f_l.write("Line Trajectory Coverage             R value: {} - P value: {}\n".format(l_r_value, l_p_value))
+    f_l.write("Line Average coverage: {}\n".format(np.average(line_coverage_percentage)))
+    f_l.write("---------------------------------------------\n")
+
+    f_b.write("Test suite size: {}\n".format(test_suite_size))
+    f_b.write("Branch Trajectory Coverage coverage R value: {} - P value: {}\n".format(b_r_value, b_p_value))
+    f_b.write("Branch Average coverage: {}\n".format(np.average(branch_coverage_percentage)))
+    f_b.write("---------------------------------------------\n")
+
     print("Line coverage   R value: {} - P value: {}".format(l_r_value, l_p_value))
     print("Branch coverage R value: {} - P value: {}".format(b_r_value, b_p_value))
+    print("Line Average coverage: {}".format(np.average(line_coverage_percentage)))
+    print("Branch Average coverage: {}".format(np.average(branch_coverage_percentage)))
 
     # Plot the results
     plt.figure("Line")
@@ -288,6 +303,9 @@ for j, test_suite_size in enumerate(test_suit_sizes):
     plt.figure("Branch")
     plt.scatter(branch_coverage_percentage, unique_crash_count, color="C{}".format(j), label="Size: {} - Correlation: {}".format(test_suite_size, b_r_value))
     print("---------------------------------------------")
+
+f_l.close()
+f_b.close()
 
 plt.figure("Line")
 plt.xlabel("Line Coverage (%)")
