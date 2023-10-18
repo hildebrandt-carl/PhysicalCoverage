@@ -58,7 +58,7 @@ python3 -m pip install matplotlib-venn==0.11.9
 python3 -m pip install scikit-learn
 python3 -m pip install tensorflow==2.11.0
 python3 -m pip install waymo-open-dataset-tf-2-11-0
-python3 -m pip pip install protobuf==3.20.0
+python3 -m pip install protobuf==3.20.0
 ```
 
 ## Getting Started
