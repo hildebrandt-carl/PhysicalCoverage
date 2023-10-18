@@ -16,7 +16,7 @@ To do this you can use the script `run_waymo_scenarios.py` which has the followi
 
 You can run this script using:
 ```bash
-cd /environments/waymo
+cd ./environments/waymo
 python3 run_waymo_scenarios.py --data_path <full path to folder>/PhysicalCoverage/data_subset --cores 5
 ```
 
@@ -46,7 +46,7 @@ Sometimes you might want to view camera data from one or many scenarios. Rather 
 An example of using this script to view the camera data from scenario 0 and scenario 3 would be:
 
 ```bash
-cd /environments/waymo
+cd ./environments/waymo
 python3 inspect_camera --data_path <full path to folder>/PhysicalCoverage/data_subset --index "0, 3"
 ```
 

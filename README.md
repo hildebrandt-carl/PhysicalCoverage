@@ -31,7 +31,7 @@ This software was developed, run and test on the following machines. **Note:** B
 
 ### Software
 
-We require several python packages to run our software. To install them you can use the package manager `pip`. 
+We require several python packages to run our software. To install them you can use the package manager `pip`. We tested this using `Python 3.7`.
 
 ```bash
 sudo apt install python3-pip
@@ -55,6 +55,10 @@ python3 -m pip install pandas==1.2.0
 python3 -m pip install ordered_set==4.1.0
 python3 -m pip install tqdm==4.65.0
 python3 -m pip install matplotlib-venn==0.11.9
+python3 -m pip install scikit-learn
+python3 -m pip install tensorflow==2.11.0
+python3 -m pip install waymo-open-dataset-tf-2-11-0
+python3 -m pip pip install protobuf==3.20.0
 ```
 
 ## Getting Started
