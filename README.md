@@ -67,7 +67,7 @@ python3 -m pip install matplotlib-venn==0.11.9
 | RRS Pipeline      	| This will show you how to run the RRS Pipeline on example data, as well as your own.                      	| [README.MD](./processing_pipeline/README.md)      |
 | Data Analysis     	| This will show you how to generate the graphs presented in our paper.                                     	| [README.MD](./analysis/README.md)    	            |
 | Provided Data      	| This will provide a subset of the data used in the paper. The data used in the paper was over 2TB.                	| [README.MD](./data_subset/README.md)              |
-| Provided Data      	| Includes the paper published at [ISSTA](https://conf.researchr.org/home/issta-2023) 2023                	| [Paper](./paper/main.pdf)              |
+| Paper      	| Includes the paper published at [ISSTA](https://conf.researchr.org/home/issta-2023) 2023                	| [Paper](./paper/main.pdf)              |
 
 
 ## Data Provided
